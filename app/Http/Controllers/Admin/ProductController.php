@@ -5,6 +5,8 @@ namespace App\Http\Controllers\Admin;
 use App\Http\Controllers\Controller;
 use App\Models\Product;
 use App\Models\Category;
+use App\Http\Requests\StoreProductRequest;
+use App\Http\Requests\UpdateProductRequest;
 use Illuminate\Http\Request;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\View\View;
@@ -19,6 +21,9 @@ class ProductController extends Controller
     {
         $search = $request->get('search');
         $category_id = $request->get('category_id');
+        $status = $request->get('status');
+        $sort = $request->get('sort', 'created_at');
+        $order = $request->get('order', 'desc');
         
         $products = Product::with('category')
             ->when($search, function ($query, $search) {
@@ -29,12 +34,15 @@ class ProductController extends Controller
             ->when($category_id, function ($query, $category_id) {
                 return $query->where('category_id', $category_id);
             })
-            ->orderBy('created_at', 'desc')
-            ->paginate(10);
+            ->when($status, function ($query, $status) {
+                return $query->where('status', $status);
+            })
+            ->orderBy($sort, $order)
+            ->paginate(12);
 
         $categories = Category::active()->get();
 
-        return view('admin.products.index', compact('products', 'categories', 'search', 'category_id'));
+        return view('admin.products.index', compact('products', 'categories', 'search', 'category_id', 'status', 'sort', 'order'));
     }
 
     /**
@@ -49,29 +57,16 @@ class ProductController extends Controller
     /**
      * Store a newly created resource in storage.
      */
-    public function store(Request $request): RedirectResponse
+    public function store(StoreProductRequest $request): RedirectResponse
     {
-        $validated = $request->validate([
-            'name' => 'required|string|max:255',
-            'sku' => 'required|string|max:255|unique:products',
-            'category_id' => 'required|exists:categories,id',
-            'stock' => 'required|integer|min:0',
-            'purchase_price' => 'required|integer|min:0',
-            'promo_price' => 'nullable|integer|min:0',
-            'sell_price' => 'required|integer|min:0',
-            'image' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:2048',
-            'description' => 'nullable|string',
-            'weight' => 'nullable|string|max:255',
-            'expiry_date' => 'nullable|date',
-            'status' => 'required|in:active,inactive',
-        ]);
+        $validated = $request->validated();
 
         // Handle image upload
         if ($request->hasFile('image')) {
             $image = $request->file('image');
             $filename = time() . '_' . $image->getClientOriginalName();
-            $image->storeAs('products', $filename, 'public');
-            $validated['image'] = $filename;
+            $path = $image->storeAs('products', $filename, 'public');
+            $validated['image'] = 'products/' . $filename;
         }
 
         Product::create($validated);
@@ -101,35 +96,22 @@ class ProductController extends Controller
     /**
      * Update the specified resource in storage.
      */
-    public function update(Request $request, Product $product): RedirectResponse
+    public function update(UpdateProductRequest $request, Product $product): RedirectResponse
     {
-        $validated = $request->validate([
-            'name' => 'required|string|max:255',
-            'sku' => 'required|string|max:255|unique:products,sku,' . $product->id,
-            'category_id' => 'required|exists:categories,id',
-            'stock' => 'required|integer|min:0',
-            'purchase_price' => 'required|integer|min:0',
-            'promo_price' => 'nullable|integer|min:0',
-            'sell_price' => 'required|integer|min:0',
-            'image' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:2048',
-            'description' => 'nullable|string',
-            'weight' => 'nullable|string|max:255',
-            'expiry_date' => 'nullable|date',
-            'status' => 'required|in:active,inactive',
-        ]);
+        $validated = $request->validated();
 
         // Handle image upload
         if ($request->hasFile('image')) {
             // Delete old image if exists
-            if ($product->image && Storage::disk('public')->exists('products/' . $product->image)) {
-                Storage::disk('public')->delete('products/' . $product->image);
+            if ($product->image && Storage::disk('public')->exists($product->image)) {
+                Storage::disk('public')->delete($product->image);
             }
 
             // Store new image
             $image = $request->file('image');
             $filename = time() . '_' . $image->getClientOriginalName();
-            $image->storeAs('products', $filename, 'public');
-            $validated['image'] = $filename;
+            $path = $image->storeAs('products', $filename, 'public');
+            $validated['image'] = 'products/' . $filename;
         }
 
         $product->update($validated);
@@ -144,8 +126,8 @@ class ProductController extends Controller
     public function destroy(Product $product): RedirectResponse
     {
         // Delete image if exists
-        if ($product->image && Storage::disk('public')->exists('products/' . $product->image)) {
-            Storage::disk('public')->delete('products/' . $product->image);
+        if ($product->image && Storage::disk('public')->exists($product->image)) {
+            Storage::disk('public')->delete($product->image);
         }
 
         $product->delete();
