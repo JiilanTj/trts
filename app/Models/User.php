@@ -25,6 +25,7 @@ class User extends Authenticatable
         'balance',
         'level',
         'role',
+        'is_seller',
     ];
 
     /**
@@ -48,6 +49,7 @@ class User extends Authenticatable
             'password' => 'hashed',
             'balance' => 'integer',
             'level' => 'integer',
+            'is_seller' => 'boolean',
         ];
     }
 
@@ -79,6 +81,16 @@ class User extends Authenticatable
     public function isUser(): bool
     {
         return $this->role === 'user';
+    }
+
+    /**
+     * Check if user is a seller
+     *
+     * @return bool
+     */
+    public function isSeller(): bool
+    {
+        return $this->is_seller === true;
     }
 
     /**
@@ -136,5 +148,66 @@ class User extends Authenticatable
     public function scopeUsers($query)
     {
         return $query->where('role', 'user');
+    }
+
+    /**
+     * Scope a query to only include sellers.
+     *
+     * @param  \Illuminate\Database\Eloquent\Builder  $query
+     * @return \Illuminate\Database\Eloquent\Builder
+     */
+    public function scopeSellers($query)
+    {
+        return $query->where('is_seller', true);
+    }
+
+    /**
+     * Products that belong to the seller.
+     *
+     * @return \Illuminate\Database\Eloquent\Relations\HasMany
+     */
+    public function products()
+    {
+        return $this->hasMany(Product::class);
+    }
+
+    /**
+     * Orders that belong to the seller.
+     *
+     * @return \Illuminate\Database\Eloquent\Relations\HasMany
+     */
+    public function orders()
+    {
+        return $this->hasMany(Order::class);
+    }
+
+    /**
+     * Invitation codes created by this user.
+     *
+     * @return \Illuminate\Database\Eloquent\Relations\HasMany
+     */
+    public function invitationCodes()
+    {
+        return $this->hasMany(InvitationCode::class);
+    }
+
+    /**
+     * Seller requests made by this user.
+     *
+     * @return \Illuminate\Database\Eloquent\Relations\HasMany
+     */
+    public function sellerRequests()
+    {
+        return $this->hasMany(SellerRequest::class);
+    }
+
+    /**
+     * Seller info for this user.
+     *
+     * @return \Illuminate\Database\Eloquent\Relations\HasOne
+     */
+    public function sellerInfo()
+    {
+        return $this->hasOne(SellerInfo::class);
     }
 }

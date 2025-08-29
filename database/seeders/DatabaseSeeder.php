@@ -18,6 +18,7 @@ class DatabaseSeeder extends Seeder
             CategorySeeder::class,
             ProductSeeder::class,
             SettingSeeder::class, // added
+            InvitationCodeSeeder::class, // added
         ]);
     }
 }

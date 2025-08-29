@@ -96,6 +96,29 @@
                 </ul>
             </div>
 
+            <div class="mb-4">
+                <p class="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-2">Seller System</p>
+                <ul class="space-y-1">
+                    <li>
+                        <a href="{{ route('admin.seller-requests.index') }}" class="flex items-center space-x-3 px-3 py-2.5 rounded-lg {{ request()->routeIs('admin.seller-requests.*') ? 'bg-blue-50 text-blue-700 border border-blue-200' : 'text-gray-600 hover:bg-gray-100 hover:text-gray-900' }} transition-all duration-200">
+                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
+                            </svg>
+                            <span class="font-medium">Permintaan Seller</span>
+                            <span id="pending-count" class="bg-red-500 text-white text-xs rounded-full px-2 py-1 hidden"></span>
+                        </a>
+                    </li>
+                    <li>
+                        <a href="{{ route('invitation-codes.index') }}" class="flex items-center space-x-3 px-3 py-2.5 rounded-lg {{ request()->routeIs('invitation-codes.*') ? 'bg-blue-50 text-blue-700 border border-blue-200' : 'text-gray-600 hover:bg-gray-100 hover:text-gray-900' }} transition-all duration-200">
+                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 7a2 2 0 012 2m4 0a6 6 0 01-7.743 5.743L11 12H9v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2h2.586l4.707-4.707A1 1 0 0111 3h6a2 2 0 012 2v2z"></path>
+                            </svg>
+                            <span class="font-medium">Kode Undangan</span>
+                        </a>
+                    </li>
+                </ul>
+            </div>
+
             <div>
                 <p class="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-2">Sistem</p>
                 <ul class="space-y-1">
@@ -126,3 +149,27 @@
         </form>
     </div>
 </div>
+
+<script>
+// Update pending seller requests count
+function updatePendingCount() {
+    fetch('{{ route("admin.seller-requests.count") }}')
+        .then(response => response.json())
+        .then(data => {
+            const badge = document.getElementById('pending-count');
+            if (data.count > 0) {
+                badge.textContent = data.count;
+                badge.classList.remove('hidden');
+            } else {
+                badge.classList.add('hidden');
+            }
+        })
+        .catch(error => console.log('Error fetching pending count:', error));
+}
+
+// Update count on page load and every 30 seconds
+document.addEventListener('DOMContentLoaded', function() {
+    updatePendingCount();
+    setInterval(updatePendingCount, 30000);
+});
+</script>
