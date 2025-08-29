@@ -13,22 +13,26 @@ class AdminSeeder extends Seeder
      */
     public function run(): void
     {
-        User::create([
-            'full_name' => 'Administrator',
-            'username' => 'admin',
-            'password' => Hash::make('admin123'),
-            'balance' => 0,
-            'level' => 10, // Admin level
-            'role' => 'admin',
-        ]);
+        User::firstOrCreate(
+            ['username' => 'admin'],
+            [
+                'full_name' => 'Administrator',
+                'password' => Hash::make('admin123'),
+                'balance' => 0,
+                'level' => 10, // Admin level
+                'role' => 'admin',
+            ]
+        );
 
-        User::create([
-            'full_name' => 'Test User',
-            'username' => 'testuser',
-            'password' => Hash::make('user123'),
-            'balance' => 1000,
-            'level' => 1,
-            'role' => 'user',
-        ]);
+        User::firstOrCreate(
+            ['username' => 'testuser'],
+            [
+                'full_name' => 'Test User',
+                'password' => Hash::make('user123'),
+                'balance' => 1000,
+                'level' => 1,
+                'role' => 'user',
+            ]
+        );
     }
 }
