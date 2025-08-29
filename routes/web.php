@@ -5,6 +5,7 @@ use App\Http\Controllers\Admin\ProductController;
 use App\Http\Controllers\Admin\UserController;
 use App\Http\Controllers\ProfileController;
 use Illuminate\Support\Facades\Route;
+use App\Models\User;
 
 Route::get('/', function () {
     return view('welcome');
@@ -14,7 +15,29 @@ Route::get('/dashboard', function () {
     $user = auth()->user();
     
     if ($user->isAdmin()) {
-        return view('admin-dashboard');
+        $recentUsers = User::where('role','user')->latest()->take(8)->get();
+        $totalUsers = User::where('role','user')->count();
+        // Perhitungan pertumbuhan pengguna (hanya role user)
+        $currentMonthUsers = User::where('role','user')
+            ->whereBetween('created_at', [now()->startOfMonth(), now()->endOfMonth()])
+            ->count();
+        $lastMonthUsers = User::where('role','user')
+            ->whereBetween('created_at', [now()->subMonth()->startOfMonth(), now()->subMonth()->endOfMonth()])
+            ->count();
+        if ($lastMonthUsers === 0) {
+            if ($currentMonthUsers === 0) {
+                $userGrowthPercent = 0.0;
+                $userGrowthText = '0%';
+            } else {
+                // Definisikan 100% jika bulan lalu 0 dan sekarang ada pengguna baru
+                $userGrowthPercent = 100.0;
+                $userGrowthText = '+100%';
+            }
+        } else {
+            $userGrowthPercent = (($currentMonthUsers - $lastMonthUsers) / $lastMonthUsers) * 100;
+            $userGrowthText = ($userGrowthPercent >= 0 ? '+' : '') . number_format($userGrowthPercent, 1, ',', '.') . '%';
+        }
+        return view('admin-dashboard', compact('recentUsers', 'totalUsers', 'userGrowthPercent', 'userGrowthText'));
     }
     
     return view('dashboard');
@@ -27,8 +50,28 @@ Route::get('/admin-dashboard', function () {
     if (!$user->isAdmin()) {
         return redirect()->route('dashboard')->with('error', 'Access denied. Admin only.');
     }
-    
-    return view('admin-dashboard');
+    $recentUsers = User::where('role','user')->latest()->take(8)->get();
+    $totalUsers = User::where('role','user')->count();
+    // Perhitungan pertumbuhan pengguna (hanya role user)
+    $currentMonthUsers = User::where('role','user')
+        ->whereBetween('created_at', [now()->startOfMonth(), now()->endOfMonth()])
+        ->count();
+    $lastMonthUsers = User::where('role','user')
+        ->whereBetween('created_at', [now()->subMonth()->startOfMonth(), now()->subMonth()->endOfMonth()])
+        ->count();
+    if ($lastMonthUsers === 0) {
+        if ($currentMonthUsers === 0) {
+            $userGrowthPercent = 0.0;
+            $userGrowthText = '0%';
+        } else {
+            $userGrowthPercent = 100.0;
+            $userGrowthText = '+100%';
+        }
+    } else {
+        $userGrowthPercent = (($currentMonthUsers - $lastMonthUsers) / $lastMonthUsers) * 100;
+        $userGrowthText = ($userGrowthPercent >= 0 ? '+' : '') . number_format($userGrowthPercent, 1, ',', '.') . '%';
+    }
+    return view('admin-dashboard', compact('recentUsers', 'totalUsers', 'userGrowthPercent', 'userGrowthText'));
 })->middleware(['auth'])->name('admin.dashboard');
 
 Route::get('/user-dashboard', function () {

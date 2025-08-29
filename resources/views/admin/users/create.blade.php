@@ -1,15 +1,15 @@
 <x-admin-layout>
-    <x-slot name="title">Create User</x-slot>
+    <x-slot name="title">Buat Pengguna</x-slot>
 
     <div class="max-w-xl mx-auto bg-white rounded-lg shadow-sm border border-gray-200">
         <div class="px-6 py-4 border-b border-gray-200 flex items-center justify-between">
-            <h2 class="text-lg font-semibold text-gray-800">New User</h2>
-            <a href="{{ route('admin.users.index') }}" class="text-sm text-gray-500 hover:text-gray-700">Cancel</a>
+            <h2 class="text-lg font-semibold text-gray-800">Pengguna Baru</h2>
+            <a href="{{ route('admin.users.index') }}" class="text-sm text-gray-500 hover:text-gray-700">Batal</a>
         </div>
         <form action="{{ route('admin.users.store') }}" method="POST" enctype="multipart/form-data" class="px-6 py-6 space-y-5">
             @csrf
             <div>
-                <label class="block text-sm font-medium text-gray-700 mb-1">Full Name</label>
+                <label class="block text-sm font-medium text-gray-700 mb-1">Nama Lengkap</label>
                 <input type="text" name="full_name" value="{{ old('full_name') }}" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500" required>
                 @error('full_name')<p class="text-red-600 text-xs mt-1">{{ $message }}</p>@enderror
             </div>
@@ -19,13 +19,13 @@
                 @error('username')<p class="text-red-600 text-xs mt-1">{{ $message }}</p>@enderror
             </div>
             <div>
-                <label class="block text-sm font-medium text-gray-700 mb-1">Password</label>
+                <label class="block text-sm font-medium text-gray-700 mb-1">Kata Sandi</label>
                 <input type="password" name="password" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500" required>
                 @error('password')<p class="text-red-600 text-xs mt-1">{{ $message }}</p>@enderror
             </div>
             <div class="grid grid-cols-2 gap-4">
                 <div>
-                    <label class="block text-sm font-medium text-gray-700 mb-1">Balance</label>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Saldo</label>
                     <input type="number" name="balance" value="{{ old('balance',0) }}" min="0" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
                     @error('balance')<p class="text-red-600 text-xs mt-1">{{ $message }}</p>@enderror
                 </div>
@@ -36,7 +36,7 @@
                 </div>
             </div>
             <div>
-                <label class="block text-sm font-medium text-gray-700 mb-1">Role</label>
+                <label class="block text-sm font-medium text-gray-700 mb-1">Peran</label>
                 <select name="role" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500" required>
                     <option value="user" @selected(old('role')==='user')>User</option>
                     <option value="admin" @selected(old('role')==='admin')>Admin</option>
@@ -44,13 +44,13 @@
                 @error('role')<p class="text-red-600 text-xs mt-1">{{ $message }}</p>@enderror
             </div>
             <div>
-                <label class="block text-sm font-medium text-gray-700 mb-1">Photo</label>
+                <label class="block text-sm font-medium text-gray-700 mb-1">Foto</label>
                 <input type="file" name="photo" accept="image/*" class="w-full text-sm">
                 @error('photo')<p class="text-red-600 text-xs mt-1">{{ $message }}</p>@enderror
             </div>
             <div class="pt-2 flex justify-end space-x-3">
-                <a href="{{ route('admin.users.index') }}" class="px-4 py-2 border border-gray-300 rounded-lg text-sm text-gray-700 hover:bg-gray-50">Back</a>
-                <button class="bg-blue-600 hover:bg-blue-700 text-white px-5 py-2 rounded-lg text-sm font-medium">Create</button>
+                <a href="{{ route('admin.users.index') }}" class="px-4 py-2 border border-gray-300 rounded-lg text-sm text-gray-700 hover:bg-gray-50">Kembali</a>
+                <button class="bg-blue-600 hover:bg-blue-700 text-white px-5 py-2 rounded-lg text-sm font-medium">Buat</button>
             </div>
         </form>
     </div>
