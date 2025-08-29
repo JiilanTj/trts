@@ -6,6 +6,8 @@ use App\Http\Controllers\Admin\UserController;
 use App\Http\Controllers\ProfileController;
 use Illuminate\Support\Facades\Route;
 use App\Models\User;
+use App\Http\Controllers\User\CategoryBrowseController; // added
+use App\Http\Controllers\User\ProductBrowseController; // added
 
 Route::get('/', function () {
     return view('welcome');
@@ -82,6 +84,13 @@ Route::middleware('auth')->group(function () {
     Route::get('/profile', [ProfileController::class, 'edit'])->name('profile.edit');
     Route::patch('/profile', [ProfileController::class, 'update'])->name('profile.update');
     Route::delete('/profile', [ProfileController::class, 'destroy'])->name('profile.destroy');
+
+    // User-facing browse routes (GET only)
+    Route::get('kategori', [CategoryBrowseController::class,'index'])->name('browse.categories.index');
+    Route::get('kategori/{category}', [CategoryBrowseController::class,'show'])->name('browse.categories.show');
+    Route::get('produk', [ProductBrowseController::class,'index'])->name('browse.products.index');
+    Route::get('produk/{product}', [ProductBrowseController::class,'show'])->name('browse.products.show');
+    Route::post('produk/{product}/beli', [ProductBrowseController::class,'buy'])->name('browse.products.buy'); // new buy route
 });
 
 // Admin Routes - Only for admin users

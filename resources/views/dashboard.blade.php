@@ -79,5 +79,8 @@
                     </div>
                 </div>
             </div>
+            <!-- Pintasan Cepat Component -->
+            @include('components.quick-shortcuts')
+        </div>
     </div>
 </x-app-layout>
