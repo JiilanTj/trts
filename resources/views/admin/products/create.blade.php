@@ -194,31 +194,3 @@
     });
     </script>
 </x-admin-layout>
-// Auto-calculate profit
-function calculateProfit() {
-    const purchasePrice = parseFloat(document.getElementById('purchase_price').value) || 0;
-    const sellPrice = parseFloat(document.getElementById('sell_price').value) || 0;
-    const profit = sellPrice - purchasePrice;
-    
-    document.getElementById('profit-display').textContent = '$' + profit.toFixed(2);
-}
-
-document.getElementById('purchase_price').addEventListener('input', calculateProfit);
-document.getElementById('sell_price').addEventListener('input', calculateProfit);
-
-// Image preview
-document.getElementById('image').addEventListener('change', function(e) {
-    const file = e.target.files[0];
-    if (file) {
-        const reader = new FileReader();
-        reader.onload = function(e) {
-            document.getElementById('preview-img').src = e.target.result;
-            document.getElementById('image-preview').classList.remove('hidden');
-        };
-        reader.readAsDataURL(file);
-    } else {
-        document.getElementById('image-preview').classList.add('hidden');
-    }
-});
-</script>
-@endsection
