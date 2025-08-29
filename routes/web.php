@@ -51,7 +51,7 @@ Route::get('/admin-dashboard', function () {
     $user = auth()->user();
     
     if (!$user->isAdmin()) {
-        return redirect()->route('dashboard')->with('error', 'Access denied. Admin only.');
+        return redirect()->route('dashboard')->with('error', 'Akses ditolak. Hanya untuk Admin.');
     }
     $recentUsers = User::where('role','user')->latest()->take(8)->get();
     $totalUsers = User::where('role','user')->count();

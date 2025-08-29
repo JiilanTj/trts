@@ -50,7 +50,7 @@ class CategoryController extends Controller
         Category::create($validated);
 
         return redirect()->route('admin.categories.index')
-                        ->with('success', 'Category created successfully.');
+                        ->with('success', 'Kategori berhasil dibuat.');
     }
 
     /**
@@ -84,7 +84,7 @@ class CategoryController extends Controller
         $category->update($validated);
 
         return redirect()->route('admin.categories.index')
-                        ->with('success', 'Category updated successfully.');
+                        ->with('success', 'Kategori berhasil diperbarui.');
     }
 
     /**
@@ -95,12 +95,12 @@ class CategoryController extends Controller
         // Check if category has products
         if ($category->products()->count() > 0) {
             return redirect()->route('admin.categories.index')
-                            ->with('error', 'Cannot delete category that has products. Please reassign or delete products first.');
+                            ->with('error', 'Kategori yang masih memiliki produk tidak dapat dihapus. Mohon pindahkan atau hapus produk terlebih dahulu.');
         }
 
         $category->delete();
 
         return redirect()->route('admin.categories.index')
-                        ->with('success', 'Category deleted successfully.');
+                        ->with('success', 'Kategori berhasil dihapus.');
     }
 }

@@ -74,7 +74,7 @@ class UserController extends Controller
         User::create($data);
 
         return redirect()->route('admin.users.index')
-            ->with('success', 'User created successfully.');
+            ->with('success', 'Pengguna berhasil dibuat.');
     }
 
     /**
@@ -117,14 +117,14 @@ class UserController extends Controller
         if ($user->role === 'admin' && ($data['role'] ?? 'admin') !== 'admin') {
             $otherAdmins = User::where('role', 'admin')->where('id', '!=', $user->id)->count();
             if ($otherAdmins === 0) {
-                return back()->with('error', 'Cannot change role. At least one admin is required.');
+                return back()->with('error', 'Perubahan peran dibatalkan. Minimal harus ada satu admin.');
             }
         }
 
         $user->update($data);
 
         return redirect()->route('admin.users.index')
-            ->with('success', 'User updated successfully.');
+            ->with('success', 'Pengguna berhasil diperbarui.');
     }
 
     /**
@@ -134,20 +134,20 @@ class UserController extends Controller
     {
         // Prevent self delete
         if (auth()->id() === $user->id) {
-            return back()->with('error', 'You cannot delete your own account.');
+            return back()->with('error', 'Anda tidak dapat menghapus akun sendiri.');
         }
 
         // Prevent deleting last admin
         if ($user->role === 'admin') {
             $otherAdmins = User::where('role', 'admin')->where('id', '!=', $user->id)->count();
             if ($otherAdmins === 0) {
-                return back()->with('error', 'Cannot delete the last remaining admin.');
+                return back()->with('error', 'Tidak dapat menghapus admin terakhir yang tersisa.');
             }
         }
 
         $user->delete();
 
         return redirect()->route('admin.users.index')
-            ->with('success', 'User deleted successfully.');
+            ->with('success', 'Pengguna berhasil dihapus.');
     }
 }
