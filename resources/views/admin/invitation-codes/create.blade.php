@@ -32,7 +32,7 @@
                                value="{{ old('max_usage', 1) }}" 
                                min="1" 
                                max="100" 
-                               class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 @error('max_usage') border-red-300 @enderror"
+                               class="w-full px-3 py-2 border {{ $errors->has('max_usage') ? 'border-red-300' : 'border-gray-300' }} rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                                required>
                         @error('max_usage')
                             <p class="text-red-500 text-sm mt-1">{{ $message }}</p>
@@ -49,7 +49,7 @@
                                name="expires_at" 
                                value="{{ old('expires_at') }}" 
                                min="{{ now()->format('Y-m-d\TH:i') }}"
-                               class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 @error('expires_at') border-red-300 @enderror">
+                               class="w-full px-3 py-2 border {{ $errors->has('expires_at') ? 'border-red-300' : 'border-gray-300' }} rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
                         @error('expires_at')
                             <p class="text-red-500 text-sm mt-1">{{ $message }}</p>
                         @enderror

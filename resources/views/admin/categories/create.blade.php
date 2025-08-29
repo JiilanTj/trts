@@ -31,7 +31,7 @@
                            name="name" 
                            value="{{ old('name') }}" 
                            required
-                           class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 @error('name') border-red-500 @enderror"
+                           class="w-full px-4 py-2 border {{ $errors->has('name') ? 'border-red-500' : 'border-gray-300' }} rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                            placeholder="Masukkan nama kategori">
                     @error('name')
                         <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
@@ -46,7 +46,7 @@
                     <textarea id="description" 
                               name="description" 
                               rows="4"
-                              class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 @error('description') border-red-500 @enderror"
+                              class="w-full px-4 py-2 border {{ $errors->has('description') ? 'border-red-500' : 'border-gray-300' }} rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                               placeholder="Masukkan deskripsi kategori">{{ old('description') }}</textarea>
                     @error('description')
                         <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
@@ -61,7 +61,7 @@
                     <select id="status" 
                             name="status" 
                             required
-                            class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 @error('status') border-red-500 @enderror">
+                            class="w-full px-4 py-2 border {{ $errors->has('status') ? 'border-red-500' : 'border-gray-300' }} rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
                         <option value="">Pilih Status</option>
                         <option value="active" {{ old('status') === 'active' ? 'selected' : '' }}>Aktif</option>
                         <option value="inactive" {{ old('status') === 'inactive' ? 'selected' : '' }}>Tidak Aktif</option>
