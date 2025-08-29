@@ -1,7 +1,8 @@
 <?php
 
-namespace App\Http\Controllers;
+namespace App\Http\Controllers\Admin;
 
+use App\Http\Controllers\Controller;
 use App\Models\InvitationCode;
 use Illuminate\Http\Request;
 use Illuminate\Http\RedirectResponse;
@@ -11,16 +12,15 @@ use Illuminate\Support\Facades\Auth;
 class InvitationCodeController extends Controller
 {
     /**
-     * Display a listing of invitation codes for current user.
+     * Display a listing of invitation codes.
      */
     public function index(): View
     {
         $invitationCodes = InvitationCode::with('user')
-            ->where('user_id', Auth::id())
             ->latest()
             ->paginate(15);
 
-        return view('invitation-codes.index', compact('invitationCodes'));
+        return view('admin.invitation-codes.index', compact('invitationCodes'));
     }
 
     /**
@@ -28,7 +28,7 @@ class InvitationCodeController extends Controller
      */
     public function create(): View
     {
-        return view('invitation-codes.create');
+        return view('admin.invitation-codes.create');
     }
 
     /**
@@ -48,7 +48,7 @@ class InvitationCodeController extends Controller
             'expires_at' => $request->expires_at,
         ]);
 
-        return redirect()->route('invitation-codes.index')
+        return redirect()->route('admin.invitation-codes.index')
             ->with('success', 'Kode undangan berhasil dibuat: ' . $invitationCode->code);
     }
 
@@ -57,14 +57,9 @@ class InvitationCodeController extends Controller
      */
     public function show(InvitationCode $invitationCode): View
     {
-        // Check authorization
-        if ($invitationCode->user_id !== Auth::id()) {
-            abort(403);
-        }
-
         $invitationCode->load('user');
         
-        return view('invitation-codes.show', compact('invitationCode'));
+        return view('admin.invitation-codes.show', compact('invitationCode'));
     }
 
     /**
@@ -72,11 +67,6 @@ class InvitationCodeController extends Controller
      */
     public function updateStatus(InvitationCode $invitationCode): RedirectResponse
     {
-        // Check authorization
-        if ($invitationCode->user_id !== Auth::id()) {
-            abort(403);
-        }
-
         $invitationCode->update([
             'is_active' => !$invitationCode->is_active
         ]);
@@ -92,14 +82,9 @@ class InvitationCodeController extends Controller
      */
     public function destroy(InvitationCode $invitationCode): RedirectResponse
     {
-        // Check authorization
-        if ($invitationCode->user_id !== Auth::id()) {
-            abort(403);
-        }
-
         $invitationCode->delete();
 
-        return redirect()->route('invitation-codes.index')
+        return redirect()->route('admin.invitation-codes.index')
             ->with('success', 'Kode undangan berhasil dihapus.');
     }
 

@@ -21,6 +21,7 @@ class UserController extends Controller
         $search = $request->get('search');
         $role = $request->get('role');
         $level = $request->get('level');
+        $sellerStatus = $request->get('seller_status');
         $sort = $request->get('sort', 'created_at');
         $order = $request->get('order', 'desc');
 
@@ -42,11 +43,19 @@ class UserController extends Controller
             })
             ->when($role, fn ($q, $role) => $q->where('role', $role))
             ->when($level, fn ($q, $level) => $q->where('level', $level))
+            ->when($sellerStatus, function ($query, $sellerStatus) {
+                if ($sellerStatus === 'seller') {
+                    $query->where('is_seller', true);
+                } elseif ($sellerStatus === 'non_seller') {
+                    $query->where('is_seller', false);
+                }
+            })
+            ->with('sellerInfo') // Load seller relationship for performance
             ->orderBy($sort, $order)
             ->paginate(15)
             ->appends($request->query());
 
-        return view('admin.users.index', compact('users', 'search', 'role', 'level', 'sort', 'order'));
+        return view('admin.users.index', compact('users', 'search', 'role', 'level', 'sellerStatus', 'sort', 'order'));
     }
 
     /**
@@ -82,6 +91,7 @@ class UserController extends Controller
      */
     public function show(User $user): View
     {
+        $user->load('sellerInfo'); // Load seller relationship
         return view('admin.users.show', compact('user'));
     }
 

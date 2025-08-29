@@ -3,6 +3,9 @@
 use App\Http\Controllers\Admin\CategoryController;
 use App\Http\Controllers\Admin\ProductController;
 use App\Http\Controllers\Admin\UserController;
+use App\Http\Controllers\Admin\InvitationCodeController as AdminInvitationCodeController;
+use App\Http\Controllers\Admin\SellerRequestController as AdminSellerRequestController;
+use App\Http\Controllers\Admin\SellerInfoController as AdminSellerInfoController;
 use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\InvitationCodeController;
 use App\Http\Controllers\SellerRequestController;
@@ -106,19 +109,23 @@ Route::middleware(['auth', 'role:admin'])->prefix('admin')->name('admin.')->grou
     Route::post('settings', [SettingController::class,'update'])->name('settings.update');
     
     // Admin Invitation Codes Management
-    Route::resource('invitation-codes', InvitationCodeController::class)->except(['edit', 'update']);
-    Route::post('invitation-codes/{invitationCode}/status', [InvitationCodeController::class, 'updateStatus'])->name('invitation-codes.update-status');
+    Route::resource('invitation-codes', AdminInvitationCodeController::class)->except(['edit', 'update']);
+    Route::post('invitation-codes/{invitationCode}/status', [AdminInvitationCodeController::class, 'updateStatus'])->name('invitation-codes.update-status');
+    Route::post('invitation-codes/validate', [AdminInvitationCodeController::class, 'validate'])->name('invitation-codes.validate');
     
     // Admin Seller Requests Management
-    Route::get('seller-requests', [SellerRequestController::class, 'index'])->name('seller-requests.index');
-    Route::get('seller-requests/{sellerRequest}', [SellerRequestController::class, 'show'])->name('seller-requests.show');
-    Route::post('seller-requests/{sellerRequest}/approve', [SellerRequestController::class, 'approve'])->name('seller-requests.approve');
-    Route::post('seller-requests/{sellerRequest}/reject', [SellerRequestController::class, 'reject'])->name('seller-requests.reject');
-    Route::get('seller-requests-count', [SellerRequestController::class, 'getPendingCount'])->name('seller-requests.count');
+    Route::get('seller-requests', [AdminSellerRequestController::class, 'index'])->name('seller-requests.index');
+    Route::get('seller-requests/{sellerRequest}', [AdminSellerRequestController::class, 'show'])->name('seller-requests.show');
+    Route::post('seller-requests/{sellerRequest}/approve', [AdminSellerRequestController::class, 'approve'])->name('seller-requests.approve');
+    Route::post('seller-requests/{sellerRequest}/reject', [AdminSellerRequestController::class, 'reject'])->name('seller-requests.reject');
+    Route::get('seller-requests-count', [AdminSellerRequestController::class, 'getPendingCount'])->name('seller-requests.count');
     
     // Admin Seller Info Management
-    Route::post('sellers/{sellerInfo}/status', [SellerInfoController::class, 'updateStatus'])->name('sellers.update-status');
-    Route::post('sellers/{sellerInfo}/credit-score', [SellerInfoController::class, 'updateCreditScore'])->name('sellers.update-credit-score');
+    Route::get('sellers', [AdminSellerInfoController::class, 'index'])->name('sellers.index');
+    Route::get('sellers/{sellerInfo}', [AdminSellerInfoController::class, 'show'])->name('sellers.show');
+    Route::post('sellers/{sellerInfo}/status', [AdminSellerInfoController::class, 'updateStatus'])->name('sellers.update-status');
+    Route::post('sellers/{sellerInfo}/credit-score', [AdminSellerInfoController::class, 'updateCreditScore'])->name('sellers.update-credit-score');
+    Route::get('sellers/{sellerInfo}/stats', [AdminSellerInfoController::class, 'getStats'])->name('sellers.stats');
 });
 
 // Seller System Routes
