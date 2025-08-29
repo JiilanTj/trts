@@ -8,6 +8,7 @@ use Illuminate\Support\Facades\Route;
 use App\Models\User;
 use App\Http\Controllers\User\CategoryBrowseController; // added
 use App\Http\Controllers\User\ProductBrowseController; // added
+use App\Http\Controllers\Admin\SettingController; // new
 
 Route::get('/', function () {
     return view('welcome');
@@ -98,6 +99,8 @@ Route::middleware(['auth', 'role:admin'])->prefix('admin')->name('admin.')->grou
     Route::resource('categories', CategoryController::class);
     Route::resource('products', ProductController::class);
     Route::resource('users', UserController::class);
+    Route::get('settings', [SettingController::class,'index'])->name('settings.index');
+    Route::post('settings', [SettingController::class,'update'])->name('settings.update');
 });
 
 Route::get('/debug-auth', function () {
