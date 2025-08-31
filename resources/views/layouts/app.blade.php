@@ -51,66 +51,99 @@
 
             <!-- Bottom Navigation - TikTok Style -->
             <nav class="fixed bottom-0 left-0 right-0 bg-black z-50">
+                @php
+                    $homeActive = request()->routeIs('dashboard');
+                    $profileActive = request()->routeIs('profile.edit');
+                    $settingsActive = auth()->check() && auth()->user()->isAdmin() ? request()->routeIs('admin.settings.*') : false; // hanya admin yang bisa aktif
+                    // Placeholder routes (messages/history) belum ada -> selalu false
+                    $messagesActive = false;
+                    $historyActive = false;
+                @endphp
                 <div class="flex justify-around items-center h-16 px-4">
                     <!-- Home -->
-                    <a href="{{ route('dashboard') }}" class="flex flex-col items-center justify-center space-y-1 {{ request()->routeIs('dashboard') ? 'text-white' : 'text-gray-400' }}">
-                        <svg class="w-6 h-6" fill="currentColor" viewBox="0 0 20 20">
-                            <path d="M10.707 2.293a1 1 0 00-1.414 0l-7 7a1 1 0 001.414 1.414L4 10.414V17a1 1 0 001 1h2a1 1 0 001-1v-2a1 1 0 011-1h2a1 1 0 011 1v2a1 1 0 001 1h2a1 1 0 001-1v-6.586l.293.293a1 1 0 001.414-1.414l-7-7z"></path>
-                        </svg>
-                        <span class="text-xs">Home</span>
-                    </a>
-
-                    <!-- Shop -->
-                    <a href="{{ route('browse.categories.index') }}" class="flex flex-col items-center justify-center space-y-1 {{ request()->routeIs('browse.categories.*') ? 'text-white' : 'text-gray-400' }}">
-                        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z"></path>
-                        </svg>
-                        <span class="text-xs">Shop</span>
-                    </a>
-
-                <!-- Plus Button dengan TikTok glitch effect -->
-                <button class="glitch-button flex flex-col items-center justify-center space-y-1 relative">
-                    <div class="relative w-12 h-8">
-                        <!-- Pink layer (terlihat di kanan) -->
-                        <div class="glitch-layer-1 absolute w-12 h-8 bg-pink-500 rounded-xl transform translate-x-1"></div>
-                        
-                        <!-- Cyan layer (terlihat di kiri) -->
-                        <div class="glitch-layer-2 absolute w-12 h-8 bg-cyan-400 rounded-xl transform -translate-x-1"></div>
-                        
-                        <!-- Main white layer (di tengah) -->
-                        <div class="relative w-12 h-8 bg-white rounded-xl flex items-center justify-center z-10">
-                            <svg class="w-4 h-4 text-black font-bold" fill="currentColor" viewBox="0 0 20 20">
-                                <path fill-rule="evenodd" d="M10 3a1 1 0 011 1v5h5a1 1 0 110 2h-5v5a1 1 0 11-2 0v-5H4a1 1 0 110-2h5V4a1 1 0 011-1z" clip-rule="evenodd"></path>
-                            </svg>
-                        </div>
-                    </div>
-                </button>
-
-                    <!-- Inbox with notification -->
-                    <button class="flex flex-col items-center justify-center space-y-1 text-gray-400 relative">
-                        <div class="relative">
-                            <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 13V6a2 2 0 00-2-2H6a2 2 0 00-2 2v7m16 0v5a2 2 0 01-2 2H6a2 2 0 01-2-2v-5m16 0H4m16 0l-2-2M4 13l2-2"></path>
-                            </svg>
-                            <!-- Red notification badge -->
-                            <div class="absolute -top-1 -right-1 w-4 h-4 bg-red-500 rounded-full flex items-center justify-center">
-                                <span class="text-xs text-white font-bold">1</span>
+                    <a href="{{ route('dashboard') }}" aria-label="Home" class="relative flex items-center justify-center {{ $homeActive ? 'glitch-button' : 'text-gray-400' }}">
+                        @if($homeActive)
+                            <div class="relative w-12 h-8">
+                                <div class="glitch-layer-1 absolute w-12 h-8 bg-pink-500 rounded-xl translate-x-1"></div>
+                                <div class="glitch-layer-2 absolute w-12 h-8 bg-cyan-400 rounded-xl -translate-x-1"></div>
+                                <div class="relative w-12 h-8 bg-white rounded-xl flex items-center justify-center z-10">
+                                    <svg class="w-5 h-5 text-black" fill="currentColor" viewBox="0 0 20 20"><path d="M10.707 2.293a1 1 0 00-1.414 0l-7 7a1 1 0 001.414 1.414L4 10.414V17a1 1 0 001 1h2a1 1 0 001-1v-2a1 1 0 011-1h2a1 1 0 011 1v2a1 1 0 001 1h2a1 1 0 001-1v-6.586l.293.293a1 1 0 001.414-1.414l-7-7z"/></svg>
+                                </div>
                             </div>
-                        </div>
-                        <span class="text-xs">Inbox</span>
-                    </button>
+                        @else
+                            <div class="w-12 h-8 flex items-center justify-center">
+                                <svg class="w-6 h-6" fill="currentColor" viewBox="0 0 20 20"><path d="M10.707 2.293a1 1 0 00-1.414 0l-7 7a1 1 0 001.414 1.414L4 10.414V17a1 1 0 001 1h2a1 1 0 001-1v-2a1 1 0 011-1h2a1 1 0 011 1v2a1 1 0 001 1h2a1 1 0 001-1v-6.586l.293.293a1 1 0 001.414-1.414l-7-7z"/></svg>
+                            </div>
+                        @endif
+                    </a>
 
-                    <!-- Profile with notification dot -->
-                    <button class="flex flex-col items-center justify-center space-y-1 text-gray-400 relative">
-                        <div class="relative">
-                            <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"></path>
-                            </svg>
-                            <!-- Red notification dot -->
-                            <div class="absolute -top-0.5 -right-0.5 w-2 h-2 bg-red-500 rounded-full"></div>
-                        </div>
-                        <span class="text-xs">Profile</span>
-                    </button>
+                    <!-- Settings (gear) -->
+                    <a href="{{ auth()->check() && auth()->user()->isAdmin() ? route('admin.settings.index') : route('profile.edit') }}" aria-label="Settings" class="relative flex items-center justify-center {{ $settingsActive ? 'glitch-button' : 'text-gray-400' }}">
+                        @if($settingsActive)
+                            <div class="relative w-12 h-8">
+                                <div class="glitch-layer-1 absolute w-12 h-8 bg-pink-500 rounded-xl translate-x-1"></div>
+                                <div class="glitch-layer-2 absolute w-12 h-8 bg-cyan-400 rounded-xl -translate-x-1"></div>
+                                <div class="relative w-12 h-8 bg-white rounded-xl flex items-center justify-center z-10">
+                                    <svg class="w-5 h-5 text-black" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.757.426 1.757 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.757-2.924 1.757-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.757-.426-1.757-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.607 2.273.07 2.573-1.065z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/></svg>
+                                </div>
+                            </div>
+                        @else
+                            <div class="w-12 h-8 flex items-center justify-center">
+                                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.757.426 1.757 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.757-2.924 1.757-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.757-.426-1.757-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.607 2.273.07 2.573-1.065z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/></svg>
+                            </div>
+                        @endif
+                    </a>
+
+                    <!-- Messages -->
+                    <a href="#" aria-label="Messages" class="relative flex items-center justify-center {{ $messagesActive ? 'glitch-button' : 'text-gray-400' }}">
+                        @if($messagesActive)
+                            <div class="relative w-12 h-8">
+                                <div class="glitch-layer-1 absolute w-12 h-8 bg-pink-500 rounded-xl translate-x-1"></div>
+                                <div class="glitch-layer-2 absolute w-12 h-8 bg-cyan-400 rounded-xl -translate-x-1"></div>
+                                <div class="relative w-12 h-8 bg-white rounded-xl flex items-center justify-center z-10">
+                                    <svg class="w-5 h-5 text-black" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 10h.01M12 10h.01M16 10h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4-.8L3 20l1.22-2.44A7.793 7.793 0 013 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"/></svg>
+                                </div>
+                            </div>
+                        @else
+                            <div class="w-12 h-8 flex items-center justify-center">
+                                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 10h.01M12 10h.01M16 10h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4-.8L3 20l1.22-2.44A7.793 7.793 0 013 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"/></svg>
+                            </div>
+                        @endif
+                    </a>
+
+                    <!-- History -->
+                    <a href="#" aria-label="History" class="relative flex items-center justify-center {{ $historyActive ? 'glitch-button' : 'text-gray-400' }}">
+                        @if($historyActive)
+                            <div class="relative w-12 h-8">
+                                <div class="glitch-layer-1 absolute w-12 h-8 bg-pink-500 rounded-xl translate-x-1"></div>
+                                <div class="glitch-layer-2 absolute w-12 h-8 bg-cyan-400 rounded-xl -translate-x-1"></div>
+                                <div class="relative w-12 h-8 bg-white rounded-xl flex items-center justify-center z-10">
+                                    <svg class="w-5 h-5 text-black" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v5l3 3m6-5a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+                                </div>
+                            </div>
+                        @else
+                            <div class="w-12 h-8 flex items-center justify-center">
+                                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v5l3 3m6-5a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+                            </div>
+                        @endif
+                    </a>
+
+                    <!-- Profile -->
+                    <a href="{{ route('profile.edit') }}" aria-label="Profile" class="relative flex items-center justify-center {{ $profileActive && !$settingsActive ? 'glitch-button' : 'text-gray-400' }}">
+                        @if($profileActive && !$settingsActive)
+                            <div class="relative w-12 h-8">
+                                <div class="glitch-layer-1 absolute w-12 h-8 bg-pink-500 rounded-xl translate-x-1"></div>
+                                <div class="glitch-layer-2 absolute w-12 h-8 bg-cyan-400 rounded-xl -translate-x-1"></div>
+                                <div class="relative w-12 h-8 bg-white rounded-xl flex items-center justify-center z-10">
+                                    <svg class="w-5 h-5 text-black" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"/></svg>
+                                </div>
+                            </div>
+                        @else
+                            <div class="w-12 h-8 flex items-center justify-center">
+                                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"/></svg>
+                            </div>
+                        @endif
+                    </a>
                 </div>
             </nav>
         </div>
