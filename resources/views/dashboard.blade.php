@@ -20,21 +20,43 @@
                             </div>
                             
                             <div>
-                                <h1 class="text-xl font-medium text-gray-900">{{ auth()->user()->full_name }}</h1>
+                                @if(auth()->user()->isSeller() && auth()->user()->sellerInfo)
+                                    <h1 class="text-xl font-medium text-gray-900">{{ auth()->user()->full_name }}</h1>
+                                    <p class="text-sm text-blue-600 font-medium">{{ auth()->user()->sellerInfo->store_name }}</p>
+                                @else
+                                    <h1 class="text-xl font-medium text-gray-900">{{ auth()->user()->full_name }}</h1>
+                                @endif
                                 <!-- User Stats -->
                                 <div class="flex items-center space-x-4 mt-1">
-                                    <div class="text-center">
-                                        <span class="text-sm font-semibold text-gray-900">1250</span>
-                                        <p class="text-xs text-gray-500">Mengikuti</p>
-                                    </div>
-                                    <div class="text-center">
-                                        <span class="text-sm font-semibold text-gray-900">564423</span>
-                                        <p class="text-xs text-gray-500">Kunjungan</p>
-                                    </div>
-                                    <div class="text-center">
-                                        <span class="text-sm font-semibold text-gray-900">100</span>
-                                        <p class="text-xs text-gray-500">Skor kredit</p>
-                                    </div>
+                                    @if(auth()->user()->isSeller() && auth()->user()->sellerInfo)
+                                        <!-- Seller Stats -->
+                                        <div class="text-center">
+                                            <span class="text-sm font-semibold text-gray-900">{{ auth()->user()->sellerInfo->followers }}</span>
+                                            <p class="text-xs text-gray-500">Mengikuti</p>
+                                        </div>
+                                        <div class="text-center">
+                                            <span class="text-sm font-semibold text-gray-900">{{ number_format(auth()->user()->sellerInfo->visitors) }}</span>
+                                            <p class="text-xs text-gray-500">Kunjungan</p>
+                                        </div>
+                                        <div class="text-center">
+                                            <span class="text-sm font-semibold text-gray-900">{{ auth()->user()->sellerInfo->credit_score }}</span>
+                                            <p class="text-xs text-gray-500">Skor kredit</p>
+                                        </div>
+                                    @else
+                                        <!-- Regular User Stats -->
+                                        <div class="text-center">
+                                            <span class="text-sm font-semibold text-gray-900">1250</span>
+                                            <p class="text-xs text-gray-500">Mengikuti</p>
+                                        </div>
+                                        <div class="text-center">
+                                            <span class="text-sm font-semibold text-gray-900">564423</span>
+                                            <p class="text-xs text-gray-500">Kunjungan</p>
+                                        </div>
+                                        <div class="text-center">
+                                            <span class="text-sm font-semibold text-gray-900">100</span>
+                                            <p class="text-xs text-gray-500">Skor kredit</p>
+                                        </div>
+                                    @endif
                                 </div>
                             </div>
                         </div>
@@ -45,6 +67,17 @@
                                 <div class="w-2 h-2 bg-green-500 rounded-full"></div>
                                 <span class="text-xs font-medium text-green-700">Active</span>
                             </div>
+                            
+                            @if(auth()->user()->isSeller())
+                                <!-- Seller Badge -->
+                                <div class="flex items-center space-x-1 bg-orange-50 px-2 py-1 rounded-lg">
+                                    <svg class="w-3 h-3 text-orange-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z"></path>
+                                    </svg>
+                                    <span class="text-xs font-medium text-orange-700">Seller</span>
+                                </div>
+                            @endif
+                            
                             <!-- Level Badge -->
                             <div class="flex items-center space-x-1 bg-blue-50 px-2 py-1 rounded-lg">
                                 <svg class="w-3 h-3 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">

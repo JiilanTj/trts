@@ -49,6 +49,9 @@ Route::get('/dashboard', function () {
         return view('admin-dashboard', compact('recentUsers', 'totalUsers', 'userGrowthPercent', 'userGrowthText'));
     }
     
+    // Load seller info for regular users who are sellers
+    $user->load('sellerInfo');
+    
     return view('dashboard');
 })->middleware(['auth'])->name('dashboard');
 
@@ -84,6 +87,10 @@ Route::get('/admin-dashboard', function () {
 })->middleware(['auth'])->name('admin.dashboard');
 
 Route::get('/user-dashboard', function () {
+    $user = auth()->user();
+    // Load seller info for users who are sellers
+    $user->load('sellerInfo');
+    
     return view('dashboard');
 })->middleware(['auth'])->name('user.dashboard');
 

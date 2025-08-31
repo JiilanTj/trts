@@ -17,12 +17,16 @@ class SellerRequestController extends Controller
      */
     public function index(): View
     {
-        $sellerRequests = SellerRequest::with('user')
-            ->where('user_id', Auth::id())
+        $user = Auth::user();
+        
+        // Get latest seller request for current user
+        $sellerRequest = SellerRequest::where('user_id', $user->id)
             ->latest()
-            ->paginate(15);
+            ->first();
+        
+        $hasRequest = $sellerRequest !== null;
 
-        return view('seller-requests.index', compact('sellerRequests'));
+        return view('user.seller-requests.index', compact('sellerRequest', 'hasRequest'));
     }
 
     /**
@@ -30,23 +34,25 @@ class SellerRequestController extends Controller
      */
     public function create()
     {
+        $user = Auth::user();
+        
         // Check if user already has a pending or approved request
-        $existingRequest = SellerRequest::where('user_id', Auth::id())
+        $existingRequest = SellerRequest::where('user_id', $user->id)
             ->whereIn('status', [SellerRequest::STATUS_PENDING, SellerRequest::STATUS_APPROVED])
             ->first();
 
         if ($existingRequest) {
-            return redirect()->route('seller-requests.show', $existingRequest)
+            return redirect()->route('seller-requests.index')
                 ->with('info', 'Anda sudah memiliki permintaan seller yang sedang diproses atau sudah disetujui.');
         }
 
         // Check if user is already a seller
-        if (Auth::user()->isSeller()) {
+        if ($user->isSeller()) {
             return redirect()->route('dashboard')
                 ->with('info', 'Anda sudah menjadi seller.');
         }
 
-        return view('seller-requests.create');
+        return view('user.seller-requests.create');
     }
 
     /**
@@ -121,6 +127,6 @@ class SellerRequestController extends Controller
 
         $sellerRequest->load('user');
         
-        return view('seller-requests.show', compact('sellerRequest'));
+        return view('user.seller-requests.show', compact('sellerRequest'));
     }
 }
