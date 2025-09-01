@@ -1,0 +1,38 @@
+<?php
+
+namespace App\Models;
+
+use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\HasMany;
+
+class Order extends Model
+{
+    protected $fillable = [
+        'user_id','purchase_type','external_customer_name','external_customer_phone',
+        'subtotal','discount_total','grand_total','seller_margin_total',
+        'payment_method','payment_status','payment_proof_path','payment_confirmed_at','payment_confirmed_by',
+        'status','admin_notes','user_notes'
+    ];
+
+    protected $casts = [
+        'payment_confirmed_at' => 'datetime',
+    ];
+
+    // Relationships
+    public function user(): BelongsTo { return $this->belongsTo(User::class); }
+    public function confirmer(): BelongsTo { return $this->belongsTo(User::class,'payment_confirmed_by'); }
+    public function items(): HasMany { return $this->hasMany(OrderItem::class); }
+
+    // Scopes / Helpers
+    public function isPending(): bool { return $this->status === 'pending'; }
+    public function isAwaitingConfirmation(): bool { return $this->status === 'awaiting_confirmation'; }
+    public function isPackaging(): bool { return $this->status === 'packaging'; }
+    public function isShipped(): bool { return $this->status === 'shipped'; }
+    public function isDelivered(): bool { return $this->status === 'delivered'; }
+    public function isCompleted(): bool { return $this->status === 'completed'; }
+    public function isCancelled(): bool { return $this->status === 'cancelled'; }
+
+    public function canUploadProof(): bool { return in_array($this->payment_status, ['unpaid','rejected']); }
+    public function canBeConfirmed(): bool { return $this->payment_status === 'waiting_confirmation'; }
+}
