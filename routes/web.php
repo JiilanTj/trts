@@ -15,6 +15,9 @@ use App\Models\User;
 use App\Http\Controllers\User\CategoryBrowseController; // added
 use App\Http\Controllers\User\ProductBrowseController; // added
 use App\Http\Controllers\Admin\SettingController; // new
+// +++ added order controllers
+use App\Http\Controllers\User\OrderController as UserOrderController;
+use App\Http\Controllers\Admin\OrderController as AdminOrderController;
 
 Route::get('/', function () {
     return view('welcome');
@@ -105,6 +108,16 @@ Route::middleware('auth')->group(function () {
     Route::get('produk', [ProductBrowseController::class,'index'])->name('browse.products.index');
     Route::get('produk/{product}', [ProductBrowseController::class,'show'])->name('browse.products.show');
     Route::post('produk/{product}/beli', [ProductBrowseController::class,'buy'])->name('browse.products.buy'); // new buy route
+
+    // +++ User Order Routes (manual order system)
+    Route::prefix('orders')->name('user.orders.')->group(function () {
+        Route::get('/', [UserOrderController::class,'index'])->name('index');
+        Route::get('/create', [UserOrderController::class,'create'])->name('create');
+        Route::post('/', [UserOrderController::class,'store'])->name('store');
+        Route::get('/{order}', [UserOrderController::class,'show'])->name('show');
+        Route::post('/{order}/upload-proof', [UserOrderController::class,'uploadProof'])->name('upload-proof');
+        Route::post('/{order}/cancel', [UserOrderController::class,'cancel'])->name('cancel');
+    });
 });
 
 // Admin Routes - Only for admin users
@@ -133,6 +146,16 @@ Route::middleware(['auth', 'role:admin'])->prefix('admin')->name('admin.')->grou
     Route::post('sellers/{sellerInfo}/status', [AdminSellerInfoController::class, 'updateStatus'])->name('sellers.update-status');
     Route::post('sellers/{sellerInfo}/credit-score', [AdminSellerInfoController::class, 'updateCreditScore'])->name('sellers.update-credit-score');
     Route::get('sellers/{sellerInfo}/stats', [AdminSellerInfoController::class, 'getStats'])->name('sellers.stats');
+
+    // +++ Admin Order Routes
+    Route::prefix('orders')->name('orders.')->group(function () {
+        Route::get('/', [AdminOrderController::class,'index'])->name('index');
+        Route::get('/{order}', [AdminOrderController::class,'show'])->name('show');
+        Route::post('/{order}/approve-payment', [AdminOrderController::class,'approvePayment'])->name('approve-payment');
+        Route::post('/{order}/reject-payment', [AdminOrderController::class,'rejectPayment'])->name('reject-payment');
+        Route::post('/{order}/advance-status', [AdminOrderController::class,'advanceStatus'])->name('advance-status');
+        Route::post('/{order}/cancel', [AdminOrderController::class,'cancel'])->name('cancel');
+    });
 });
 
 // Seller System Routes
