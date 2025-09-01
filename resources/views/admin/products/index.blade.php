@@ -7,44 +7,38 @@
             <div class="flex items-center justify-between">
                 <h2 class="text-xl font-semibold text-gray-800">Produk</h2>
                 <a href="{{ route('admin.products.create') }}" 
-                   class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg text-sm font-medium transition-colors">
-                    <svg class="w-4 h-4 inline mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"></path>
-                    </svg>
+                   class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg text-sm font-medium transition-colors shadow">
                     Tambah Produk
                 </a>
             </div>
 
             <!-- Form Pencarian & Filter -->
             <div class="mt-4">
-                <form method="GET" action="{{ route('admin.products.index') }}" class="flex gap-3">
+                <form method="GET" action="{{ route('admin.products.index') }}" class="flex flex-col md:flex-row gap-3">
                     <div class="flex-1">
-                        <input type="text" 
-                               name="search" 
-                               value="{{ $search }}" 
-                               placeholder="Cari produk berdasarkan nama, SKU, atau deskripsi..." 
-                               class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
+                        <input type="text" name="search" value="{{ $search }}" placeholder="Cari nama / SKU..." class="w-full rounded-lg border-gray-300 focus:ring-blue-500 focus:border-blue-500" />
                     </div>
-                    <div class="w-48">
-                        <select name="category_id" 
-                                class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
+                    <div class="w-full md:w-48">
+                        <select name="category_id" class="w-full rounded-lg border-gray-300 focus:ring-blue-500 focus:border-blue-500">
                             <option value="">Semua Kategori</option>
-                            @foreach($categories as $category)
-                                <option value="{{ $category->id }}" {{ $category_id == $category->id ? 'selected' : '' }}>
-                                    {{ $category->name }}
-                                </option>
+                            @foreach($categories as $c)
+                                <option value="{{ $c->id }}" @selected($category_id == $c->id)>{{ $c->name }}</option>
                             @endforeach
                         </select>
                     </div>
+                    <div class="w-full md:w-40">
+                        <select name="status" class="w-full rounded-lg border-gray-300 focus:ring-blue-500 focus:border-blue-500">
+                            <option value="">Semua Status</option>
+                            <option value="active" @selected($status==='active')>Aktif</option>
+                            <option value="inactive" @selected($status==='inactive')>Tidak Aktif</option>
+                        </select>
+                    </div>
                     <button type="submit" 
-                            class="bg-gray-600 hover:bg-gray-700 text-white px-6 py-2 rounded-lg text-sm font-medium transition-colors">
+                            class="bg-gray-600 hover:bg-gray-700 text-white px-6 py-2 rounded-lg text-sm font-medium transition-colors shadow">
                         Cari
                     </button>
-                    @if($search || $category_id)
-                        <a href="{{ route('admin.products.index') }}" 
-                           class="bg-gray-300 hover:bg-gray-400 text-gray-700 px-4 py-2 rounded-lg text-sm font-medium transition-colors">
-                            Reset
-                        </a>
+                    @if($search || $category_id || $status)
+                        <a href="{{ route('admin.products.index') }}" class="text-sm px-4 py-2 rounded-lg bg-gray-200 hover:bg-gray-300">Reset</a>
                     @endif
                 </form>
             </div>
@@ -64,101 +58,75 @@
         @endif
 
         <!-- Tabel Produk -->
-        <div class="overflow-x-auto">
-            <table class="w-full">
+        <div class="overflow-x-auto mt-4">
+            <table class="w-full text-sm">
                 <thead class="bg-gray-50">
-                    <tr>
-                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Produk</th>
-                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">SKU</th>
-                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Kategori</th>
-                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Stok</th>
-                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Harga Beli</th>
-                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Harga Jual</th>
-                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Laba</th>
-                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
-                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Aksi</th>
+                    <tr class="text-left text-xs font-semibold uppercase tracking-wider text-gray-600">
+                        <th class="px-6 py-3">Produk</th>
+                        <th class="px-6 py-3">SKU</th>
+                        <th class="px-6 py-3">Kategori</th>
+                        <th class="px-6 py-3">Stok</th>
+                        <th class="px-6 py-3">Harga Beli</th>
+                        <th class="px-6 py-3">Harga Biasa</th>
+                        <th class="px-6 py-3">Harga Jual</th>
+                        <th class="px-6 py-3">Laba</th>
+                        <th class="px-6 py-3">Status</th>
+                        <th class="px-6 py-3 text-right">Aksi</th>
                     </tr>
                 </thead>
-                <tbody class="bg-white divide-y divide-gray-200">
+                <tbody class="bg-white divide-y divide-gray-100">
                     @forelse($products as $product)
                         <tr class="hover:bg-gray-50">
-                            <td class="px-6 py-4 whitespace-nowrap">
-                                <div class="flex items-center">
-                                    @if($product->image)
-                                        <img src="{{ $product->image_url }}" alt="{{ $product->name }}" class="h-10 w-10 rounded-lg object-cover mr-3">
-                                    @else
-                                        <div class="h-10 w-10 bg-gray-200 rounded-lg flex items-center justify-center mr-3">
-                                            <svg class="w-6 h-6 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"></path>
-                                            </svg>
-                                        </div>
-                                    @endif
-                                    <div>
-                                        <div class="text-sm font-medium text-gray-900">{{ $product->name }}</div>
-                                        @if($product->weight)
-                                            <div class="text-sm text-gray-500">{{ $product->weight }} gr</div>
+                            <td class="px-6 py-3 font-medium text-gray-800">
+                                <div class="flex items-center gap-3">
+                                    <div class="w-12 h-12 rounded border border-gray-200 bg-gray-50 overflow-hidden flex items-center justify-center">
+                                        @if($product->image)
+                                            <img src="{{ Storage::url($product->image) }}" alt="{{ $product->name }}" class="w-full h-full object-cover" />
+                                        @else
+                                            <span class="text-[10px] text-gray-400">No Img</span>
+                                        @endif
+                                    </div>
+                                    <div class="leading-tight">
+                                        <a href="{{ route('admin.products.show',$product) }}" class="hover:text-blue-600">{{ $product->name }}</a>
+                                        @if($product->promo_price && $product->promo_price < $product->sell_price)
+                                            <span class="ml-2 text-xs px-2 py-0.5 rounded bg-pink-600 text-white">Promo</span>
                                         @endif
                                     </div>
                                 </div>
                             </td>
-                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{{ $product->sku }}</td>
-                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{{ $product->category->name }}</td>
-                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                                <span class="font-medium {{ $product->stock > 0 ? 'text-green-600' : 'text-red-600' }}">
-                                    {{ $product->stock }}
-                                </span>
-                            </td>
-                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">Rp {{ number_format($product->purchase_price,0,',','.') }}</td>
-                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">Rp {{ number_format($product->sell_price,0,',','.') }}</td>
-                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                                <span class="font-medium {{ $product->profit > 0 ? 'text-green-600' : 'text-red-600' }}">
-                                    Rp {{ number_format($product->profit, 0, ',', '.') }}
-                                </span>
-                            </td>
-                            <td class="px-6 py-4 whitespace-nowrap">
-                                @if($product->status === 'active')
-                                    <span class="inline-flex px-2 py-1 text-xs font-semibold rounded-full bg-green-100 text-green-800">
-                                        Aktif
-                                    </span>
-                                @else
-                                    <span class="inline-flex px-2 py-1 text-xs font-semibold rounded-full bg-red-100 text-red-800">
-                                        Tidak Aktif
-                                    </span>
+                            <td class="px-6 py-3 text-gray-600">{{ $product->sku }}</td>
+                            <td class="px-6 py-3 text-gray-600">{{ $product->category?->name ?? '-' }}</td>
+                            <td class="px-6 py-3 text-gray-700">{{ $product->stock }}</td>
+                            <td class="px-6 py-3 text-gray-700">Rp {{ number_format($product->purchase_price,0,',','.') }}</td>
+                            <td class="px-6 py-3 text-gray-700">
+                                Rp {{ number_format($product->harga_biasa,0,',','.') }}
+                                @if($product->promo_price && $product->promo_price < $product->sell_price)
+                                    <div class="text-[11px] text-pink-600">Promo: Rp {{ number_format($product->promo_price,0,',','.') }}</div>
                                 @endif
                             </td>
-                            <td class="px-6 py-4 whitespace-nowrap text-sm font-medium">
-                                <div class="flex space-x-2">
-                                    <a href="{{ route('admin.products.show', $product) }}" 
-                                       class="text-blue-600 hover:text-blue-900">Lihat</a>
-                                    <a href="{{ route('admin.products.edit', $product) }}" 
-                                       class="text-indigo-600 hover:text-indigo-900">Ubah</a>
-                                    <form method="POST" action="{{ route('admin.products.destroy', $product) }}" 
-                                          class="inline" onsubmit="return confirm('Yakin ingin menghapus produk ini?')">
+                            <td class="px-6 py-3 text-gray-700">Rp {{ number_format($product->sell_price,0,',','.') }}</td>
+                            <td class="px-6 py-3 text-gray-700">Rp {{ number_format($product->profit,0,',','.') }}</td>
+                            <td class="px-6 py-3">
+                                <span class="px-2 py-1 rounded-full text-xs font-medium {{ $product->status==='active' ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700' }}">
+                                    {{ $product->status==='active' ? 'Aktif' : 'Tidak Aktif' }}
+                                </span>
+                            </td>
+                            <!-- Adjust Aksi buttons layout to always sit horizontally without wrapping -->
+                            <td class="px-6 py-3">
+                                <div class="flex justify-end items-center gap-2">
+                                    <a href="{{ route('admin.products.show',$product) }}" class="whitespace-nowrap text-xs px-3 py-1 rounded bg-gray-200 hover:bg-gray-300 inline-flex items-center">Detail</a>
+                                    <a href="{{ route('admin.products.edit',$product) }}" class="whitespace-nowrap text-xs px-3 py-1 rounded bg-blue-600 text-white hover:bg-blue-700 inline-flex items-center">Edit</a>
+                                    <form action="{{ route('admin.products.destroy',$product) }}" method="POST" onsubmit="return confirm('Hapus produk ini? Tindakan tidak dapat dibatalkan.');" class="inline-flex">
                                         @csrf
                                         @method('DELETE')
-                                        <button type="submit" class="text-red-600 hover:text-red-900">Hapus</button>
+                                        <button type="submit" class="whitespace-nowrap text-xs px-3 py-1 rounded bg-red-600 text-white hover:bg-red-700 inline-flex items-center">Hapus</button>
                                     </form>
                                 </div>
                             </td>
                         </tr>
                     @empty
                         <tr>
-                            <td colspan="9" class="px-6 py-12 text-center text-gray-500">
-                                <svg class="mx-auto h-12 w-12 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"></path>
-                                </svg>
-                                <h3 class="mt-2 text-sm font-medium text-gray-900">Belum ada produk</h3>
-                                <p class="mt-1 text-sm text-gray-500">Mulai dengan menambahkan produk baru.</p>
-                                <div class="mt-6">
-                                    <a href="{{ route('admin.products.create') }}" 
-                                       class="inline-flex items-center px-4 py-2 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700">
-                                        <svg class="-ml-1 mr-2 h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"></path>
-                                        </svg>
-                                        Tambah Produk
-                                    </a>
-                                </div>
-                            </td>
+                            <td colspan="10" class="px-6 py-6 text-center text-gray-500">Belum ada produk.</td>
                         </tr>
                     @endforelse
                 </tbody>
