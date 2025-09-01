@@ -88,6 +88,11 @@
                                 @else
                                     <svg class="w-8 h-8 text-gray-600" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M3 7h2l2-3h10l2 3h2v13H3z" /></svg>
                                 @endif
+                                @php $hasPromo = $product->promo_price && $product->promo_price < $product->sell_price; @endphp
+                                @if($hasPromo)
+                                    @php $disc = round( (1 - ($product->promo_price / $product->sell_price)) * 100 ); @endphp
+                                    <span class="absolute top-2 left-2 px-2 py-0.5 rounded-full bg-gradient-to-r from-fuchsia-600 to-rose-600 text-white text-[10px] font-semibold shadow">-{{ $disc }}%</span>
+                                @endif
                                 @if(!$product->inStock())
                                     <span class="absolute top-2 right-2 px-2 py-0.5 rounded-full bg-gray-800 text-white text-[10px] font-medium">Habis</span>
                                 @elseif($product->stock < 5)
@@ -106,9 +111,13 @@
                                             <span class="text-[10px] px-1.5 py-0.5 rounded bg-[#1b1f25] text-cyan-400 border border-cyan-500/30">Jual</span>
                                             <p class="text-xs font-medium text-cyan-400">Rp {{ number_format($product->harga_jual, 0, ',', '.') }}</p>
                                         </div>
+                                        @php $margin = $product->harga_jual - $product->harga_biasa; @endphp
+                                        <div class="flex items-center gap-2 ml-0.5">
+                                            <span class="text-[9px] text-emerald-400 {{ $margin<=0 ? 'opacity-0' : '' }}">+ Rp {{ number_format(max($margin,0),0,',','.') }}</span>
+                                        </div>
                                     @endif
                                 </div>
-                                @if($product->promo_price && $product->promo_price < $product->sell_price)
+                                @if($hasPromo)
                                     <p class="text-[10px] text-gray-500 line-through">Rp {{ number_format($product->sell_price, 0, ',', '.') }}</p>
                                 @endif
                                 <p class="text-[10px] text-gray-500">Stok: {{ $product->stock }}</p>

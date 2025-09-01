@@ -35,6 +35,10 @@
                     @elseif($product->stock < 5)
                         <span class="absolute top-3 right-3 px-2 py-1 text-[10px] font-medium rounded-full bg-amber-500 text-white">Stok Menipis</span>
                     @endif
+                    @if($product->promo_price && $product->promo_price < $product->sell_price)
+                        @php $disc = round( (1 - ($product->promo_price / $product->sell_price))*100 ); @endphp
+                        <span class="absolute top-3 left-3 px-2 py-1 text-[10px] font-semibold rounded-full bg-gradient-to-r from-fuchsia-600 to-rose-600 text-white shadow">-{{ $disc }}%</span>
+                    @endif
                 </div>
             </div>
 
@@ -63,6 +67,11 @@
                                 <p class="text-[11px] font-medium uppercase tracking-wide text-gray-500">Harga Jual</p>
                                 <p class="text-xl font-semibold text-cyan-400">Rp {{ number_format($product->harga_jual, 0, ',', '.') }}</p>
                             </div>
+                            <div class="hidden md:block">
+                                @php $potensi = $product->harga_jual - $product->harga_biasa; @endphp
+                                <p class="text-[11px] font-medium uppercase tracking-wide text-gray-500">Margin Potensial</p>
+                                <p class="text-sm font-semibold {{ $potensi>0 ? 'text-emerald-400' : 'text-gray-400' }}">{{ $potensi>0 ? 'Rp '.number_format($potensi,0,',','.') : '-' }}</p>
+                            </div>
                         @endif
                         <div>
                             @if(!$product->inStock())
@@ -77,6 +86,11 @@
                             </div>
                         @endif
                     </div>
+                    @if($isSeller)
+                        <div id="chosen-price" class="text-[11px] font-medium text-gray-400">
+                            Harga terpilih saat ini: <span class="text-fuchsia-300" data-label>Harga Biasa</span> • <span data-price>Rp {{ number_format($product->harga_biasa,0,',','.') }}</span>
+                        </div>
+                    @endif
                 </div>
 
                 <div class="text-sm text-gray-400 leading-relaxed">
@@ -103,16 +117,16 @@
                 </div>
 
                 <div class="pt-2">
-                    <form method="POST" action="{{ route('browse.products.buy',$product) }}" class="space-y-4">
+                    <form method="POST" action="{{ route('browse.products.buy',$product) }}" class="space-y-4" id="buy-form" data-harga-biasa="{{ $product->harga_biasa }}" data-harga-jual="{{ $product->harga_jual }}">
                         @csrf
                         @if($isSeller)
                             <div class="flex items-center gap-4">
                                 <label class="flex items-center gap-2 text-xs text-gray-300">
-                                    <input type="radio" name="purchase_type" value="self" class="text-fuchsia-500 focus:ring-fuchsia-500/60 bg-[#1b1f25] border-white/10" checked>
+                                    <input type="radio" name="purchase_type" value="self" class="purchase-type text-fuchsia-500 focus:ring-fuchsia-500/60 bg-[#1b1f25] border-white/10" checked>
                                     <span>Beli Untuk Diri (Harga Biasa)</span>
                                 </label>
                                 <label class="flex items-center gap-2 text-xs text-gray-300">
-                                    <input type="radio" name="purchase_type" value="external" class="text-cyan-500 focus:ring-cyan-500/60 bg-[#1b1f25] border-white/10">
+                                    <input type="radio" name="purchase_type" value="external" class="purchase-type text-cyan-500 focus:ring-cyan-500/60 bg-[#1b1f25] border-white/10">
                                     <span>Jual ke Pelanggan (Harga Jual)</span>
                                 </label>
                             </div>
@@ -168,4 +182,30 @@
             @endif
         </div>
     </div>
+
+    @php $isSeller = auth()->user()?->isSeller(); @endphp
+    @if($isSeller)
+    <script>
+        (function(){
+            const form = document.getElementById('buy-form');
+            if(!form) return;
+            const radios = form.querySelectorAll('.purchase-type');
+            const chosen = document.getElementById('chosen-price');
+            if(!chosen) return;
+            const hargaBiasa = parseInt(form.dataset.hargaBiasa,10);
+            const hargaJual = parseInt(form.dataset.hargaJual,10);
+            const rupiah = n => 'Rp ' + (n||0).toLocaleString('id-ID');
+            radios.forEach(r=>{
+                r.addEventListener('change',()=>{
+                    const type = form.querySelector('.purchase-type:checked').value;
+                    const price = type==='external'?hargaJual:hargaBiasa;
+                    chosen.querySelector('[data-label]').textContent = type==='external' ? 'Harga Jual' : 'Harga Biasa';
+                    chosen.querySelector('[data-price]').textContent = rupiah(price);
+                    chosen.classList.add('animate-pulse');
+                    setTimeout(()=>chosen.classList.remove('animate-pulse'),500);
+                });
+            });
+        })();
+    </script>
+    @endif
 </x-app-layout>
