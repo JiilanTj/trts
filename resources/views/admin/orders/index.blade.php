@@ -1,123 +1,132 @@
+@php /** @var \Illuminate\Pagination\LengthAwarePaginator $orders */ @endphp
 <x-admin-layout>
-    <x-slot name="title">Orders</x-slot>
+    <x-slot name="title">Manajemen Order</x-slot>
 
-    <div class="px-6 py-6">
-        <div class="flex items-center justify-between mb-6">
-            <div>
-                <h1 class="text-2xl font-bold text-gray-800">Daftar Order</h1>
-                <p class="text-sm text-gray-500">Monitoring pesanan manual & status pembayaran.</p>
+    @php
+        $statusColors = [
+            'pending' => 'bg-gray-100 text-gray-800',
+            'awaiting_confirmation' => 'bg-yellow-100 text-yellow-800',
+            'packaging' => 'bg-blue-100 text-blue-800',
+            'shipped' => 'bg-indigo-100 text-indigo-800',
+            'delivered' => 'bg-teal-100 text-teal-800',
+            'completed' => 'bg-green-100 text-green-800',
+            'cancelled' => 'bg-red-100 text-red-800',
+        ];
+        $paymentColors = [
+            'unpaid' => 'bg-red-100 text-red-800',
+            'waiting_confirmation' => 'bg-yellow-100 text-yellow-800',
+            'paid' => 'bg-green-100 text-green-800',
+            'rejected' => 'bg-red-100 text-red-800',
+        ];
+    @endphp
+
+    <div class="bg-white rounded-lg shadow-sm border border-gray-200">
+        <!-- Header -->
+        <div class="px-6 py-4 border-b border-gray-200">
+            <div class="flex items-center justify-between">
+                <h2 class="text-xl font-semibold text-gray-800">Order</h2>
+            </div>
+
+            <!-- Filter Form -->
+            <div class="mt-4">
+                <form method="GET" class="flex flex-wrap gap-3 items-end">
+                    <div>
+                        <label class="block text-xs font-medium text-gray-600 mb-1">Status</label>
+                        <select name="status" class="px-3 py-2 text-sm rounded-lg bg-white border border-gray-300 focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
+                            <option value="">Semua</option>
+                            @foreach(\App\Models\Order::statusOptions() as $k=>$v)
+                                <option value="{{ $k }}" @selected(request('status')===$k)>{{ $v }}</option>
+                            @endforeach
+                        </select>
+                    </div>
+                    <div>
+                        <label class="block text-xs font-medium text-gray-600 mb-1">Pembayaran</label>
+                        <select name="payment_status" class="px-3 py-2 text-sm rounded-lg bg-white border border-gray-300 focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
+                            <option value="">Semua</option>
+                            @foreach(\App\Models\Order::paymentStatusOptions() as $k=>$v)
+                                <option value="{{ $k }}" @selected(request('payment_status')===$k)>{{ $v }}</option>
+                            @endforeach
+                        </select>
+                    </div>
+                    <div>
+                        <label class="block text-xs font-medium text-gray-600 mb-1">User ID</label>
+                        <input type="number" name="user_id" value="{{ request('user_id') }}" placeholder="ID" class="px-3 py-2 text-sm rounded-lg bg-white border border-gray-300 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 w-32" />
+                    </div>
+                    <div class="flex gap-2 items-center mt-1">
+                        <button class="bg-blue-600 hover:bg-blue-700 text-white px-5 py-2 rounded-lg text-sm font-medium transition">Filter</button>
+                        @if(request('status')||request('payment_status')||request('user_id'))
+                            <a href="{{ route('admin.orders.index') }}" class="bg-gray-300 hover:bg-gray-400 text-gray-800 px-4 py-2 rounded-lg text-sm font-medium transition">Reset</a>
+                        @endif
+                    </div>
+                </form>
             </div>
         </div>
 
-        <!-- Filters -->
-        <form method="GET" class="grid grid-cols-1 md:grid-cols-5 gap-4 bg-white p-4 rounded-lg shadow mb-6 border border-gray-100">
-            <div>
-                <label class="block text-xs font-semibold text-gray-500 mb-1">Status Order</label>
-                <select name="status" class="w-full rounded-md border-gray-300 text-sm">
-                    <option value="">Semua</option>
-                    @php($statusOptions = [
-                        'pending' => 'Menunggu',
-                        'awaiting_confirmation' => 'Menunggu Konfirmasi',
-                        'packaging' => 'Sedang Dikemas',
-                        'shipped' => 'Dikirim',
-                        'delivered' => 'Diterima',
-                        'completed' => 'Selesai',
-                        'cancelled' => 'Dibatalkan',
-                    ])
-                    @foreach($statusOptions as $value => $label)
-                        <option value="{{ $value }}" @selected(request('status')===$value)>{{ $label }}</option>
-                    @endforeach
-                </select>
-            </div>
-            <div>
-                <label class="block text-xs font-semibold text-gray-500 mb-1">Status Pembayaran</label>
-                <select name="payment_status" class="w-full rounded-md border-gray-300 text-sm">
-                    <option value="">Semua</option>
-                    @php($paymentStatusOptions = [
-                        'unpaid' => 'Belum Dibayar',
-                        'waiting_confirmation' => 'Menunggu Konfirmasi',
-                        'paid' => 'Dibayar',
-                        'rejected' => 'Ditolak',
-                    ])
-                    @foreach($paymentStatusOptions as $value => $label)
-                        <option value="{{ $value }}" @selected(request('payment_status')===$value)>{{ $label }}</option>
-                    @endforeach
-                </select>
-            </div>
-            <div>
-                <label class="block text-xs font-semibold text-gray-500 mb-1">User ID</label>
-                <input type="text" name="user_id" value="{{ request('user_id') }}" class="w-full rounded-md border-gray-300 text-sm" placeholder="User ID">
-            </div>
-            <div class="md:col-span-2 flex items-end gap-2">
-                <button class="px-4 py-2 bg-blue-600 text-white text-sm font-medium rounded-md shadow hover:bg-blue-700">Filter</button>
-                <a href="{{ route('admin.orders.index') }}" class="px-4 py-2 bg-gray-100 text-gray-700 text-sm font-medium rounded-md hover:bg-gray-200">Reset</a>
-            </div>
-        </form>
+        <!-- Flash Messages -->
+        @if(session('success'))
+            <div class="mx-6 mt-4 bg-green-50 border border-green-200 text-green-700 px-4 py-3 rounded-lg text-sm">{{ session('success') }}</div>
+        @endif
+        @if(session('error'))
+            <div class="mx-6 mt-4 bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg text-sm">{{ session('error') }}</div>
+        @endif
 
-        <div class="bg-white border border-gray-100 rounded-xl shadow">
-            <div class="overflow-x-auto rounded-t-xl">
-                <table class="min-w-full divide-y divide-gray-200">
-                    <thead class="bg-gray-50">
-                        <tr class="text-xs font-semibold text-gray-600 uppercase tracking-wider">
-                            <th class="px-4 py-3 text-left">ID</th>
-                            <th class="px-4 py-3 text-left">User</th>
-                            <th class="px-4 py-3 text-left">Tipe</th>
-                            <th class="px-4 py-3 text-left">Subtotal</th>
-                            <th class="px-4 py-3 text-left">Grand Total</th>
-                            <th class="px-4 py-3 text-left">Pembayaran</th>
-                            <th class="px-4 py-3 text-left">Status</th>
-                            <th class="px-4 py-3 text-left">Created</th>
-                            <th class="px-4 py-3"></th>
+        <!-- Table -->
+        <div class="overflow-x-auto mt-4">
+            <table class="w-full">
+                <thead class="bg-gray-50">
+                    <tr>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">ID</th>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">User</th>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Tipe</th>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Subtotal</th>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Grand Total</th>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Pembayaran</th>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Dibuat</th>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Aksi</th>
+                    </tr>
+                </thead>
+                <tbody class="bg-white divide-y divide-gray-200">
+                    @forelse($orders as $order)
+                        <tr class="hover:bg-gray-50">
+                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-700 font-mono">#{{ $order->id }}</td>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-800">{{ $order->user->full_name ?? 'User#'.$order->user_id }}</td>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-700">
+                                <span class="inline-flex px-2 py-1 text-xs font-semibold rounded-full bg-gray-100 text-gray-800">{{ $order->purchase_type==='external' ? 'Eksternal' : 'Pribadi' }}</span>
+                            </td>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-700">Rp {{ number_format($order->subtotal,0,',','.') }}</td>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm font-semibold text-gray-900">Rp {{ number_format($order->grand_total,0,',','.') }}</td>
+                            <td class="px-6 py-4 whitespace-nowrap">
+                                @php $ps = $order->payment_status; @endphp
+                                <span class="inline-flex px-2 py-1 text-xs font-semibold rounded-full {{ $paymentColors[$ps] ?? 'bg-gray-100 text-gray-800' }}">{{ $order->paymentStatusLabel() }}</span>
+                            </td>
+                            <td class="px-6 py-4 whitespace-nowrap">
+                                @php $st = $order->status; @endphp
+                                <span class="inline-flex px-2 py-1 text-xs font-semibold rounded-full {{ $statusColors[$st] ?? 'bg-gray-100 text-gray-800' }}">{{ $order->statusLabel() }}</span>
+                            </td>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{{ $order->created_at->format('d M Y H:i') }}</td>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm font-medium">
+                                <a href="{{ route('admin.orders.show',$order) }}" class="text-blue-600 hover:text-blue-900">Detail</a>
+                            </td>
                         </tr>
-                    </thead>
-                    <tbody class="divide-y divide-gray-100 text-sm">
-                        @forelse($orders as $order)
-                            <tr class="hover:bg-gray-50">
-                                <td class="px-4 py-3 font-mono text-xs">#{{ $order->id }}</td>
-                                <td class="px-4 py-3">{{ $order->user->username ?? 'N/A' }}</td>
-                                <td class="px-4 py-3">
-                                    <span class="px-2 py-1 rounded text-xs bg-indigo-50 text-indigo-700 font-medium">{{ $order->purchase_type }}</span>
-                                </td>
-                                <td class="px-4 py-3">Rp {{ number_format($order->subtotal,0,',','.') }}</td>
-                                <td class="px-4 py-3 font-semibold">Rp {{ number_format($order->grand_total,0,',','.') }}</td>
-                                <td class="px-4 py-3">
-                                    @php($ps=$order->payment_status)
-                                    <span class="px-2 py-1 rounded text-xs font-medium
-                                        @class([
-                                            'bg-gray-100 text-gray-700'=> $ps==='unpaid',
-                                            'bg-yellow-100 text-yellow-700'=> $ps==='waiting_confirmation',
-                                            'bg-green-100 text-green-700'=> $ps==='paid',
-                                            'bg-red-100 text-red-700'=> $ps==='rejected',
-                                        ])">{{ $ps }}</span>
-                                </td>
-                                <td class="px-4 py-3">
-                                    @php($st=$order->status)
-                                    <span class="px-2 py-1 rounded text-xs font-medium @class([
-                                            'bg-gray-100 text-gray-700'=> $st==='pending',
-                                            'bg-yellow-100 text-yellow-700'=> $st==='awaiting_confirmation',
-                                            'bg-blue-100 text-blue-700'=> $st==='packaging',
-                                            'bg-indigo-100 text-indigo-700'=> $st==='shipped',
-                                            'bg-purple-100 text-purple-700'=> $st==='delivered',
-                                            'bg-green-100 text-green-700'=> $st==='completed',
-                                            'bg-red-100 text-red-700'=> $st==='cancelled',
-                                        ])">{{ $st }}</span>
-                                </td>
-                                <td class="px-4 py-3 text-xs text-gray-500">{{ $order->created_at->format('d M H:i') }}</td>
-                                <td class="px-4 py-3 text-right">
-                                    <a href="{{ route('admin.orders.show', $order) }}" class="inline-flex items-center px-3 py-1.5 rounded-md text-xs font-medium bg-white border border-gray-300 hover:bg-gray-100 shadow-sm">Detail</a>
-                                </td>
-                            </tr>
-                        @empty
-                            <tr>
-                                <td colspan="9" class="px-4 py-10 text-center text-sm text-gray-500">Belum ada order.</td>
-                            </tr>
-                        @endforelse
-                    </tbody>
-                </table>
-            </div>
-            <div class="px-4 py-3 border-t border-gray-100">
-                {{ $orders->withQueryString()->links() }}
-            </div>
+                    @empty
+                        <tr>
+                            <td colspan="9" class="px-6 py-12 text-center text-gray-500">
+                                <svg class="mx-auto h-12 w-12 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 7h18M3 12h18M3 17h18"></path></svg>
+                                <h3 class="mt-2 text-sm font-medium text-gray-900">Belum ada order</h3>
+                                <p class="mt-1 text-sm text-gray-500">Order baru akan tampil di sini.</p>
+                            </td>
+                        </tr>
+                    @endforelse
+                </tbody>
+            </table>
         </div>
+
+        <!-- Pagination -->
+        @if($orders->hasPages())
+            <div class="px-6 py-4 border-t border-gray-200 bg-gray-50">
+                {{ $orders->appends(request()->query())->links() }}
+            </div>
+        @endif
     </div>
 </x-admin-layout>

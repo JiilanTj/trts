@@ -133,7 +133,11 @@
                         @else
                             <input type="hidden" name="purchase_type" value="self">
                         @endif
-                        <button @disabled(!$product->inStock()) class="w-full py-3 rounded-xl text-sm font-medium text-white bg-gradient-to-r from-fuchsia-500 via-rose-500 to-cyan-500 hover:from-fuchsia-500/90 hover:via-rose-500/90 hover:to-cyan-500/90 disabled:from-gray-600 disabled:via-gray-500 disabled:to-gray-400 disabled:cursor-not-allowed shadow-sm shadow-fuchsia-500/30 flex items-center justify-center gap-2 focus:outline-none focus:ring-2 focus:ring-fuchsia-500/60">
+                        <button @disabled(!$product->inStock()) class="w-full py-3 rounded-xl text-sm font-medium text-white bg-gradient-to-r from-fuchsia-500 via-rose-500 to-cyan-500 hover:from-fuchsia-500/90 hover:via-rose-500/90 hover:to-cyan-500/90 disabled:from-gray-600 disabled:via-gray-500 disabled:to-gray-400 disabled:cursor-not-allowed shadow-sm shadow-fuchsia-500/30 flex items-center justify-center gap-2 focus:outline-none focus:ring-2 focus:ring-fuchsia-500/60"
+                            type="button"
+                            id="go-order-btn"
+                            data-base-url="{{ route('user.orders.create') }}"
+                            data-product-id="{{ $product->id }}">
                             <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2 9m5-9v9m4-9v9m4-9l2 9" /></svg>
                             Beli
                         </button>
@@ -191,7 +195,6 @@
             if(!form) return;
             const radios = form.querySelectorAll('.purchase-type');
             const chosen = document.getElementById('chosen-price');
-            if(!chosen) return;
             const hargaBiasa = parseInt(form.dataset.hargaBiasa,10);
             const hargaJual = parseInt(form.dataset.hargaJual,10);
             const rupiah = n => 'Rp ' + (n||0).toLocaleString('id-ID');
@@ -205,6 +208,30 @@
                     setTimeout(()=>chosen.classList.remove('animate-pulse'),500);
                 });
             });
+            const goBtn = document.getElementById('go-order-btn');
+            if(goBtn){
+                goBtn.addEventListener('click',()=>{
+                    const type = form.querySelector('.purchase-type:checked')?.value || 'self';
+                    const base = goBtn.dataset.baseUrl;
+                    const pid = goBtn.dataset.productId;
+                    const url = base + '?product_id=' + encodeURIComponent(pid) + '&purchase_type=' + encodeURIComponent(type);
+                    window.location.href = url;
+                });
+            }
+        })();
+    </script>
+    @else
+    <script>
+        (function(){
+            const goBtn = document.getElementById('go-order-btn');
+            if(goBtn){
+                goBtn.addEventListener('click',()=>{
+                    const base = goBtn.dataset.baseUrl;
+                    const pid = goBtn.dataset.productId;
+                    const url = base + '?product_id=' + encodeURIComponent(pid) + '&purchase_type=self';
+                    window.location.href = url;
+                });
+            }
         })();
     </script>
     @endif

@@ -10,6 +10,7 @@ class Order extends Model
 {
     protected $fillable = [
         'user_id','purchase_type','external_customer_name','external_customer_phone',
+        'address', // added address field
         'subtotal','discount_total','grand_total','seller_margin_total',
         'payment_method','payment_status','payment_proof_path','payment_confirmed_at','payment_confirmed_by',
         'status','admin_notes','user_notes'
@@ -35,4 +36,38 @@ class Order extends Model
 
     public function canUploadProof(): bool { return in_array($this->payment_status, ['unpaid','rejected']); }
     public function canBeConfirmed(): bool { return $this->payment_status === 'waiting_confirmation'; }
+
+    // Label helpers
+    public static function statusOptions(): array
+    {
+        return [
+            'pending' => 'Pending',
+            'awaiting_confirmation' => 'Menunggu Konfirmasi',
+            'packaging' => 'Dikemas',
+            'shipped' => 'Dikirim',
+            'delivered' => 'Diterima',
+            'completed' => 'Selesai',
+            'cancelled' => 'Dibatalkan',
+        ];
+    }
+
+    public static function paymentStatusOptions(): array
+    {
+        return [
+            'unpaid' => 'Belum Bayar',
+            'waiting_confirmation' => 'Menunggu Konfirmasi',
+            'paid' => 'Dibayar',
+            'rejected' => 'Ditolak',
+        ];
+    }
+
+    public function statusLabel(): string
+    {
+        return self::statusOptions()[$this->status] ?? ucfirst(str_replace('_',' ',$this->status));
+    }
+
+    public function paymentStatusLabel(): string
+    {
+        return self::paymentStatusOptions()[$this->payment_status] ?? ucfirst(str_replace('_',' ',$this->payment_status));
+    }
 }

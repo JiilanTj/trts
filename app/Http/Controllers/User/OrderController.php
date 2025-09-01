@@ -30,9 +30,17 @@ class OrderController extends Controller
     /** Show create form */
     public function create(Request $request)
     {
-        // Products can be filtered client side later
         $products = Product::active()->get();
-        return view('user.orders.create', compact('products'));
+        $prefill = null;
+        if ($request->filled('product_id')) {
+            $prefill = $products->firstWhere('id', (int)$request->input('product_id'));
+        }
+        $purchaseType = $request->input('purchase_type','self');
+        if(!in_array($purchaseType,['self','external'])) { $purchaseType = 'self'; }
+        $singleMode = (bool)$prefill; // if coming from product page, go straight to single checkout
+        $user = $request->user();
+        $selfDefaultName = $user->full_name; // for autofill when self
+        return view('user.orders.create', compact('products','prefill','purchaseType','singleMode','selfDefaultName'));
     }
 
     /**
@@ -40,20 +48,36 @@ class OrderController extends Controller
      * Expected payload:
      * purchase_type: self|external
      * external_customer_name/phone (when external)
+     * address (required)
      * items: [ { product_id, quantity } ]
      */
     public function store(Request $request)
     {
+        // Normalize potential array inputs coming from malformed submissions/autofill
+        foreach (['external_customer_name','external_customer_phone','address'] as $field) {
+            $val = $request->input($field);
+            if (is_array($val)) {
+                $flat = trim(implode(' ', array_map(fn($v)=> is_scalar($v)? $v : '', $val)));
+                $request->merge([$field => $flat]);
+            }
+        }
+
         $user = $request->user();
         $data = $request->validate([
             'purchase_type' => 'required|in:self,external',
             'external_customer_name' => 'required_if:purchase_type,external|string|max:120',
             'external_customer_phone' => 'required_if:purchase_type,external|string|max:40',
+            'address' => 'required|string|max:255',
             'items' => 'required|array|min:1',
             'items.*.product_id' => 'required|exists:products,id',
             'items.*.quantity' => 'required|integer|min:1',
             'user_notes' => 'nullable|string',
         ]);
+
+        // Autofill for self purchase: treat user's own name as external_customer_name for consistency
+        if ($data['purchase_type'] === 'self') {
+            $data['external_customer_name'] = $user->full_name;
+        }
 
         $purchaseType = $data['purchase_type'];
         $itemsInput = $data['items'];
@@ -66,6 +90,7 @@ class OrderController extends Controller
                 'purchase_type' => $purchaseType,
                 'external_customer_name' => $data['external_customer_name'] ?? null,
                 'external_customer_phone' => $data['external_customer_phone'] ?? null,
+                'address' => $data['address'] ?? null,
                 'subtotal' => 0,
                 'discount_total' => 0,
                 'grand_total' => 0,
@@ -88,7 +113,6 @@ class OrderController extends Controller
                 $discount = 0; // future: apply promo logic
                 $sellerMargin = 0;
                 if ($user->isSeller() && $purchaseType === 'external') {
-                    // margin = (sell_price - basePrice) * qty? we store per-unit margin
                     $sellerMargin = max(0, $sellPrice - $basePrice);
                 }
                 $lineTotal = ($unitPrice - $discount) * $qty;
