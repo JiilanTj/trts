@@ -1,28 +1,33 @@
 <x-app-layout>
-    <div class="min-h-screen bg-gradient-to-br from-blue-50 via-white to-indigo-50 px-4 py-6 space-y-8">
-        <div class="flex items-center gap-3">
-            <a href="{{ url()->previous() }}" class="inline-flex items-center justify-center w-9 h-9 rounded-xl border border-gray-200 text-gray-500 hover:text-gray-700 hover:bg-gray-50 transition" aria-label="Kembali">
+    <div class="min-h-screen bg-[#0f1115] text-gray-200 px-4 py-6 space-y-10 relative overflow-hidden">
+        <!-- background accents -->
+        <div class="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_25%_15%,rgba(236,72,153,0.07),transparent_60%)]"></div>
+        <div class="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_80%_85%,rgba(59,130,246,0.08),transparent_65%)]"></div>
+
+        <!-- Header -->
+        <div class="flex items-center gap-3 relative z-10">
+            <a href="{{ url()->previous() }}" class="inline-flex items-center justify-center w-9 h-9 rounded-xl border border-white/10 text-gray-400 hover:text-white hover:bg-white/5 transition focus:outline-none focus:ring-2 focus:ring-fuchsia-500/60" aria-label="Kembali">
                 <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M15 19l-7-7 7-7" /></svg>
             </a>
             <div class="flex-1 min-w-0">
-                <h1 class="text-base font-semibold text-gray-900 leading-tight line-clamp-1">Detail Produk</h1>
+                <h1 class="text-base font-semibold text-white leading-tight line-clamp-1">Detail Produk</h1>
                 <p class="text-[11px] text-gray-500 mt-0.5 line-clamp-1">Informasi produk aktif.</p>
             </div>
-            <a href="{{ route('browse.products.index') }}" class="hidden sm:inline-flex items-center gap-2 px-3 py-2 rounded-lg text-xs font-medium bg-indigo-600 text-white hover:bg-indigo-700 shadow-sm transition">
+            <a href="{{ route('browse.products.index') }}" class="hidden sm:inline-flex items-center gap-2 px-3 py-2 rounded-lg text-xs font-medium bg-gradient-to-r from-fuchsia-500 via-rose-500 to-cyan-500 text-white hover:from-fuchsia-500/90 hover:via-rose-500/90 hover:to-cyan-500/90 shadow-sm shadow-fuchsia-500/30 transition focus:outline-none focus:ring-2 focus:ring-fuchsia-500/60">
                 <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M3 7h2l2-3h10l2 3h2v13H3z" /></svg>
                 Semua Produk
             </a>
         </div>
 
-        <div class="grid md:grid-cols-2 gap-8">
+        <div class="grid md:grid-cols-2 gap-10 relative z-10">
             <!-- Media -->
             <div class="space-y-4">
-                <div class="bg-white rounded-2xl border border-gray-200 shadow-sm overflow-hidden relative">
-                    <div class="aspect-square w-full bg-gray-100 flex items-center justify-center overflow-hidden">
+                <div class="rounded-2xl border border-white/10 bg-[#181d23] shadow-sm overflow-hidden relative">
+                    <div class="aspect-square w-full bg-[#1f252c] flex items-center justify-center overflow-hidden">
                         @if($product->image_url)
                             <img src="{{ $product->image_url }}" alt="{{ $product->name }}" class="object-cover w-full h-full">
                         @else
-                            <svg class="w-12 h-12 text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 7h2l2-3h10l2 3h2v13H3z" /></svg>
+                            <svg class="w-12 h-12 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 7h2l2-3h10l2 3h2v13H3z" /></svg>
                         @endif
                     </div>
                     @if($product->promo_price)
@@ -39,60 +44,60 @@
             <!-- Detail -->
             <div class="space-y-6">
                 <div>
-                    <h2 class="text-xl font-semibold text-gray-900 mb-1 leading-snug">{{ $product->name }}</h2>
+                    <h2 class="text-xl font-semibold text-white mb-1 leading-snug">{{ $product->name }}</h2>
                     <p class="text-xs text-gray-500">SKU: {{ $product->sku }} • Kategori: {{ $product->category->name }}</p>
                 </div>
                 <div class="flex flex-wrap items-center gap-4">
                     <div class="flex items-baseline gap-2">
-                        <p class="text-2xl font-bold text-indigo-600">Rp {{ number_format($product->promo_price ?: $product->sell_price, 0, ',', '.') }}</p>
+                        <p class="text-2xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-fuchsia-400 via-rose-400 to-cyan-400">Rp {{ number_format($product->promo_price ?: $product->sell_price, 0, ',', '.') }}</p>
                         @if($product->promo_price)
-                            <p class="text-sm text-gray-400 line-through">Rp {{ number_format($product->sell_price, 0, ',', '.') }}</p>
+                            <p class="text-sm text-gray-500 line-through">Rp {{ number_format($product->sell_price, 0, ',', '.') }}</p>
                         @endif
                     </div>
                     @if(!$product->inStock())
-                        <span class="px-2.5 py-1 text-[11px] bg-red-50 text-red-600 rounded-full font-medium">Stok Habis</span>
+                        <span class="px-2.5 py-1 text-[11px] bg-red-600/20 text-red-400 rounded-full font-medium border border-red-600/30">Stok Habis</span>
                     @else
-                        <span class="px-2.5 py-1 text-[11px] bg-green-50 text-green-600 rounded-full font-medium">Stok: {{ $product->stock }}</span>
+                        <span class="px-2.5 py-1 text-[11px] bg-emerald-600/20 text-emerald-400 rounded-full font-medium border border-emerald-600/30">Stok: {{ $product->stock }}</span>
                     @endif
                     @if($product->expiry_date)
-                        <span class="px-2.5 py-1 text-[11px] bg-gray-100 text-gray-600 rounded-full font-medium">Exp {{ $product->expiry_date->format('d M Y') }}</span>
+                        <span class="px-2.5 py-1 text-[11px] bg-[#1b1f25] text-gray-400 rounded-full font-medium border border-white/10">Exp {{ $product->expiry_date->format('d M Y') }}</span>
                     @endif
                 </div>
-                <div class="text-sm text-gray-700 leading-relaxed">
+                <div class="text-sm text-gray-400 leading-relaxed">
                     {{ $product->description ?: 'Tidak ada deskripsi produk.' }}
                 </div>
 
                 <div class="grid grid-cols-2 gap-4 text-sm">
-                    <div class="bg-white rounded-xl border border-gray-200 p-4">
+                    <div class="rounded-xl border border-white/10 bg-[#181d23] p-4">
                         <p class="text-[11px] font-medium text-gray-500 uppercase tracking-wide">Berat</p>
-                        <p class="mt-1 font-semibold text-gray-900">{{ $product->weight ? $product->weight . ' gr' : '-' }}</p>
+                        <p class="mt-1 font-semibold text-gray-200">{{ $product->weight ? $product->weight . ' gr' : '-' }}</p>
                     </div>
-                    <div class="bg-white rounded-xl border border-gray-200 p-4">
+                    <div class="rounded-xl border border-white/10 bg-[#181d23] p-4">
                         <p class="text-[11px] font-medium text-gray-500 uppercase tracking-wide">Status</p>
-                        <p class="mt-1 font-semibold text-gray-900">{{ $product->status === 'active' ? 'Aktif' : 'Tidak Aktif' }}</p>
+                        <p class="mt-1 font-semibold text-gray-200">{{ $product->status === 'active' ? 'Aktif' : 'Tidak Aktif' }}</p>
                     </div>
-                    <div class="bg-white rounded-xl border border-gray-200 p-4">
+                    <div class="rounded-xl border border-white/10 bg-[#181d23] p-4">
                         <p class="text-[11px] font-medium text-gray-500 uppercase tracking-wide">Dibuat</p>
-                        <p class="mt-1 font-semibold text-gray-900">{{ $product->created_at?->format('d M Y') }}</p>
+                        <p class="mt-1 font-semibold text-gray-200">{{ $product->created_at?->format('d M Y') }}</p>
                     </div>
-                    <div class="bg-white rounded-xl border border-gray-200 p-4">
+                    <div class="rounded-xl border border-white/10 bg-[#181d23] p-4">
                         <p class="text-[11px] font-medium text-gray-500 uppercase tracking-wide">Diperbarui</p>
-                        <p class="mt-1 font-semibold text-gray-900">{{ $product->updated_at?->format('d M Y') }}</p>
+                        <p class="mt-1 font-semibold text-gray-200">{{ $product->updated_at?->format('d M Y') }}</p>
                     </div>
                 </div>
 
                 <div class="pt-2">
                     <form method="POST" action="{{ route('browse.products.buy',$product) }}" class="space-y-3">
                         @csrf
-                        <button @disabled(!$product->inStock()) class="w-full py-3 bg-indigo-600 hover:bg-indigo-700 disabled:bg-gray-300 disabled:cursor-not-allowed text-white font-medium rounded-xl text-sm shadow-sm flex items-center justify-center gap-2">
+                        <button @disabled(!$product->inStock()) class="w-full py-3 rounded-xl text-sm font-medium text-white bg-gradient-to-r from-fuchsia-500 via-rose-500 to-cyan-500 hover:from-fuchsia-500/90 hover:via-rose-500/90 hover:to-cyan-500/90 disabled:from-gray-600 disabled:via-gray-500 disabled:to-gray-400 disabled:cursor-not-allowed shadow-sm shadow-fuchsia-500/30 flex items-center justify-center gap-2 focus:outline-none focus:ring-2 focus:ring-fuchsia-500/60">
                             <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2 9m5-9v9m4-9v9m4-9l2 9" /></svg>
                             Beli
                         </button>
                         @if (session('success'))
-                            <p class="text-[11px] text-green-600 font-medium">{{ session('success') }}</p>
+                            <p class="text-[11px] text-emerald-400 font-medium">{{ session('success') }}</p>
                         @endif
                         @if (session('error'))
-                            <p class="text-[11px] text-red-600 font-medium">{{ session('error') }}</p>
+                            <p class="text-[11px] text-red-400 font-medium">{{ session('error') }}</p>
                         @endif
                     </form>
                 </div>
@@ -100,34 +105,34 @@
         </div>
 
         <!-- Divider -->
-        <div class="mt-10">
-            <div class="h-px bg-gradient-to-r from-transparent via-gray-200 to-transparent"></div>
+        <div>
+            <div class="h-px bg-gradient-to-r from-transparent via-white/10 to-transparent"></div>
         </div>
 
         <!-- Related Products -->
-        <div class="space-y-4">
+        <div class="space-y-4 relative z-10">
             <div class="flex items-center justify-between">
-                <h3 class="text-sm font-semibold text-gray-800">Produk Terkait (Kategori Sama)</h3>
-                <a href="{{ route('browse.products.index',[ 'category' => $product->category_id ]) }}" class="text-[11px] text-indigo-600 hover:text-indigo-700 font-medium">Lihat Semua</a>
+                <h3 class="text-sm font-semibold text-gray-300">Produk Terkait (Kategori Sama)</h3>
+                <a href="{{ route('browse.products.index',[ 'category' => $product->category_id ]) }}" class="text-[11px] font-medium bg-clip-text text-transparent bg-gradient-to-r from-fuchsia-400 via-rose-400 to-cyan-400 hover:from-fuchsia-400/80 hover:via-rose-400/80 hover:to-cyan-400/80">Lihat Semua</a>
             </div>
             @if($relatedProducts->count())
                 <div class="grid grid-cols-2 sm:grid-cols-4 gap-4">
                     @foreach($relatedProducts as $rp)
-                        <a href="{{ route('browse.products.show',$rp) }}" class="group relative bg-white border border-gray-200 rounded-2xl p-3 hover:border-indigo-500 hover:shadow-md transition flex flex-col overflow-hidden">
-                            <div class="absolute inset-0 opacity-0 group-hover:opacity-100 bg-gradient-to-br from-indigo-50 via-transparent to-indigo-100 transition"></div>
-                            <div class="relative aspect-square w-full bg-gray-50 border border-gray-100 rounded-lg flex items-center justify-center mb-2 overflow-hidden">
+                        <a href="{{ route('browse.products.show',$rp) }}" class="group relative rounded-2xl p-3 bg-[#181d23] border border-white/5 hover:border-fuchsia-500/60 transition flex flex-col overflow-hidden focus:outline-none focus:ring-2 focus:ring-fuchsia-500/50">
+                            <div class="absolute inset-0 opacity-0 group-hover:opacity-100 bg-gradient-to-br from-fuchsia-500/10 via-transparent to-cyan-500/10 transition pointer-events-none"></div>
+                            <div class="relative aspect-square w-full bg-[#1f252c] border border-white/5 rounded-lg flex items-center justify-center mb-2 overflow-hidden group-hover:border-fuchsia-400/40">
                                 @if($rp->image_url)
                                     <img src="{{ $rp->image_url }}" alt="{{ $rp->name }}" class="object-cover w-full h-full">
                                 @else
-                                    <svg class="w-6 h-6 text-gray-300" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M3 7h2l2-3h10l2 3h2v13H3z" /></svg>
+                                    <svg class="w-6 h-6 text-gray-600" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M3 7h2l2-3h10l2 3h2v13H3z" /></svg>
                                 @endif
                                 @if($rp->promo_price)
-                                    <span class="absolute top-2 left-2 px-2 py-0.5 rounded-full bg-rose-500 text-white text-[9px] font-medium">Promo</span>
+                                    <span class="absolute top-2 left-2 px-2 py-0.5 rounded-full bg-rose-600 text-white text-[9px] font-medium">Promo</span>
                                 @endif
                             </div>
-                            <h4 class="relative text-[11px] font-medium text-gray-800 group-hover:text-indigo-600 mb-0.5 line-clamp-2 leading-snug">{{ $rp->name }}</h4>
-                            <p class="relative text-xs font-semibold text-indigo-600">Rp {{ number_format($rp->promo_price ?: $rp->sell_price,0,',','.') }}</p>
-                            <p class="relative text-[9px] text-gray-400">Stok: {{ $rp->stock }}</p>
+                            <h4 class="relative text-[11px] font-medium text-gray-200 group-hover:text-white mb-0.5 line-clamp-2 leading-snug">{{ $rp->name }}</h4>
+                            <p class="relative text-xs font-semibold bg-clip-text text-transparent bg-gradient-to-r from-fuchsia-400 via-rose-400 to-cyan-400">Rp {{ number_format($rp->promo_price ?: $rp->sell_price,0,',','.') }}</p>
+                            <p class="relative text-[9px] text-gray-500">Stok: {{ $rp->stock }}</p>
                         </a>
                     @endforeach
                 </div>
