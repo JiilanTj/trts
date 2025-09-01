@@ -30,9 +30,6 @@
                             <svg class="w-12 h-12 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 7h2l2-3h10l2 3h2v13H3z" /></svg>
                         @endif
                     </div>
-                    @if($product->promo_price)
-                        <span class="absolute top-3 left-3 px-2 py-1 text-[10px] font-medium rounded-full bg-rose-600 text-white">Promo</span>
-                    @endif
                     @if(!$product->inStock())
                         <span class="absolute top-3 right-3 px-2 py-1 text-[10px] font-medium rounded-full bg-gray-800 text-white">Stok Habis</span>
                     @elseif($product->stock < 5)
@@ -47,22 +44,41 @@
                     <h2 class="text-xl font-semibold text-white mb-1 leading-snug">{{ $product->name }}</h2>
                     <p class="text-xs text-gray-500">SKU: {{ $product->sku }} • Kategori: {{ $product->category->name }}</p>
                 </div>
-                <div class="flex flex-wrap items-center gap-4">
-                    <div class="flex items-baseline gap-2">
-                        <p class="text-2xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-fuchsia-400 via-rose-400 to-cyan-400">Rp {{ number_format($product->promo_price ?: $product->sell_price, 0, ',', '.') }}</p>
-                        @if($product->promo_price)
-                            <p class="text-sm text-gray-500 line-through">Rp {{ number_format($product->sell_price, 0, ',', '.') }}</p>
+
+                <!-- Pricing Block -->
+                <div class="space-y-3">
+                    @php $isSeller = auth()->user()?->isSeller(); @endphp
+                    <div class="flex flex-wrap items-end gap-6">
+                        <div>
+                            <p class="text-[11px] font-medium uppercase tracking-wide text-gray-500">Harga Biasa</p>
+                            <div class="flex items-baseline gap-2">
+                                <p class="text-2xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-fuchsia-400 via-rose-400 to-cyan-400">Rp {{ number_format($product->harga_biasa, 0, ',', '.') }}</p>
+                                @if($product->promo_price && $product->promo_price < $product->sell_price)
+                                    <p class="text-sm text-gray-500 line-through">Rp {{ number_format($product->sell_price, 0, ',', '.') }}</p>
+                                @endif
+                            </div>
+                        </div>
+                        @if($isSeller)
+                            <div>
+                                <p class="text-[11px] font-medium uppercase tracking-wide text-gray-500">Harga Jual</p>
+                                <p class="text-xl font-semibold text-cyan-400">Rp {{ number_format($product->harga_jual, 0, ',', '.') }}</p>
+                            </div>
+                        @endif
+                        <div>
+                            @if(!$product->inStock())
+                                <span class="px-2.5 py-1 text-[11px] bg-red-600/20 text-red-400 rounded-full font-medium border border-red-600/30">Stok Habis</span>
+                            @else
+                                <span class="px-2.5 py-1 text-[11px] bg-emerald-600/20 text-emerald-400 rounded-full font-medium border border-emerald-600/30">Stok: {{ $product->stock }}</span>
+                            @endif
+                        </div>
+                        @if($product->expiry_date)
+                            <div>
+                                <span class="px-2.5 py-1 text-[11px] bg-[#1b1f25] text-gray-400 rounded-full font-medium border border-white/10">Exp {{ $product->expiry_date->format('d M Y') }}</span>
+                            </div>
                         @endif
                     </div>
-                    @if(!$product->inStock())
-                        <span class="px-2.5 py-1 text-[11px] bg-red-600/20 text-red-400 rounded-full font-medium border border-red-600/30">Stok Habis</span>
-                    @else
-                        <span class="px-2.5 py-1 text-[11px] bg-emerald-600/20 text-emerald-400 rounded-full font-medium border border-emerald-600/30">Stok: {{ $product->stock }}</span>
-                    @endif
-                    @if($product->expiry_date)
-                        <span class="px-2.5 py-1 text-[11px] bg-[#1b1f25] text-gray-400 rounded-full font-medium border border-white/10">Exp {{ $product->expiry_date->format('d M Y') }}</span>
-                    @endif
                 </div>
+
                 <div class="text-sm text-gray-400 leading-relaxed">
                     {{ $product->description ?: 'Tidak ada deskripsi produk.' }}
                 </div>
@@ -87,8 +103,22 @@
                 </div>
 
                 <div class="pt-2">
-                    <form method="POST" action="{{ route('browse.products.buy',$product) }}" class="space-y-3">
+                    <form method="POST" action="{{ route('browse.products.buy',$product) }}" class="space-y-4">
                         @csrf
+                        @if($isSeller)
+                            <div class="flex items-center gap-4">
+                                <label class="flex items-center gap-2 text-xs text-gray-300">
+                                    <input type="radio" name="purchase_type" value="self" class="text-fuchsia-500 focus:ring-fuchsia-500/60 bg-[#1b1f25] border-white/10" checked>
+                                    <span>Beli Untuk Diri (Harga Biasa)</span>
+                                </label>
+                                <label class="flex items-center gap-2 text-xs text-gray-300">
+                                    <input type="radio" name="purchase_type" value="external" class="text-cyan-500 focus:ring-cyan-500/60 bg-[#1b1f25] border-white/10">
+                                    <span>Jual ke Pelanggan (Harga Jual)</span>
+                                </label>
+                            </div>
+                        @else
+                            <input type="hidden" name="purchase_type" value="self">
+                        @endif
                         <button @disabled(!$product->inStock()) class="w-full py-3 rounded-xl text-sm font-medium text-white bg-gradient-to-r from-fuchsia-500 via-rose-500 to-cyan-500 hover:from-fuchsia-500/90 hover:via-rose-500/90 hover:to-cyan-500/90 disabled:from-gray-600 disabled:via-gray-500 disabled:to-gray-400 disabled:cursor-not-allowed shadow-sm shadow-fuchsia-500/30 flex items-center justify-center gap-2 focus:outline-none focus:ring-2 focus:ring-fuchsia-500/60">
                             <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2 9m5-9v9m4-9v9m4-9l2 9" /></svg>
                             Beli
@@ -126,12 +156,9 @@
                                 @else
                                     <svg class="w-6 h-6 text-gray-600" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M3 7h2l2-3h10l2 3h2v13H3z" /></svg>
                                 @endif
-                                @if($rp->promo_price)
-                                    <span class="absolute top-2 left-2 px-2 py-0.5 rounded-full bg-rose-600 text-white text-[9px] font-medium">Promo</span>
-                                @endif
                             </div>
                             <h4 class="relative text-[11px] font-medium text-gray-200 group-hover:text-white mb-0.5 line-clamp-2 leading-snug">{{ $rp->name }}</h4>
-                            <p class="relative text-xs font-semibold bg-clip-text text-transparent bg-gradient-to-r from-fuchsia-400 via-rose-400 to-cyan-400">Rp {{ number_format($rp->promo_price ?: $rp->sell_price,0,',','.') }}</p>
+                            <p class="relative text-xs font-semibold bg-clip-text text-transparent bg-gradient-to-r from-fuchsia-400 via-rose-400 to-cyan-400">Rp {{ number_format($rp->harga_biasa,0,',','.') }}</p>
                             <p class="relative text-[9px] text-gray-500">Stok: {{ $rp->stock }}</p>
                         </a>
                     @endforeach

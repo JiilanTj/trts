@@ -36,6 +36,12 @@ class Product extends Model
         'status' => 'string',
     ];
 
+    // Tambahan atribut terlampir agar bisa dipanggil langsung di blade ($product->harga_biasa, $product->harga_jual)
+    protected $appends = [
+        'harga_biasa',
+        'harga_jual',
+    ];
+
     /**
      * Get the category that owns the product
      */
@@ -69,6 +75,25 @@ class Product extends Model
     }
 
     /**
+     * Harga Biasa = promo_price jika ada dan < sell_price, selain itu sell_price
+     */
+    public function getHargaBiasaAttribute(): int
+    {
+        if ($this->promo_price !== null && $this->promo_price < $this->sell_price) {
+            return (int) $this->promo_price;
+        }
+        return (int) $this->sell_price;
+    }
+
+    /**
+     * Harga Jual (untuk penjualan external oleh seller) = sell_price
+     */
+    public function getHargaJualAttribute(): int
+    {
+        return (int) $this->sell_price;
+    }
+
+    /**
      * Get formatted purchase price
      */
     public function getFormattedPurchasePriceAttribute(): string
@@ -93,6 +118,22 @@ class Product extends Model
     }
 
     /**
+     * Formatted harga biasa
+     */
+    public function getFormattedHargaBiasaAttribute(): string
+    {
+        return 'Rp ' . number_format($this->harga_biasa, 0, ',', '.');
+    }
+
+    /**
+     * Formatted harga jual
+     */
+    public function getFormattedHargaJualAttribute(): string
+    {
+        return 'Rp ' . number_format($this->harga_jual, 0, ',', '.');
+    }
+
+    /**
      * Get image URL
      */
     public function getImageUrlAttribute(): ?string
@@ -107,6 +148,22 @@ class Product extends Model
     {
         $this->profit = $this->sell_price - $this->purchase_price;
         return $this->profit;
+    }
+
+    /**
+     * Helper untuk memilih harga berdasarkan user & tipe pembelian
+     * $purchaseType: self|external
+     */
+    public function getApplicablePrice($user, string $purchaseType = 'self'): int
+    {
+        $isSeller = $user && method_exists($user, 'isSeller') && $user->isSeller();
+        if (!$isSeller) {
+            return $this->harga_biasa;
+        }
+        if ($purchaseType === 'external') {
+            return $this->harga_jual;
+        }
+        return $this->harga_biasa;
     }
 
     /**

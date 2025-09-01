@@ -54,15 +54,27 @@ class ProductBrowseController extends Controller
     }
 
     /**
-     * Mock buy action - no real transaction, just flash message.
+     * Simulasi pembelian dengan dukungan purchase_type (self|external) & penentuan harga.
      */
     public function buy(Request $request, Product $product)
     {
         abort_unless($product->isActive(), 404);
-        if(!$product->inStock()) {
-            return back()->with('error','Produk sedang habis stok.');
+        if (!$product->inStock()) {
+            return back()->with('error', 'Produk sedang habis stok.');
         }
-        // Simulasi: tidak mengurangi stok atau membuat transaksi.
-        return back()->with('success','Simulasi pembelian berhasil. (Fitur pembelian penuh belum tersedia)');
+
+        $purchaseType = $request->input('purchase_type', 'self');
+        if (!in_array($purchaseType, ['self','external'])) {
+            $purchaseType = 'self';
+        }
+
+        $user = $request->user();
+        $appliedPrice = $product->getApplicablePrice($user, $purchaseType);
+
+        // Simulasi saja: tidak membuat record transaksi / tidak kurangi stok.
+        $labelHarga = $purchaseType === 'external' && $user?->isSeller() ? 'Harga Jual' : 'Harga Biasa';
+        $formatted = 'Rp ' . number_format($appliedPrice, 0, ',', '.');
+
+        return back()->with('success', "Simulasi pembelian ($labelHarga: $formatted) berhasil. (Fitur pembelian penuh belum tersedia)");
     }
 }

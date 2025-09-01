@@ -30,6 +30,7 @@ class UserFactory extends Factory
             'balance' => fake()->numberBetween(0, 10000),
             'level' => fake()->numberBetween(1, 5),
             'role' => 'user',
+            'is_seller' => false,
             'remember_token' => Str::random(10),
         ];
     }

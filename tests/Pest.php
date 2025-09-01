@@ -11,9 +11,8 @@
 |
 */
 
-pest()->extend(Tests\TestCase::class)
-    ->use(Illuminate\Foundation\Testing\RefreshDatabase::class)
-    ->in('Feature');
+// Use the Laravel test case for all Feature tests (actingAs etc.)
+uses(Tests\TestCase::class)->in('Feature');
 
 /*
 |--------------------------------------------------------------------------

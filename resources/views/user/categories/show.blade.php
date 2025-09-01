@@ -66,6 +66,7 @@
                     <span class="text-[11px] text-gray-500">Menampilkan {{ $products->firstItem() }} - {{ $products->lastItem() }}</span>
                 @endif
             </div>
+            @php $isSeller = auth()->user()?->isSeller(); @endphp
             @if($products->count())
                 <div id="products-grid" class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4">
                     @foreach($products as $product)
@@ -81,9 +82,20 @@
                                 </div>
                                 <h3 class="text-xs font-medium text-gray-200 group-hover:text-white mb-1 line-clamp-2 leading-snug relative">{{ $product->name }}</h3>
                             </div>
-                            <div class="mt-auto space-y-0.5 relative z-10">
-                                <p class="text-sm font-semibold bg-clip-text text-transparent bg-gradient-to-r from-fuchsia-400 via-rose-400 to-cyan-400">Rp {{ number_format($product->promo_price ?: $product->sell_price, 0, ',', '.') }}</p>
-                                @if($product->promo_price)
+                            <div class="mt-auto space-y-1 relative z-10">
+                                <div class="flex flex-col gap-0.5">
+                                    <div class="flex items-center gap-2">
+                                        <span class="text-[10px] px-1.5 py-0.5 rounded bg-[#1b1f25] text-gray-400 border border-white/5">Biasa</span>
+                                        <p class="text-sm font-semibold bg-clip-text text-transparent bg-gradient-to-r from-fuchsia-400 via-rose-400 to-cyan-400">Rp {{ number_format($product->harga_biasa, 0, ',', '.') }}</p>
+                                    </div>
+                                    @if($isSeller)
+                                        <div class="flex items-center gap-2">
+                                            <span class="text-[10px] px-1.5 py-0.5 rounded bg-[#1b1f25] text-cyan-400 border border-cyan-500/30">Jual</span>
+                                            <p class="text-xs font-medium text-cyan-400">Rp {{ number_format($product->harga_jual, 0, ',', '.') }}</p>
+                                        </div>
+                                    @endif
+                                </div>
+                                @if($product->promo_price && $product->promo_price < $product->sell_price)
                                     <p class="text-[10px] text-gray-500 line-through">Rp {{ number_format($product->sell_price, 0, ',', '.') }}</p>
                                 @endif
                                 <p class="text-[10px] text-gray-500">Stok: {{ $product->stock }}</p>
