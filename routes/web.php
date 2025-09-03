@@ -18,6 +18,12 @@ use App\Http\Controllers\Admin\SettingController; // new
 // +++ added order controllers
 use App\Http\Controllers\User\OrderController as UserOrderController;
 use App\Http\Controllers\Admin\OrderController as AdminOrderController;
+use App\Http\Controllers\User\KycRequestController as UserKycRequestController;
+use App\Http\Controllers\Admin\KycRequestController as AdminKycRequestController;
+use App\Http\Controllers\User\UserDetailController; // added
+// +++ KYC snapshot controllers (user + admin)
+use App\Http\Controllers\User\KycController as UserKycController; // new
+use App\Http\Controllers\Admin\KycController as AdminKycController; // new
 
 Route::get('/', function () {
     return view('welcome');
@@ -118,6 +124,23 @@ Route::middleware('auth')->group(function () {
         Route::post('/{order}/upload-proof', [UserOrderController::class,'uploadProof'])->name('upload-proof');
         Route::post('/{order}/cancel', [UserOrderController::class,'cancel'])->name('cancel');
     });
+    
+    // KYC User routes (JSON minimal)
+    Route::prefix('kyc')->name('user.kyc.')->group(function(){
+        Route::get('requests', [UserKycRequestController::class,'index'])->name('requests.index');
+        Route::post('requests', [UserKycRequestController::class,'store'])->name('requests.store');
+        Route::get('requests/{kycRequest}', [UserKycRequestController::class,'show'])->name('requests.show');
+    });
+    // User KYC snapshot (approved data)
+    Route::get('kyc', [UserKycController::class,'show'])->name('user.kyc.show');
+    
+    // User Detail routes (JSON minimal)
+    Route::prefix('user-detail')->name('user.detail.')->group(function(){
+        Route::get('/', [UserDetailController::class,'show'])->name('show');
+        Route::post('/', [UserDetailController::class,'upsert'])->name('upsert');
+        Route::put('/', [UserDetailController::class,'upsert']);
+        Route::patch('/', [UserDetailController::class,'upsert']);
+    });
 });
 
 // Admin Routes - Only for admin users
@@ -155,6 +178,20 @@ Route::middleware(['auth', 'role:admin'])->prefix('admin')->name('admin.')->grou
         Route::post('/{order}/reject-payment', [AdminOrderController::class,'rejectPayment'])->name('reject-payment');
         Route::post('/{order}/advance-status', [AdminOrderController::class,'advanceStatus'])->name('advance-status');
         Route::post('/{order}/cancel', [AdminOrderController::class,'cancel'])->name('cancel');
+    });
+    
+    // Admin KYC management routes (JSON minimal)
+    Route::prefix('kyc')->name('kyc.')->group(function(){
+        Route::get('requests', [AdminKycRequestController::class,'index'])->name('requests.index');
+        Route::get('requests/{kycRequest}', [AdminKycRequestController::class,'show'])->name('requests.show');
+        Route::post('requests/{kycRequest}/start-review', [AdminKycRequestController::class,'startReview'])->name('requests.start-review');
+        Route::post('requests/{kycRequest}/approve', [AdminKycRequestController::class,'approve'])->name('requests.approve');
+        Route::post('requests/{kycRequest}/reject', [AdminKycRequestController::class,'reject'])->name('requests.reject');
+    });
+    // Admin KYC snapshots (approved records)
+    Route::prefix('kyc/snapshots')->name('kyc.snapshots.')->group(function(){
+        Route::get('/', [AdminKycController::class,'index'])->name('index');
+        Route::get('/{kyc}', [AdminKycController::class,'show'])->name('show');
     });
 });
 

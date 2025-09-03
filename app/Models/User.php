@@ -210,4 +210,34 @@ class User extends Authenticatable
     {
         return $this->hasOne(SellerInfo::class);
     }
+
+    /**
+     * User detail for this user.
+     *
+     * @return \Illuminate\Database\Eloquent\Relations\HasOne
+     */
+    public function detail()
+    {
+        return $this->hasOne(UserDetail::class);
+    }
+
+    /**
+     * KYC requests made by this user.
+     *
+     * @return \Illuminate\Database\Eloquent\Relations\HasMany
+     */
+    public function kycRequests()
+    {
+        return $this->hasMany(KycRequest::class);
+    }
+
+    /**
+     * KYC information for this user.
+     *
+     * @return \Illuminate\Database\Eloquent\Relations\HasOne
+     */
+    public function kyc()
+    {
+        return $this->hasOne(Kyc::class);
+    }
 }
