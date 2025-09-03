@@ -14,8 +14,11 @@ class KycController extends Controller
     public function show(Request $request)
     {
         $kyc = Kyc::where('user_id',$request->user()->id)->first();
-        return response()->json([
-            'data' => $kyc,
-        ]);
+        if ($request->wantsJson()) {
+            return response()->json([
+                'data' => $kyc,
+            ]);
+        }
+        return view('user.kyc.snapshot.show',[ 'kyc' => $kyc ]);
     }
 }

@@ -53,7 +53,7 @@
             <nav class="fixed bottom-0 left-0 right-0 bg-[#0c0e12]/95 backdrop-blur-md border-t border-white/10 z-50">
                 @php
                     $homeActive = request()->routeIs('dashboard');
-                    $profileActive = request()->routeIs('profile.edit');
+                    $profileActive = request()->routeIs('user.profile.index');
                     $settingsActive = auth()->check() && auth()->user()->isAdmin() ? request()->routeIs('admin.settings.*') : false; // hanya admin yang bisa aktif
                     $messagesActive = false;
                     $historyActive = false;
@@ -128,7 +128,7 @@
                     </a>
 
                     <!-- Profile -->
-                    <a href="{{ route('profile.edit') }}" aria-label="Profile" class="relative flex items-center justify-center {{ $profileActive && !$settingsActive ? 'glitch-button' : 'text-gray-500 hover:text-gray-300' }}">
+                    <a href="{{ route('user.profile.index') }}" aria-label="Profile" class="relative flex items-center justify-center {{ $profileActive && !$settingsActive ? 'glitch-button' : 'text-gray-500 hover:text-gray-300' }}">
                         @if($profileActive && !$settingsActive)
                             <div class="relative w-12 h-8">
                                 <div class="glitch-layer-1 absolute w-12 h-8 bg-fuchsia-500 rounded-xl translate-x-1"></div>

@@ -125,13 +125,13 @@ Route::middleware('auth')->group(function () {
         Route::post('/{order}/cancel', [UserOrderController::class,'cancel'])->name('cancel');
     });
     
-    // KYC User routes (JSON minimal)
+    // KYC User routes now support Blade + JSON (index, store, show)
     Route::prefix('kyc')->name('user.kyc.')->group(function(){
         Route::get('requests', [UserKycRequestController::class,'index'])->name('requests.index');
         Route::post('requests', [UserKycRequestController::class,'store'])->name('requests.store');
         Route::get('requests/{kycRequest}', [UserKycRequestController::class,'show'])->name('requests.show');
     });
-    // User KYC snapshot (approved data)
+    // User KYC snapshot (approved data) - supports Blade + JSON
     Route::get('kyc', [UserKycController::class,'show'])->name('user.kyc.show');
     
     // User Detail routes (JSON minimal)
@@ -141,6 +141,9 @@ Route::middleware('auth')->group(function () {
         Route::put('/', [UserDetailController::class,'upsert']);
         Route::patch('/', [UserDetailController::class,'upsert']);
     });
+    Route::get('profile-page', function(){
+        return view('user.profile.index');
+    })->name('user.profile.index');
 });
 
 // Admin Routes - Only for admin users

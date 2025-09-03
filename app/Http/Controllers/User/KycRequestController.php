@@ -15,16 +15,24 @@ class KycRequestController extends Controller
     {
         $requests = KycRequest::where('user_id', $request->user()->id)
             ->latest()->get();
-        return response()->json([
-            'data' => $requests,
+        if ($request->wantsJson()) {
+            return response()->json([
+                'data' => $requests,
+            ]);
+        }
+        return view('user.kyc.requests.index', [
+            'requests' => $requests,
         ]);
     }
 
-    /** Show single KYC request (JSON for now) */
+    /** Show single KYC request (JSON or Blade) */
     public function show(Request $request, KycRequest $kycRequest)
     {
         abort_unless($kycRequest->user_id === $request->user()->id, 403);
-        return response()->json(['data' => $kycRequest]);
+        if ($request->wantsJson()) {
+            return response()->json(['data' => $kycRequest]);
+        }
+        return view('user.kyc.requests.show',[ 'kycRequest' => $kycRequest ]);
     }
 
     /** Create a new KYC request */
@@ -36,7 +44,10 @@ class KycRequestController extends Controller
             ->whereIn('status_kyc',['pending','review'])
             ->exists();
         if ($exists) {
-            return response()->json(['message' => 'Masih ada pengajuan KYC yang berjalan.'], 422);
+            if ($request->wantsJson()) {
+                return response()->json(['message' => 'Masih ada pengajuan KYC yang berjalan.'], 422);
+            }
+            return back()->withErrors(['full_name' => 'Masih ada pengajuan KYC yang berjalan.']);
         }
 
         $data = $request->validate([
@@ -81,6 +92,9 @@ class KycRequestController extends Controller
             'status_kyc' => KycRequest::STATUS_PENDING,
         ]);
 
-        return response()->json(['message' => 'Pengajuan KYC dibuat','data'=>$requestModel], 201);
+        if ($request->wantsJson()) {
+            return response()->json(['message' => 'Pengajuan KYC dibuat','data'=>$requestModel], 201);
+        }
+        return redirect()->route('user.kyc.requests.show',$requestModel)->with('success','Pengajuan KYC berhasil dikirim');
     }
 }

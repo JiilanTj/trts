@@ -5,6 +5,7 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasOne;
+use Illuminate\Support\Facades\Storage;
 
 class KycRequest extends Model
 {
@@ -30,6 +31,20 @@ class KycRequest extends Model
             self::STATUS_APPROVED => 'Diterima',
             self::STATUS_REJECTED => 'Ditolak',
         ];
+    }
+
+    // Accessor untuk URL file (public disk)
+    public function getKtpFrontUrlAttribute(): ?string
+    {
+        return $this->ktp_front_path ? Storage::url($this->ktp_front_path) : null;
+    }
+    public function getKtpBackUrlAttribute(): ?string
+    {
+        return $this->ktp_back_path ? Storage::url($this->ktp_back_path) : null;
+    }
+    public function getSelfieKtpUrlAttribute(): ?string
+    {
+        return $this->selfie_ktp_path ? Storage::url($this->selfie_ktp_path) : null;
     }
 
     public function user(): BelongsTo { return $this->belongsTo(User::class); }
