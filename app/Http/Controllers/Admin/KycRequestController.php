@@ -18,36 +18,61 @@ class KycRequestController extends Controller
         if ($status = $request->get('status')) {
             $query->where('status_kyc',$status);
         }
-        $requests = $query->latest()->paginate(30);
-        return response()->json(['data'=>$requests]);
+        if ($userId = $request->get('user_id')) {
+            $query->where('user_id',$userId);
+        }
+        $requests = $query->latest()->paginate(30)->withQueryString();
+
+        if ($request->wantsJson()) {
+            return response()->json(['data'=>$requests]);
+        }
+
+        return view('admin.kyc.requests.index', [
+            'requests' => $requests,
+            'statusOptions' => KycRequest::statusOptions(),
+        ]);
     }
 
     /** Show single request */
-    public function show(KycRequest $kycRequest)
+    public function show(Request $request, KycRequest $kycRequest)
     {
         $kycRequest->load('user','reviewer','kyc');
-        return response()->json(['data'=>$kycRequest]);
+        if ($request->wantsJson()) {
+            return response()->json(['data'=>$kycRequest]);
+        }
+        return view('admin.kyc.requests.show', [
+            'kycRequest' => $kycRequest,
+            'statusOptions' => KycRequest::statusOptions(),
+        ]);
     }
 
     /** Move request to review */
     public function startReview(Request $request, KycRequest $kycRequest)
     {
         if ($kycRequest->status_kyc !== KycRequest::STATUS_PENDING) {
-            return response()->json(['message'=>'Status tidak valid untuk mulai review'],422);
+            return $request->wantsJson()
+                ? response()->json(['message'=>'Status tidak valid untuk mulai review'],422)
+                : back()->with('error','Status tidak valid untuk mulai review');
         }
         $kycRequest->update([
             'status_kyc' => KycRequest::STATUS_REVIEW,
             'reviewed_at' => now(),
             'reviewed_by' => $request->user()->id,
         ]);
-        return response()->json(['message'=>'Masuk review','data'=>$kycRequest]);
+
+        if ($request->wantsJson()) {
+            return response()->json(['message'=>'Masuk review','data'=>$kycRequest]);
+        }
+        return back()->with('success','Permintaan masuk tahap review');
     }
 
     /** Approve request and create final KYC snapshot */
     public function approve(Request $request, KycRequest $kycRequest)
     {
         if (!in_array($kycRequest->status_kyc,[KycRequest::STATUS_PENDING,KycRequest::STATUS_REVIEW])) {
-            return response()->json(['message'=>'Tidak bisa approve dari status ini'],422);
+            return $request->wantsJson()
+                ? response()->json(['message'=>'Tidak bisa approve dari status ini'],422)
+                : back()->with('error','Tidak bisa approve dari status ini');
         }
 
         DB::transaction(function() use ($kycRequest,$request){
@@ -83,14 +108,19 @@ class KycRequestController extends Controller
             );
         });
 
-        return response()->json(['message'=>'Disetujui']);
+        if ($request->wantsJson()) {
+            return response()->json(['message'=>'Disetujui']);
+        }
+        return redirect()->route('admin.kyc.requests.show',$kycRequest)->with('success','KYC disetujui & snapshot dibuat');
     }
 
     /** Reject request */
     public function reject(Request $request, KycRequest $kycRequest)
     {
         if (!in_array($kycRequest->status_kyc,[KycRequest::STATUS_PENDING,KycRequest::STATUS_REVIEW])) {
-            return response()->json(['message'=>'Tidak bisa reject dari status ini'],422);
+            return $request->wantsJson()
+                ? response()->json(['message'=>'Tidak bisa reject dari status ini'],422)
+                : back()->with('error','Tidak bisa reject dari status ini');
         }
         $data = $request->validate([
             'admin_notes' => 'nullable|string'
@@ -101,6 +131,9 @@ class KycRequestController extends Controller
             'reviewed_at' => now(),
             'reviewed_by' => $request->user()->id,
         ]);
-        return response()->json(['message'=>'Ditolak','data'=>$kycRequest]);
+        if ($request->wantsJson()) {
+            return response()->json(['message'=>'Ditolak','data'=>$kycRequest]);
+        }
+        return redirect()->route('admin.kyc.requests.show',$kycRequest)->with('success','KYC ditolak');
     }
 }

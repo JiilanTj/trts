@@ -17,16 +17,28 @@ class KycController extends Controller
         if ($userId = $request->get('user_id')) {
             $query->where('user_id',$userId);
         }
-        $kycs = $query->latest()->paginate(30);
-        return response()->json(['data'=>$kycs]);
+        $kycs = $query->latest()->paginate(30)->withQueryString();
+
+        if ($request->wantsJson()) {
+            return response()->json(['data'=>$kycs]);
+        }
+
+        return view('admin.kyc.snapshots.index', [
+            'kycs' => $kycs,
+        ]);
     }
 
     /**
      * Show single KYC snapshot
      */
-    public function show(Kyc $kyc)
+    public function show(Request $request, Kyc $kyc)
     {
         $kyc->load('user','request','verifier');
-        return response()->json(['data'=>$kyc]);
+        if ($request->wantsJson()) {
+            return response()->json(['data'=>$kyc]);
+        }
+        return view('admin.kyc.snapshots.show', [
+            'kyc' => $kyc,
+        ]);
     }
 }

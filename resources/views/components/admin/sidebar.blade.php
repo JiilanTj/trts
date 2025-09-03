@@ -127,6 +127,28 @@
                 </ul>
             </div>
 
+            <div class="mb-4">
+                <p class="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-2">KYC</p>
+                <ul class="space-y-1">
+                    <li>
+                        <a href="{{ route('admin.kyc.requests.index') }}" class="flex items-center space-x-3 px-3 py-2.5 rounded-lg {{ request()->routeIs('admin.kyc.requests.*') ? 'bg-blue-50 text-blue-700 border border-blue-200' : 'text-gray-600 hover:bg-gray-100 hover:text-gray-900' }} transition-all duration-200">
+                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1"></path>
+                            </svg>
+                            <span class="font-medium">Permintaan KYC</span>
+                        </a>
+                    </li>
+                    <li>
+                        <a href="{{ route('admin.kyc.snapshots.index') }}" class="flex items-center space-x-3 px-3 py-2.5 rounded-lg {{ request()->routeIs('admin.kyc.snapshots.*') ? 'bg-blue-50 text-blue-700 border border-blue-200' : 'text-gray-600 hover:bg-gray-100 hover:text-gray-900' }} transition-all duration-200">
+                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
+                            </svg>
+                            <span class="font-medium">Snapshot KYC</span>
+                        </a>
+                    </li>
+                </ul>
+            </div>
+
             <div>
                 <p class="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-2">Sistem</p>
                 <ul class="space-y-1">
