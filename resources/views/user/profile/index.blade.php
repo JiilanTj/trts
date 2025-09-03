@@ -21,8 +21,17 @@
         <!-- Header / Profile Brief -->
         <div class="sticky top-0 z-30 backdrop-blur bg-[#1f2226]/95 border-b border-neutral-800/70">
             <div class="px-4 py-4 flex items-center gap-4">
-                <div class="relative w-14 h-14 rounded-xl bg-[#23272b] border border-neutral-700 flex items-center justify-center text-lg font-semibold tracking-wide">
-                    {{ strtoupper($initials) }}
+                <!-- Avatar (photo or initials) -->
+                <div class="relative w-14 h-14">
+                    @if($user->photo_url)
+                        <img src="{{ $user->photo_url }}" alt="Avatar" class="w-14 h-14 rounded-full object-cover ring-2 ring-neutral-700" />
+                    @else
+                        <div class="w-14 h-14 rounded-full p-0.5 bg-gradient-to-br from-[#FE2C55] to-[#25F4EE]">
+                            <div class="w-full h-full rounded-full bg-[#23272b] flex items-center justify-center text-lg font-semibold tracking-wide">
+                                {{ strtoupper($initials) }}
+                            </div>
+                        </div>
+                    @endif
                     @if($kyc)
                         <span class="absolute -bottom-1 -right-1 inline-flex items-center justify-center w-5 h-5 rounded-full bg-emerald-500 text-[10px] font-bold shadow ring-2 ring-[#1f2226]">✓</span>
                     @endif
@@ -63,10 +72,10 @@
             <section class="space-y-3">
                 <h2 class="text-xs font-semibold tracking-wide text-neutral-400 uppercase">Akun</h2>
                 <div class="rounded-xl overflow-hidden divide-y divide-neutral-800 border border-[#2c3136] bg-[#23272b]">
-                    <a href="{{ route('profile.edit') }}" class="flex items-center justify-between px-4 py-3 hover:bg-[#272c31] transition">
+                    <a href="{{ route('user.profile.edit') }}" class="flex items-center justify-between px-4 py-3 hover:bg-[#272c31] transition">
                         <div>
                             <p class="text-sm font-medium">Edit Profil</p>
-                            <p class="text-[11px] text-neutral-400">Ubah nama, email.</p>
+                            <p class="text-[11px] text-neutral-400">Ubah nama, username, detail.</p>
                         </div>
                         <svg class="w-4 h-4 text-neutral-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/></svg>
                     </a>
@@ -99,18 +108,26 @@
                 <h2 class="text-xs font-semibold tracking-wide text-neutral-400 uppercase">Detail Profil</h2>
                 <div class="rounded-xl border border-[#2c3136] bg-[#23272b] p-4 space-y-3">
                     @if($detail)
-                        <div class="grid grid-cols-2 gap-x-4 gap-y-2 text-[13px]">
-                            <div><span class="text-neutral-500">Telepon</span><div class="font-medium mt-0.5">{{ $detail->phone ?? '-' }}</div></div>
-                            <div><span class="text-neutral-500">Gender</span><div class="font-medium mt-0.5 capitalize">{{ $detail->gender ?? '-' }}</div></div>
-                            <div><span class="text-neutral-500">Alamat</span><div class="font-medium mt-0.5">{{ $detail->address ? Str::limit($detail->address,40) : '-' }}</div></div>
-                            <div><span class="text-neutral-500">Tanggal Lahir</span><div class="font-medium mt-0.5">{{ $detail->birth_date ?? '-' }}</div></div>
+                        <div class="grid grid-cols-1 gap-y-3 text-[13px]">
+                            <div>
+                                <span class="text-neutral-500">Telepon</span>
+                                <div class="font-medium mt-0.5">{{ $detail->phone ?: '-' }}</div>
+                            </div>
+                            <div>
+                                <span class="text-neutral-500">Telepon 2</span>
+                                <div class="font-medium mt-0.5">{{ $detail->secondary_phone ?: '-' }}</div>
+                            </div>
+                            <div>
+                                <span class="text-neutral-500">Alamat</span>
+                                <div class="font-medium mt-0.5">{{ $detail->address_line ? Str::limit($detail->address_line, 80) : '-' }}</div>
+                            </div>
                         </div>
                         <div class="pt-2">
-                            <a href="{{ route('user.detail.show') }}" class="inline-flex items-center text-xs px-3 py-1.5 rounded-md bg-neutral-700/40 hover:bg-neutral-600/40 transition border border-neutral-600 text-neutral-200">Perbarui</a>
+                            <a href="{{ route('user.profile.edit') }}" class="inline-flex items-center text-xs px-3 py-1.5 rounded-md bg-neutral-700/40 hover:bg-neutral-600/40 transition border border-neutral-600 text-neutral-200">Perbarui</a>
                         </div>
                     @else
-                        <p class="text-sm text-neutral-400">Belum ada detail tambahan.</p>
-                        <a href="{{ route('user.detail.show') }}" class="inline-flex items-center text-xs px-3 py-1.5 rounded-md bg-gradient-to-r from-[#FE2C55] to-[#25F4EE] text-black font-medium">Lengkapi Sekarang</a>
+                        <p class="text-sm text-neutral-400">Belum ada detail kontak & alamat.</p>
+                        <a href="{{ route('user.profile.edit') }}" class="inline-flex items-center text-xs px-3 py-1.5 rounded-md bg-gradient-to-r from-[#FE2C55] to-[#25F4EE] text-black font-medium">Lengkapi Sekarang</a>
                     @endif
                 </div>
             </section>

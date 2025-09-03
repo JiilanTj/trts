@@ -136,14 +136,34 @@ Route::middleware('auth')->group(function () {
     
     // User Detail routes (JSON minimal)
     Route::prefix('user-detail')->name('user.detail.')->group(function(){
-        Route::get('/', [UserDetailController::class,'show'])->name('show');
-        Route::post('/', [UserDetailController::class,'upsert'])->name('upsert');
-        Route::put('/', [UserDetailController::class,'upsert']);
         Route::patch('/', [UserDetailController::class,'upsert']);
     });
+
+    // Unified profile page & edit
     Route::get('profile-page', function(){
-        return view('user.profile.index');
+        $user = auth()->user()->load(['detail','kyc']);
+        $detail = $user->detail;
+        $kyc = $user->kyc; // approved snapshot
+        $status = 'unverified';
+        if($kyc){ $status = 'verified'; }
+        else {
+            $latest = $user->kycRequests()->latest()->first();
+            if($latest){ $status = $latest->status_kyc; }
+        }
+        $statusMap = [
+            'verified' => ['label'=>'Verified','color'=>'emerald'],
+            'approved' => ['label'=>'Approved','color'=>'emerald'],
+            'pending' => ['label'=>'Pending','color'=>'amber'],
+            'review' => ['label'=>'Review','color'=>'amber'],
+            'rejected' => ['label'=>'Rejected','color'=>'rose'],
+            'unverified' => ['label'=>'Belum','color'=>'slate'],
+        ];
+        $k = $statusMap[$status] ?? $statusMap['unverified'];
+        $initials = collect(explode(' ', trim($user->full_name ?: $user->username)))->filter()->take(2)->map(fn($p)=> strtoupper(mb_substr($p,0,1)))->implode('');
+        return view('user.profile.index', compact('user','detail','kyc','k','initials'));
     })->name('user.profile.index');
+    Route::get('profile/edit', [UserDetailController::class,'editCombined'])->name('user.profile.edit');
+    Route::put('profile/edit', [UserDetailController::class,'updateCombined'])->name('user.profile.update');
 });
 
 // Admin Routes - Only for admin users
