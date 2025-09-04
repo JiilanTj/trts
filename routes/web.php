@@ -26,7 +26,7 @@ use App\Http\Controllers\User\KycController as UserKycController; // new
 use App\Http\Controllers\Admin\KycController as AdminKycController; // new
 
 Route::get('/', function () {
-    return view('welcome');
+    return redirect()->route('login');
 });
 
 Route::get('/dashboard', function () {
