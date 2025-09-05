@@ -117,19 +117,22 @@
                             <div class="space-y-4">
                                 <div>
                                     <label class="block text-[11px] font-medium text-gray-400 mb-1">Nama</label>
-                                    <input type="text" name="external_customer_name" id="customer_name_field" value="{{ $purchaseType==='self' ? $selfDefaultName : old('external_customer_name') }}" class="w-full text-sm bg-[#1b1f25] border border-white/10 rounded-xl px-3 py-2 focus:outline-none focus:ring-2 focus:ring-cyan-500/50 text-gray-200 placeholder-gray-500" placeholder="Nama Pelanggan">
+                                    <input type="text" name="external_customer_name" id="customer_name_field" value="{{ old('external_customer_name', $purchaseType==='self' ? ($selfPrefill['name'] ?? '') : '') }}" class="w-full text-sm bg-[#1b1f25] border border-white/10 rounded-xl px-3 py-2 focus:outline-none focus:ring-2 focus:ring-cyan-500/50 text-gray-200 placeholder-gray-500" placeholder="Nama Pelanggan">
                                 </div>
                                 <div>
                                     <label class="block text-[11px] font-medium text-gray-400 mb-1">No. Telepon</label>
-                                    <input type="text" name="external_customer_phone" value="{{ old('external_customer_phone') }}" class="w-full text-sm bg-[#1b1f25] border border-white/10 rounded-xl px-3 py-2 focus:outline-none focus:ring-2 focus:ring-cyan-500/50 text-gray-200 placeholder-gray-500" placeholder="08xxxxxxxxxx">
+                                    <input type="text" name="external_customer_phone" id="customer_phone_field" value="{{ old('external_customer_phone', $purchaseType==='self' ? ($selfPrefill['phone'] ?? '') : '') }}" class="w-full text-sm bg-[#1b1f25] border border-white/10 rounded-xl px-3 py-2 focus:outline-none focus:ring-2 focus:ring-cyan-500/50 text-gray-200 placeholder-gray-500" placeholder="08xxxxxxxxxx">
                                 </div>
                                 <div>
                                     <label class="block text-[11px] font-medium text-gray-400 mb-1">Alamat <span class="text-red-500">*</span></label>
-                                    <input type="text" name="address" required value="{{ old('address') }}" class="w-full text-sm bg-[#1b1f25] border border-white/10 rounded-xl px-3 py-2 focus:outline-none focus:ring-2 focus:ring-cyan-500/50 text-gray-200 placeholder-gray-500" placeholder="Alamat pengiriman / catatan lokasi">
+                                    <input type="text" name="address" id="address_field" required value="{{ old('address', $purchaseType==='self' ? ($selfPrefill['address'] ?? '') : '') }}" class="w-full text-sm bg-[#1b1f25] border border-white/10 rounded-xl px-3 py-2 focus:outline-none focus:ring-2 focus:ring-cyan-500/50 text-gray-200 placeholder-gray-500" placeholder="Alamat pengiriman / catatan lokasi">
                                 </div>
                                 <div>
                                     <label class="block text-[11px] font-medium text-gray-400 mb-1">Catatan (opsional)</label>
                                     <textarea name="user_notes" rows="3" class="w-full text-sm bg-[#1b1f25] border border-white/10 rounded-xl px-3 py-2 focus:outline-none focus:ring-2 focus:ring-fuchsia-500/50 text-gray-200 placeholder-gray-500" placeholder="Catatan tambahan...">{{ old('user_notes') }}</textarea>
+                                </div>
+                                <div class="text-[10px] text-gray-500 leading-relaxed">
+                                    Jika mode "Untuk Diri" aktif, kolom diisi otomatis dari profil Anda namun tetap bisa diedit / dikosongkan sebelum submit.
                                 </div>
                             </div>
                         </div>
@@ -175,7 +178,9 @@
             const qtyMinus = document.getElementById('qty-minus');
             const qtyPlus = document.getElementById('qty-plus');
             const nameField = document.getElementById('customer_name_field');
-            const selfName = @json($selfDefaultName);
+            const phoneField = document.getElementById('customer_phone_field');
+            const addressField = document.getElementById('address_field');
+            const selfData = @json($selfPrefill);
 
             const rupiah = n => 'Rp ' + (n||0).toLocaleString('id-ID');
 
@@ -183,23 +188,14 @@
                 sw.addEventListener('change',()=>{
                     purchaseTypeInput.value = document.querySelector('.purchase-type-switch:checked').value;
                     if(purchaseTypeInput.value==='self'){
-                        nameField.value = selfName;
-                        nameField.readOnly = true;
-                        nameField.classList.add('opacity-80');
-                    } else {
-                        if(nameField.value === selfName){ nameField.value=''; }
-                        nameField.readOnly = false;
-                        nameField.classList.remove('opacity-80');
+                        if(!nameField.value.trim()){ nameField.value = selfData.name || ''; }
+                        if(!phoneField.value.trim()){ phoneField.value = selfData.phone || ''; }
+                        if(!addressField.value.trim()){ addressField.value = selfData.address || ''; }
                     }
                     updatePriceLabels();
                     recalc();
                 });
             });
-
-            // Initialize readOnly state for self
-            if(purchaseTypeInput.value==='self'){
-                nameField.readOnly = true; nameField.classList.add('opacity-80');
-            }
 
             function buildRow(prod){
                 let html = template.replace(/__INDEX__/g, Date.now()+Math.random());

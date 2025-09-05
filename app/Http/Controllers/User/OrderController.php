@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Models\Order;
 use App\Models\OrderItem;
 use App\Models\Product;
+use App\Models\Setting; // added
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
@@ -38,16 +39,23 @@ class OrderController extends Controller
         $purchaseType = $request->input('purchase_type','self');
         if(!in_array($purchaseType,['self','external'])) { $purchaseType = 'self'; }
         $singleMode = (bool)$prefill; // if coming from product page, go straight to single checkout
-        $user = $request->user();
-        $selfDefaultName = $user->full_name; // for autofill when self
-        return view('user.orders.create', compact('products','prefill','purchaseType','singleMode','selfDefaultName'));
+        $user = $request->user()->loadMissing('detail');
+
+        // Self purchase prefill data (editable in UI)
+        $selfPrefill = [
+            'name' => $user->full_name,
+            'phone' => $user->detail->phone ?? $user->detail->secondary_phone ?? '',
+            'address' => $user->detail->address_line ?? '',
+        ];
+
+        return view('user.orders.create', compact('products','prefill','purchaseType','singleMode','selfPrefill'));
     }
 
     /**
      * Store a new order (manual payment workflow).
      * Expected payload:
      * purchase_type: self|external
-     * external_customer_name/phone (when external)
+     * external_customer_name/phone (when external or optionally overridden for self)
      * address (required)
      * items: [ { product_id, quantity } ]
      */
@@ -62,11 +70,11 @@ class OrderController extends Controller
             }
         }
 
-        $user = $request->user();
+        $user = $request->user()->loadMissing('detail');
         $data = $request->validate([
             'purchase_type' => 'required|in:self,external',
-            'external_customer_name' => 'required_if:purchase_type,external|string|max:120',
-            'external_customer_phone' => 'required_if:purchase_type,external|string|max:40',
+            'external_customer_name' => 'nullable|string|max:120', // made nullable to allow manual override for self but optional
+            'external_customer_phone' => 'nullable|string|max:40',  // optional for self, required manually for external if desired in future
             'address' => 'required|string|max:255',
             'items' => 'required|array|min:1',
             'items.*.product_id' => 'required|exists:products,id',
@@ -74,9 +82,20 @@ class OrderController extends Controller
             'user_notes' => 'nullable|string',
         ]);
 
-        // Autofill for self purchase: treat user's own name as external_customer_name for consistency
+        // If external purchase, enforce name/phone presence as before (backwards compatibility)
+        if ($data['purchase_type'] === 'external') {
+            if (empty($data['external_customer_name'])) {
+                return back()->withErrors(['external_customer_name' => 'Nama pelanggan wajib diisi untuk pembelian pelanggan.'])->withInput();
+            }
+            if (empty($data['external_customer_phone'])) {
+                return back()->withErrors(['external_customer_phone' => 'No. telepon pelanggan wajib diisi untuk pembelian pelanggan.'])->withInput();
+            }
+        }
+
+        // For self purchase: supply defaults only if user left blank.
         if ($data['purchase_type'] === 'self') {
-            $data['external_customer_name'] = $user->full_name;
+            $data['external_customer_name'] = $data['external_customer_name'] ?: $user->full_name;
+            $data['external_customer_phone'] = $data['external_customer_phone'] ?: ($user->detail->phone ?? $user->detail->secondary_phone ?? null);
         }
 
         $purchaseType = $data['purchase_type'];
@@ -153,7 +172,8 @@ class OrderController extends Controller
     {
         abort_unless($order->user_id === $request->user()->id, 403);
         $order->load('items.product');
-        return view('user.orders.show', compact('order'));
+        $setting = Setting::first(); // pass payment info
+        return view('user.orders.show', compact('order','setting'));
     }
 
     /** Upload / replace manual payment proof */
