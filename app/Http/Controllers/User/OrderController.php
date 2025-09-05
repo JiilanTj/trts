@@ -7,6 +7,7 @@ use App\Models\Order;
 use App\Models\OrderItem;
 use App\Models\Product;
 use App\Models\Setting; // added
+use App\Models\Notification;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
@@ -106,6 +107,11 @@ class OrderController extends Controller
             'user_notes' => 'nullable|string',
         ]);
 
+        // Validate that only sellers can buy as external/seller
+        if ($data['purchase_type'] === 'external' && !$user->isSeller()) {
+            return back()->withErrors(['purchase_type' => 'Hanya seller yang dapat membeli untuk pelanggan eksternal.'])->withInput();
+        }
+
         // If external purchase, enforce name/phone presence as before (backwards compatibility)
         if ($data['purchase_type'] === 'external') {
             if (empty($data['external_customer_name'])) {
@@ -188,6 +194,14 @@ class OrderController extends Controller
             return $order->fresh(['items.product']);
         });
 
+        // Create notification for new order
+        Notification::create([
+            'for_user_id' => $user->id,
+            'category' => 'order',
+            'title' => 'Order Berhasil Dibuat',
+            'description' => "Order #{$order->id} telah berhasil dibuat dengan total Rp" . number_format($order->grand_total, 0, ',', '.') . ". Silakan lakukan pembayaran dan upload bukti transfer.",
+        ]);
+
         return redirect()->route('user.orders.show', $order)->with('success', 'Order berhasil dibuat.');
     }
 
@@ -220,6 +234,14 @@ class OrderController extends Controller
             'payment_proof_path' => $path,
             'payment_status' => 'waiting_confirmation',
             'status' => 'awaiting_confirmation',
+        ]);
+
+        // Create notification for proof upload
+        Notification::create([
+            'for_user_id' => $order->user_id,
+            'category' => 'payment',
+            'title' => 'Bukti Pembayaran Diterima',
+            'description' => "Bukti pembayaran untuk order #{$order->id} telah diterima dan sedang menunggu konfirmasi admin. Proses verifikasi biasanya memakan waktu 1x24 jam.",
         ]);
 
         return back()->with('success', 'Bukti pembayaran diupload. Menunggu konfirmasi admin.');

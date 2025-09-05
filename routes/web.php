@@ -173,6 +173,8 @@ Route::middleware('auth')->group(function () {
     
     // History / Notifications
     Route::get('history', [App\Http\Controllers\User\HistoryController::class,'index'])->name('user.history.index');
+    Route::patch('notifications/{notification}/read', [App\Http\Controllers\User\HistoryController::class,'markAsRead'])->name('user.notifications.read');
+    Route::patch('notifications/read-all', [App\Http\Controllers\User\HistoryController::class,'markAllAsRead'])->name('user.notifications.read-all');
 });
 
 // Admin Routes - Only for admin users

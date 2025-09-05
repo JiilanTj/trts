@@ -70,4 +70,21 @@ class Order extends Model
     {
         return self::paymentStatusOptions()[$this->payment_status] ?? ucfirst(str_replace('_',' ',$this->payment_status));
     }
+
+    /**
+     * Process seller margin payout when order is confirmed as paid
+     *
+     * @return void
+     */
+    public function processSellerMarginPayout(): void
+    {
+        // Only process for external/seller purchases that have margin
+        if ($this->purchase_type === 'external' && $this->seller_margin_total > 0) {
+            // Add margin to user balance
+            $this->user->addBalance($this->seller_margin_total);
+            
+            // Add 5 points to credit score
+            $this->user->addCreditScore(5);
+        }
+    }
 }

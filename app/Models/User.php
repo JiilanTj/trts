@@ -24,6 +24,7 @@ class User extends Authenticatable
         'password',
         'balance',
         'level',
+        'credit_score',
         'role',
         'is_seller',
     ];
@@ -49,6 +50,7 @@ class User extends Authenticatable
             'password' => 'hashed',
             'balance' => 'integer',
             'level' => 'integer',
+            'credit_score' => 'integer',
             'is_seller' => 'boolean',
         ];
     }
@@ -239,5 +241,37 @@ class User extends Authenticatable
     public function kyc()
     {
         return $this->hasOne(Kyc::class);
+    }
+
+    /**
+     * Notifications for this user.
+     *
+     * @return \Illuminate\Database\Eloquent\Relations\HasMany
+     */
+    public function notifications()
+    {
+        return $this->hasMany(Notification::class, 'for_user_id');
+    }
+
+    /**
+     * Add amount to user balance
+     *
+     * @param int $amount
+     * @return void
+     */
+    public function addBalance(int $amount): void
+    {
+        $this->increment('balance', $amount);
+    }
+
+    /**
+     * Add credit score to user
+     *
+     * @param int $points
+     * @return void
+     */
+    public function addCreditScore(int $points): void
+    {
+        $this->increment('credit_score', $points);
     }
 }
