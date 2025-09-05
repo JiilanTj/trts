@@ -20,12 +20,36 @@ class OrderController extends Controller
     public function index(Request $request)
     {
         $user = $request->user();
-        $orders = Order::with('items.product')
-            ->where('user_id', $user->id)
-            ->latest()->paginate(15);
-
-        // Placeholder: return view when Blade ready
-        return view('user.orders.index', compact('orders'));
+        $status = $request->get('status', 'all');
+        $paymentStatus = $request->get('payment_status');
+        
+        $query = Order::with('items.product')->where('user_id', $user->id);
+        
+        if ($status && $status !== 'all') {
+            $query->where('status', $status);
+        }
+        
+        if ($paymentStatus && $paymentStatus !== 'all') {
+            $query->where('payment_status', $paymentStatus);
+        }
+        
+        $orders = $query->latest()->paginate(15)->appends($request->query());
+        
+        // Get counts for each status for the filter menu
+        $statusCounts = [
+            'all' => Order::where('user_id', $user->id)->count(),
+        ];
+        
+        foreach (Order::statusOptions() as $statusKey => $statusLabel) {
+            $statusCounts[$statusKey] = Order::where('user_id', $user->id)
+                ->where('status', $statusKey)
+                ->count();
+        }
+        
+        // Get status options with labels
+        $statusOptions = array_merge(['all' => 'Semua'], Order::statusOptions());
+        
+        return view('user.orders.index', compact('orders', 'statusCounts', 'status', 'statusOptions'));
     }
 
     /** Show create form */
