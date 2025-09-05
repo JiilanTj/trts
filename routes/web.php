@@ -164,6 +164,15 @@ Route::middleware('auth')->group(function () {
     })->name('user.profile.index');
     Route::get('profile/edit', [UserDetailController::class,'editCombined'])->name('user.profile.edit');
     Route::put('profile/edit', [UserDetailController::class,'updateCombined'])->name('user.profile.update');
+    
+    // Additional Menu
+    Route::get('additional-menu', [App\Http\Controllers\User\AdditionalMenuController::class,'index'])->name('user.additional-menu.index');
+    
+    // Chat / Customer Service
+    Route::get('chat', [App\Http\Controllers\User\ChatController::class,'index'])->name('user.chat.index');
+    
+    // History / Notifications
+    Route::get('history', [App\Http\Controllers\User\HistoryController::class,'index'])->name('user.history.index');
 });
 
 // Admin Routes - Only for admin users

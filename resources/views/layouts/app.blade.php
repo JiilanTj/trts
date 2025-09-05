@@ -54,9 +54,9 @@
                 @php
                     $homeActive = request()->routeIs('dashboard');
                     $profileActive = request()->routeIs('user.profile.index');
-                    $settingsActive = auth()->check() && auth()->user()->isAdmin() ? request()->routeIs('admin.settings.*') : false; // hanya admin yang bisa aktif
-                    $messagesActive = false;
-                    $historyActive = false;
+                    $additionalMenuActive = request()->routeIs('user.additional-menu.index');
+                    $messagesActive = request()->routeIs('user.chat.index');
+                    $historyActive = request()->routeIs('user.history.index');
                 @endphp
                 <div class="flex justify-around items-center h-16 px-4">
                     <!-- Home -->
@@ -76,9 +76,9 @@
                         @endif
                     </a>
 
-                    <!-- Settings (gear) -->
-                    <a href="{{ auth()->check() && auth()->user()->isAdmin() ? route('admin.settings.index') : route('profile.edit') }}" aria-label="Settings" class="relative flex items-center justify-center {{ $settingsActive ? 'glitch-button' : 'text-gray-500 hover:text-gray-300' }}">
-                        @if($settingsActive)
+                    <!-- Additional Menu (gear) -->
+                    <a href="{{ route('user.additional-menu.index') }}" aria-label="Additional Menu" class="relative flex items-center justify-center {{ $additionalMenuActive ? 'glitch-button' : 'text-gray-500 hover:text-gray-300' }}">
+                        @if($additionalMenuActive)
                             <div class="relative w-12 h-8">
                                 <div class="glitch-layer-1 absolute w-12 h-8 bg-fuchsia-500 rounded-xl translate-x-1"></div>
                                 <div class="glitch-layer-2 absolute w-12 h-8 bg-cyan-400 rounded-xl -translate-x-1"></div>
@@ -94,7 +94,7 @@
                     </a>
 
                     <!-- Messages -->
-                    <a href="#" aria-label="Messages" class="relative flex items-center justify-center {{ $messagesActive ? 'glitch-button' : 'text-gray-500 hover:text-gray-300' }}">
+                    <a href="{{ route('user.chat.index') }}" aria-label="Messages" class="relative flex items-center justify-center {{ $messagesActive ? 'glitch-button' : 'text-gray-500 hover:text-gray-300' }}">
                         @if($messagesActive)
                             <div class="relative w-12 h-8">
                                 <div class="glitch-layer-1 absolute w-12 h-8 bg-fuchsia-500 rounded-xl translate-x-1"></div>
@@ -111,7 +111,7 @@
                     </a>
 
                     <!-- History -->
-                    <a href="#" aria-label="History" class="relative flex items-center justify-center {{ $historyActive ? 'glitch-button' : 'text-gray-500 hover:text-gray-300' }}">
+                    <a href="{{ route('user.history.index') }}" aria-label="History" class="relative flex items-center justify-center {{ $historyActive ? 'glitch-button' : 'text-gray-500 hover:text-gray-300' }}">
                         @if($historyActive)
                             <div class="relative w-12 h-8">
                                 <div class="glitch-layer-1 absolute w-12 h-8 bg-fuchsia-500 rounded-xl translate-x-1"></div>
@@ -128,8 +128,8 @@
                     </a>
 
                     <!-- Profile -->
-                    <a href="{{ route('user.profile.index') }}" aria-label="Profile" class="relative flex items-center justify-center {{ $profileActive && !$settingsActive ? 'glitch-button' : 'text-gray-500 hover:text-gray-300' }}">
-                        @if($profileActive && !$settingsActive)
+                    <a href="{{ route('user.profile.index') }}" aria-label="Profile" class="relative flex items-center justify-center {{ $profileActive ? 'glitch-button' : 'text-gray-500 hover:text-gray-300' }}">
+                        @if($profileActive)
                             <div class="relative w-12 h-8">
                                 <div class="glitch-layer-1 absolute w-12 h-8 bg-fuchsia-500 rounded-xl translate-x-1"></div>
                                 <div class="glitch-layer-2 absolute w-12 h-8 bg-cyan-400 rounded-xl -translate-x-1"></div>
