@@ -97,7 +97,7 @@
                     </a>
 
                     <!-- Manajemen Produk -->
-                    <a href="#" class="flex items-center justify-between py-3 px-4 rounded-lg bg-neutral-800/40 border border-neutral-700/50 hover:border-[#25F4EE]/30 hover:bg-neutral-800/60 transition group">
+                    <a href="{{ route('browse.products.index') }}" class="flex items-center justify-between py-3 px-4 rounded-lg bg-neutral-800/40 border border-neutral-700/50 hover:border-[#25F4EE]/30 hover:bg-neutral-800/60 transition group">
                         <div class="flex items-center space-x-3">
                             <div class="w-10 h-10 rounded-full bg-gradient-to-br from-[#25F4EE]/20 to-[#FE2C55]/20 flex items-center justify-center">
                                 <svg class="w-5 h-5 text-neutral-300 group-hover:text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -115,7 +115,7 @@
                     </a>
 
                     <!-- Manajemen Status -->
-                    <a href="#" class="flex items-center justify-between py-3 px-4 rounded-lg bg-neutral-800/40 border border-neutral-700/50 hover:border-emerald-500/30 hover:bg-neutral-800/60 transition group">
+                    <a href="{{ route('user.orders.index') }}" class="flex items-center justify-between py-3 px-4 rounded-lg bg-neutral-800/40 border border-neutral-700/50 hover:border-emerald-500/30 hover:bg-neutral-800/60 transition group">
                         <div class="flex items-center space-x-3">
                             <div class="w-10 h-10 rounded-full bg-gradient-to-br from-emerald-500/20 to-blue-500/20 flex items-center justify-center">
                                 <svg class="w-5 h-5 text-neutral-300 group-hover:text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -124,7 +124,7 @@
                             </div>
                             <div>
                                 <p class="text-sm font-medium text-neutral-100 group-hover:text-white">Manajemen Status</p>
-                                <p class="text-xs text-neutral-400">Kelola status operasional</p>
+                                <p class="text-xs text-neutral-400">Kelola status order & transaksi</p>
                             </div>
                         </div>
                         <svg class="w-4 h-4 text-neutral-400 group-hover:text-emerald-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">

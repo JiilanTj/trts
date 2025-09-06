@@ -193,6 +193,7 @@ Route::middleware('auth')->group(function () {
     // User Wholesale Routes
     Route::prefix('wholesale')->name('user.wholesale.')->group(function () {
         Route::get('/', [App\Http\Controllers\User\WholesaleController::class, 'index'])->name('index');
+        Route::post('/create-order', [App\Http\Controllers\User\WholesaleController::class, 'createOrder'])->name('create-order');
     });
 });
 

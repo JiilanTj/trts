@@ -237,4 +237,47 @@ class WholesaleController extends Controller
                 ->get();
         }
     }
+    
+    /**
+     * Create order from wholesale bulk selection
+     */
+    public function createOrder(Request $request)
+    {
+        $user = $request->user();
+        
+        $data = $request->validate([
+            'selected_products' => 'required|array|min:1',
+            'selected_products.*.product_id' => 'required|exists:products,id',
+            'selected_products.*.quantity' => 'integer|min:1|max:1000',
+        ]);
+        
+        // Default quantity to 1 if not provided
+        $selectedProducts = collect($data['selected_products'])->map(function($item) {
+            return [
+                'product_id' => $item['product_id'],
+                'quantity' => $item['quantity'] ?? 1
+            ];
+        })->toArray();
+        
+        // Get products data for validation and prefill
+        $productIds = array_column($selectedProducts, 'product_id');
+        $products = Product::whereIn('id', $productIds)->where('status', 'active')->get();
+        
+        if ($products->count() !== count($productIds)) {
+            return back()->withErrors(['selected_products' => 'Beberapa produk tidak tersedia atau tidak aktif.'])->withInput();
+        }
+        
+        // Check stock availability
+        foreach ($selectedProducts as $item) {
+            $product = $products->find($item['product_id']);
+            if ($product->stock < $item['quantity']) {
+                return back()->withErrors(['selected_products' => "Stok produk '{$product->name}' tidak mencukupi (tersedia: {$product->stock}, diminta: {$item['quantity']})."])->withInput();
+            }
+        }
+        
+        // Redirect to order creation page with pre-filled products
+        return redirect()->route('user.orders.create')
+            ->with('wholesale_products', $selectedProducts)
+            ->with('success', 'Produk berhasil dipilih! Lengkapi data order di bawah.');
+    }
 }

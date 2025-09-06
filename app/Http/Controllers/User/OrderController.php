@@ -66,6 +66,27 @@ class OrderController extends Controller
         $singleMode = (bool)$prefill; // if coming from product page, go straight to single checkout
         $user = $request->user()->loadMissing('detail');
 
+        // Check for wholesale products from session
+        $wholesaleProducts = session('wholesale_products', []);
+        $wholesaleMode = !empty($wholesaleProducts);
+        
+        // If wholesale products exist, get the actual product data
+        $prefilledProducts = [];
+        if ($wholesaleMode) {
+            $productIds = array_column($wholesaleProducts, 'product_id');
+            $productData = Product::whereIn('id', $productIds)->get()->keyBy('id');
+            
+            foreach ($wholesaleProducts as $item) {
+                $product = $productData->get($item['product_id']);
+                if ($product) {
+                    $prefilledProducts[] = [
+                        'product' => $product,
+                        'quantity' => $item['quantity']
+                    ];
+                }
+            }
+        }
+
         // Self purchase prefill data (editable in UI)
         $selfPrefill = [
             'name' => $user->full_name,
@@ -73,7 +94,7 @@ class OrderController extends Controller
             'address' => $user->detail->address_line ?? '',
         ];
 
-        return view('user.orders.create', compact('products','prefill','purchaseType','singleMode','selfPrefill'));
+        return view('user.orders.create', compact('products','prefill','purchaseType','singleMode','selfPrefill','wholesaleMode','prefilledProducts'));
     }
 
     /**
@@ -201,6 +222,9 @@ class OrderController extends Controller
             'title' => 'Order Berhasil Dibuat',
             'description' => "Order #{$order->id} telah berhasil dibuat dengan total Rp" . number_format($order->grand_total, 0, ',', '.') . ". Silakan lakukan pembayaran dan upload bukti transfer.",
         ]);
+
+        // Clear wholesale session data after successful order creation
+        session()->forget('wholesale_products');
 
         return redirect()->route('user.orders.show', $order)->with('success', 'Order berhasil dibuat.');
     }

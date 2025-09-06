@@ -1,5 +1,10 @@
 @forelse($featuredProducts ?? [] as $product)
-<div class="bg-[#23272b] border border-[#2c3136] rounded-xl overflow-hidden relative">
+@if(isset($product) && is_object($product) && isset($product->id))
+<div class="bg-[#23272b] border border-[#2c3136] rounded-xl overflow-hidden relative" 
+     data-product-id="{{ $product->id }}" 
+     data-product-name="{{ str_replace('"', '&quot;', $product->name ?? '') }}" 
+     data-product-price="{{ $product->sell_price ?? 0 }}" 
+     data-product-stock="{{ $product->stock ?? 0 }}">
     <!-- Product Image -->
     <div class="aspect-square bg-neutral-800/50 relative">
         @if($product->image)
@@ -37,6 +42,7 @@
         </button>
     </div>
 </div>
+@endif
 @empty
 <!-- Empty State -->
 <div class="col-span-2 text-center py-12">

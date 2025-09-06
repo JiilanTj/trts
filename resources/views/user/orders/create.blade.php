@@ -49,7 +49,7 @@
                                     </div>
                                 @endif
                             </div>
-                            <div class="grid sm:grid-cols-2 gap-4 {{ isset($singleMode)&&$singleMode? 'hidden' : '' }}" id="product-list">
+                            <div class="grid sm:grid-cols-2 gap-4 {{ (isset($singleMode)&&$singleMode) || (isset($wholesaleMode)&&$wholesaleMode) ? 'hidden' : '' }}" id="product-list">
                                 @foreach($products as $p)
                                     <button type="button"
                                         data-product-id="{{ $p->id }}"
@@ -69,6 +69,33 @@
                                     </button>
                                 @endforeach
                             </div>
+                            
+                            @if(isset($wholesaleMode) && $wholesaleMode && !empty($prefilledProducts))
+                                <div id="wholesale-products-summary" class="space-y-4">
+                                    <div class="flex items-center justify-between">
+                                        <h3 class="text-sm font-semibold text-white">Produk dari Wholesale ({{ count($prefilledProducts) }} produk)</h3>
+                                        <a href="{{ route('user.wholesale.index') }}" class="text-xs text-fuchsia-400 hover:text-fuchsia-300">Ubah Pilihan</a>
+                                    </div>
+                                    @foreach($prefilledProducts as $index => $item)
+                                        <div class="flex items-start justify-between gap-4 rounded-xl border border-fuchsia-500/30 bg-[#1f1115] p-4">
+                                            <div class="flex-1 min-w-0">
+                                                <p class="text-[11px] text-gray-500 mb-0.5">#{{ $item['product']->id }}</p>
+                                                <h3 class="text-xs font-medium text-gray-200 leading-snug">{{ $item['product']->name }}</h3>
+                                                <p class="text-[10px] text-gray-500 mt-1">Stok: {{ $item['product']->stock }}</p>
+                                            </div>
+                                            <div class="text-right space-y-2">
+                                                <p class="text-[11px] font-semibold bg-clip-text text-transparent bg-gradient-to-r from-fuchsia-400 via-rose-400 to-cyan-400">Rp {{ number_format($item['product']->harga_biasa,0,',','.') }}</p>
+                                                <div class="flex items-center gap-2 justify-end">
+                                                    <button type="button" data-action="decrease" data-index="{{ $index }}" class="w-7 h-7 inline-flex items-center justify-center rounded-lg bg-[#242b33] text-gray-400 hover:text-white hover:bg-fuchsia-600/20 border border-white/10">-</button>
+                                                    <input type="number" min="1" value="{{ $item['quantity'] }}" data-wholesale-qty="{{ $index }}" class="w-14 text-xs bg-[#242b33] border border-white/10 rounded-lg px-2 py-1 text-center focus:outline-none focus:ring-2 focus:ring-fuchsia-500/50 text-gray-200">
+                                                    <button type="button" data-action="increase" data-index="{{ $index }}" class="w-7 h-7 inline-flex items-center justify-center rounded-lg bg-[#242b33] text-gray-400 hover:text-white hover:bg-fuchsia-600/20 border border-white/10">+</button>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    @endforeach
+                                    <p class="text-[10px] text-gray-500">Produk dari wholesale. Ubah jumlah sesuai kebutuhan lalu buat order.</p>
+                                </div>
+                            @endif
                             @if(isset($singleMode)&&$singleMode && $prefill)
                                 <div id="single-product-summary" class="space-y-4">
                                     <div class="flex items-start justify-between gap-4 rounded-xl border border-fuchsia-500/50 bg-[#1f1115] p-4">
@@ -174,6 +201,8 @@
             const switches = document.querySelectorAll('.purchase-type-switch');
             const prefillId = {{ $prefill?->id ?? 'null' }};
             const singleMode = document.getElementById('single_mode').value === '1';
+            const wholesaleMode = {{ isset($wholesaleMode) && $wholesaleMode ? 'true' : 'false' }};
+            const wholesaleProducts = @json($prefilledProducts ?? []);
             const singleQtyInput = document.getElementById('single-qty');
             const qtyMinus = document.getElementById('qty-minus');
             const qtyPlus = document.getElementById('qty-plus');
@@ -276,8 +305,79 @@
                     }
                 }
             }
+            
+            function initWholesaleMode(){
+                if(wholesaleMode && wholesaleProducts.length > 0){
+                    console.log('Initializing wholesale mode with products:', wholesaleProducts);
+                    
+                    // Add all wholesale products to the order
+                    wholesaleProducts.forEach(item => {
+                        const prod = {
+                            id: item.product.id,
+                            name: item.product.name,
+                            stock: item.product.stock,
+                            harga_biasa: item.product.harga_biasa || item.product.sell_price,
+                            harga_jual: item.product.harga_jual || item.product.sell_price
+                        };
+                        
+                        // Build the row
+                        buildRow(prod);
+                        
+                        // Set the quantity from wholesale selection
+                        const row = itemsWrapper.querySelector(`.item-row:last-child`);
+                        if(row) {
+                            const qtyInput = row.querySelector('[data-field="quantity"]');
+                            if(qtyInput) {
+                                qtyInput.value = item.quantity || 1;
+                                recalc();
+                            }
+                        }
+                    });
+                    
+                    // Add event listeners for wholesale quantity controls
+                    document.querySelectorAll('[data-wholesale-qty]').forEach((input, index) => {
+                        input.addEventListener('input', () => {
+                            const row = itemsWrapper.querySelectorAll('.item-row')[index];
+                            if(row) {
+                                const qtyInput = row.querySelector('[data-field="quantity"]');
+                                if(qtyInput) {
+                                    qtyInput.value = Math.max(1, parseInt(input.value, 10) || 1);
+                                    recalc();
+                                }
+                            }
+                        });
+                    });
+                    
+                    // Add event listeners for wholesale quantity buttons
+                    document.querySelectorAll('[data-action]').forEach(btn => {
+                        btn.addEventListener('click', () => {
+                            const action = btn.dataset.action;
+                            const index = parseInt(btn.dataset.index, 10);
+                            const input = document.querySelector(`[data-wholesale-qty="${index}"]`);
+                            const row = itemsWrapper.querySelectorAll('.item-row')[index];
+                            
+                            if(input && row) {
+                                let newValue = parseInt(input.value, 10) || 1;
+                                if(action === 'increase') {
+                                    newValue += 1;
+                                } else if(action === 'decrease') {
+                                    newValue = Math.max(1, newValue - 1);
+                                }
+                                
+                                input.value = newValue;
+                                const qtyInput = row.querySelector('[data-field="quantity"]');
+                                if(qtyInput) {
+                                    qtyInput.value = newValue;
+                                    recalc();
+                                }
+                            }
+                        });
+                    });
+                }
+            }
 
             initSingleMode();
+            initWholesaleMode();
         })();
     </script>
 </x-app-layout>
