@@ -65,7 +65,6 @@
                 <div class="flex items-center space-x-1 bg-[#23272b] border border-[#2c3136] rounded-xl p-1">
                     <button id="tabDaftarCepat" class="flex-1 py-2.5 text-sm font-medium bg-[#FE2C55] text-white rounded-lg transition-all">Daftar Cepat</button>
                     <button id="tabPilihanManual" class="flex-1 py-2.5 text-sm font-medium text-neutral-400 hover:text-neutral-200 rounded-lg transition-all">Pilihan Manual</button>
-                    <button id="tabPilihanStrategis" class="flex-1 py-2.5 text-sm font-medium text-neutral-400 hover:text-neutral-200 rounded-lg transition-all">Pilihan Strategis</button>
                 </div>
             </div>
 
@@ -100,11 +99,11 @@
             <div id="manualFilterSection" class="rounded-xl mb-6 border border-[#2c3136] bg-[#23272b] shadow-sm relative overflow-hidden" style="display: none;">
                 <div class="h-1 w-full bg-gradient-to-r from-[#25F4EE] via-[#25F4EE]/40 to-[#FE2C55]"></div>
                 
-                <div class="p-4">
+                <div class="p-3">
                     <form id="manualSearchForm" method="GET" action="{{ route('user.wholesale.index') }}">
                         <!-- Row 1: SKU Search with Icon -->
-                        <div class="mb-3">
-                            <div class="flex items-center gap-2 p-3 bg-neutral-800/30 rounded-lg border border-neutral-700/50">
+                        <div class="mb-2">
+                            <div class="flex items-center gap-2 p-2.5 bg-neutral-800/30 rounded-lg border border-neutral-700/50">
                                 <div class="flex items-center gap-2 text-xs text-neutral-300 min-w-fit">
                                     <i class="fas fa-barcode text-[#FE2C55]"></i>
                                     <span class="whitespace-nowrap">Kode Produk</span>
@@ -116,10 +115,10 @@
                         </div>
                         
                         <!-- Row 2: Category and Price Range in horizontal layout -->
-                        <div class="mb-3">
+                        <div class="mb-2">
                             <div class="flex items-center gap-2">
                                 <!-- Category Filter -->
-                                <div class="flex items-center gap-2 p-3 bg-neutral-800/30 rounded-lg border border-neutral-700/50 flex-1">
+                                <div class="flex items-center gap-2 p-2.5 bg-neutral-800/30 rounded-lg border border-neutral-700/50 flex-1">
                                     <i class="fas fa-tag text-[#25F4EE] text-xs"></i>
                                     <select name="category_id" class="bg-transparent border-0 text-sm text-white focus:outline-none focus:ring-0 flex-1">
                                         <option value="">Pilih Kategori</option>
@@ -135,14 +134,14 @@
                                 
                                 <!-- Price Range -->
                                 <div class="flex items-center gap-1">
-                                    <div class="flex items-center gap-1 p-3 bg-neutral-800/30 rounded-lg border border-neutral-700/50">
+                                    <div class="flex items-center gap-1 p-2.5 bg-neutral-800/30 rounded-lg border border-neutral-700/50">
                                         <i class="fas fa-dollar-sign text-[#FE2C55] text-xs"></i>
                                         <input type="number" name="price_min" value="{{ request('price_min') }}" 
                                                class="price-input bg-transparent border-0 text-sm text-white placeholder-neutral-400 focus:outline-none focus:ring-0 w-20" 
                                                placeholder="Min">
                                     </div>
                                     <span class="text-neutral-500 text-xs px-1">—</span>
-                                    <div class="flex items-center gap-1 p-3 bg-neutral-800/30 rounded-lg border border-neutral-700/50">
+                                    <div class="flex items-center gap-1 p-2.5 bg-neutral-800/30 rounded-lg border border-neutral-700/50">
                                         <input type="number" name="price_max" value="{{ request('price_max') }}" 
                                                class="price-input bg-transparent border-0 text-sm text-white placeholder-neutral-400 focus:outline-none focus:ring-0 w-20" 
                                                placeholder="Max">
@@ -152,9 +151,9 @@
                         </div>
                         
                         <!-- Row 3: Product Name Search with Actions -->
-                        <div class="mb-3">
+                        <div class="mb-2">
                             <div class="flex items-center gap-2">
-                                <div class="flex items-center gap-2 p-3 bg-neutral-800/30 rounded-lg border border-neutral-700/50 flex-1">
+                                <div class="flex items-center gap-2 p-2.5 bg-neutral-800/30 rounded-lg border border-neutral-700/50 flex-1">
                                     <i class="fas fa-search text-[#25F4EE] text-xs"></i>
                                     <input type="text" name="product_name" value="{{ request('product_name') }}" 
                                            class="flex-1 bg-transparent border-0 text-sm text-white placeholder-neutral-400 focus:outline-none focus:ring-0" 
@@ -163,11 +162,11 @@
                                 
                                 <!-- Action Buttons -->
                                 <div class="flex gap-2">
-                                    <button type="submit" class="px-4 py-3 bg-gradient-to-r from-[#FE2C55] to-[#25F4EE] text-white rounded-lg hover:shadow-lg transition-all duration-200 text-xs font-medium whitespace-nowrap">
+                                    <button type="submit" class="px-3 py-2.5 bg-gradient-to-r from-[#FE2C55] to-[#25F4EE] text-white rounded-lg hover:shadow-lg transition-all duration-200 text-xs font-medium whitespace-nowrap">
                                         <i class="fas fa-search mr-1"></i>Cari
                                     </button>
-                                    <button type="button" onclick="document.getElementById('manualSearchForm').reset(); loadAllProducts();" 
-                                            class="px-3 py-3 bg-neutral-700 text-neutral-300 rounded-lg hover:bg-neutral-600 transition-colors text-xs whitespace-nowrap">
+                                    <button type="button" onclick="resetManualFormAndLoadProducts();" 
+                                            class="px-2.5 py-2.5 bg-neutral-700 text-neutral-300 rounded-lg hover:bg-neutral-600 transition-colors text-xs whitespace-nowrap">
                                         <i class="fas fa-undo mr-1"></i>Reset
                                     </button>
                                 </div>
@@ -395,15 +394,6 @@
             outline: none;
             box-shadow: 0 0 0 2px rgba(254, 44, 85, 0.2);
         }
-        
-        /* Better touch targets on mobile - only for manual filter section */
-        @media (max-width: 768px) {
-            #manualFilterSection button, 
-            #manualFilterSection input, 
-            #manualFilterSection select {
-                min-height: 44px;
-            }
-        }
     </style>
 
     <script>
@@ -417,7 +407,6 @@
             // Quick Filter Tab functionality (State Changer)
             const tabDaftarCepat = document.getElementById('tabDaftarCepat');
             const tabPilihanManual = document.getElementById('tabPilihanManual');
-            const tabPilihanStrategis = document.getElementById('tabPilihanStrategis');
             const filterSection = document.getElementById('filterSection');
             const manualFilterSection = document.getElementById('manualFilterSection');
             
@@ -431,7 +420,6 @@
             console.log('Tab elements found:', {
                 tabDaftarCepat: !!tabDaftarCepat,
                 tabPilihanManual: !!tabPilihanManual,
-                tabPilihanStrategis: !!tabPilihanStrategis,
                 filterSection: !!filterSection,
                 manualFilterSection: !!manualFilterSection,
                 rankingButtons: rankingButtons.length,
@@ -525,6 +513,9 @@
                 
                 url.searchParams.set('ajax', '1');
                 
+                console.log('Loading products with URL:', url.toString());
+                console.log('Loading products with params:', params);
+                
                 try {
                     showLoading();
                     
@@ -539,6 +530,7 @@
                     if (!response.ok) throw new Error('Network response was not ok');
                     
                     const data = await response.json();
+                    console.log('AJAX response received:', data);
                     
                     // Update products grid
                     productsContainer.innerHTML = data.html;
@@ -580,6 +572,8 @@
                 console.log('Loading all products for manual search');
                 
                 await loadProductsAjax({});
+                
+                console.log('All products loaded successfully');
             }
             
             // Function to switch tabs
@@ -587,7 +581,7 @@
                 console.log('Switching to tab:', activeTab.id); // Debug log
                 
                 // Remove active class from all tabs
-                [tabDaftarCepat, tabPilihanManual, tabPilihanStrategis].forEach(tab => {
+                [tabDaftarCepat, tabPilihanManual].forEach(tab => {
                     tab.classList.remove('bg-[#FE2C55]', 'text-white');
                     tab.classList.add('text-neutral-400');
                 });
@@ -681,13 +675,6 @@
                 });
             }
             
-            if (tabPilihanStrategis) {
-                tabPilihanStrategis.addEventListener('click', (e) => {
-                    e.preventDefault();
-                    console.log('Pilihan Strategis clicked'); // Debug log
-                    switchTab(tabPilihanStrategis);
-                });
-            }
             // Function to initialize button states on page load
             function initializeButtonStates() {
                 // Check URL parameters to set correct active states
@@ -911,6 +898,75 @@
                     }
                 });
             });
+            
+            // Handle manual search form submission via AJAX
+            const manualSearchForm = document.getElementById('manualSearchForm');
+            if (manualSearchForm) {
+                manualSearchForm.addEventListener('submit', async function(e) {
+                    e.preventDefault(); // Prevent default form submission
+                    console.log('Manual search form submitted via AJAX');
+                    
+                    // Get form data
+                    const formData = new FormData(this);
+                    const params = {};
+                    
+                    // Convert FormData to object, only include non-empty values
+                    for (let [key, value] of formData.entries()) {
+                        if (value && value.trim() !== '') {
+                            params[key] = value.trim();
+                        }
+                    }
+                    
+                    console.log('Manual search params:', params);
+                    
+                    // Load products with search parameters
+                    await loadProductsAjax(params);
+                    
+                    // Update URL with search parameters (without reload)
+                    const url = new URL(window.location);
+                    // Clear old params first
+                    url.searchParams.delete('sku');
+                    url.searchParams.delete('category_id');
+                    url.searchParams.delete('price_min');
+                    url.searchParams.delete('price_max');
+                    url.searchParams.delete('product_name');
+                    
+                    // Add new params
+                    Object.keys(params).forEach(key => {
+                        if (params[key]) {
+                            url.searchParams.set(key, params[key]);
+                        }
+                    });
+                    
+                    // Update URL without reload
+                    window.history.pushState({}, '', url.toString());
+                    
+                    console.log('URL updated to:', url.toString());
+                });
+            }
+            
+            // Function to reset manual form and reload all products
+            window.resetManualFormAndLoadProducts = async function() {
+                console.log('Resetting manual form and loading all products');
+                
+                // Reset the form
+                const form = document.getElementById('manualSearchForm');
+                if (form) {
+                    form.reset();
+                }
+                
+                // Clear URL parameters
+                const url = new URL(window.location);
+                url.searchParams.delete('sku');
+                url.searchParams.delete('category_id');
+                url.searchParams.delete('price_min');
+                url.searchParams.delete('price_max');
+                url.searchParams.delete('product_name');
+                window.history.pushState({}, '', url.toString());
+                
+                // Load all products (no filters)
+                await loadProductsAjax({});
+            };
         });
     </script>
 </x-app-layout>
