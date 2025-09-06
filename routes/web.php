@@ -256,6 +256,28 @@ Route::middleware(['auth', 'role:admin'])->prefix('admin')->name('admin.')->grou
         Route::post('/{topupRequest}/reject', [AdminTopupController::class, 'reject'])->name('reject');
         Route::post('/bulk', [AdminTopupController::class, 'bulk'])->name('bulk');
     });
+    
+    // Admin Chat Management Routes
+    Route::prefix('chat')->name('chat.')->group(function () {
+        Route::get('/', [App\Http\Controllers\Admin\ChatController::class, 'index'])->name('index');
+        Route::get('/{chatRoom}', [App\Http\Controllers\Admin\ChatController::class, 'show'])->name('show');
+        Route::post('/{chatRoom}/assign', [App\Http\Controllers\Admin\ChatController::class, 'assign'])->name('assign');
+        Route::post('/{chatRoom}/close', [App\Http\Controllers\Admin\ChatController::class, 'close'])->name('close');
+        Route::post('/{chatRoom}/send-message', [App\Http\Controllers\Admin\ChatController::class, 'sendMessage'])->name('send-message');
+        Route::get('/statistics/view', [App\Http\Controllers\Admin\ChatController::class, 'statistics'])->name('statistics');
+    });
+    
+    // Admin Chat API Routes
+    Route::prefix('api/chat')->name('api.chat.')->group(function () {
+        Route::post('/typing', [App\Http\Controllers\Admin\ChatController::class, 'typing'])->name('typing');
+        Route::get('/statistics', [App\Http\Controllers\Admin\ChatController::class, 'statisticsApi'])->name('statistics');
+        
+        // Polling endpoints for production
+        Route::get('/dashboard-updates', [App\Http\Controllers\Admin\ChatController::class, 'dashboardUpdates'])->name('dashboard-updates');
+        Route::get('/{chatRoom}/messages', [App\Http\Controllers\Admin\ChatController::class, 'getNewMessages'])->name('messages');
+        Route::post('/{chatRoom}/send', [App\Http\Controllers\Admin\ChatController::class, 'sendMessageApi'])->name('send');
+        Route::get('/{chatRoom}/typing', [App\Http\Controllers\Admin\ChatController::class, 'getTypingStatus'])->name('typing-status');
+    });
 });
 
 // Seller System Routes
@@ -308,6 +330,11 @@ Route::prefix('api')->middleware(['auth'])->group(function () {
         ->name('api.notifications.unread-count');
     Route::post('/notifications/mark-all-read', [ApiNotificationController::class, 'markAllAsRead'])
         ->name('api.notifications.mark-all-read');
+    // Chat API Routes
+    Route::prefix('chat')->name('api.chat.')->group(function () {
+        Route::post('/typing', [App\Http\Controllers\User\ChatController::class, 'typing'])->name('typing');
+        Route::post('/read', [App\Http\Controllers\User\ChatController::class, 'markAsRead'])->name('read');
+    });
 });
 
 require __DIR__.'/auth.php';

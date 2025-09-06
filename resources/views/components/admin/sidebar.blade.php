@@ -113,6 +113,21 @@
             </div>
 
             <div class="mb-4">
+                <p class="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-2">Customer Support</p>
+                <ul class="space-y-1">
+                    <li>
+                        <a href="{{ route('admin.chat.index') }}" class="flex items-center space-x-3 px-3 py-2.5 rounded-lg {{ request()->routeIs('admin.chat.*') ? 'bg-blue-50 text-blue-700 border border-blue-200' : 'text-gray-600 hover:bg-gray-100 hover:text-gray-900' }} transition-all duration-200">
+                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4-.8L3 20l1.22-2.44A7.793 7.793 0 013 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"/>
+                            </svg>
+                            <span class="font-medium">Chat Support</span>
+                            <span id="open-chats-count" class="bg-orange-500 text-white text-xs rounded-full px-2 py-1 hidden"></span>
+                        </a>
+                    </li>
+                </ul>
+            </div>
+
+            <div class="mb-4">
                 <p class="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-2">Seller System</p>
                 <ul class="space-y-1">
                     <li>

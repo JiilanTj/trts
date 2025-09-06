@@ -284,4 +284,36 @@ class User extends Authenticatable
     {
         $this->increment('credit_score', $points);
     }
+
+    /**
+     * Get chat rooms where user is the customer
+     */
+    public function chatRooms(): HasMany
+    {
+        return $this->hasMany(ChatRoom::class, 'user_id');
+    }
+
+    /**
+     * Get chat rooms assigned to admin
+     */
+    public function assignedChats(): HasMany
+    {
+        return $this->hasMany(ChatRoom::class, 'admin_id');
+    }
+
+    /**
+     * Get chat messages sent by user
+     */
+    public function chatMessages(): HasMany
+    {
+        return $this->hasMany(ChatMessage::class, 'user_id');
+    }
+
+    /**
+     * Get chat room participations
+     */
+    public function chatParticipations(): HasMany
+    {
+        return $this->hasMany(ChatRoomParticipant::class, 'user_id');
+    }
 }
