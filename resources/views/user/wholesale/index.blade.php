@@ -199,17 +199,17 @@
                 </div>
             </div>
 
-            <!-- Bottom Actions -->
-            <div class="fixed bottom-0 left-0 right-0 bg-[#1a1d21]/95 backdrop-blur border-t border-neutral-800/70 p-4">
-                <div class="max-w-md mx-auto">
-                    <button id="confirmButton" class="w-full py-3 bg-gradient-to-r from-[#FE2C55] to-[#25F4EE] text-white font-semibold rounded-xl shadow-lg">
+            <!-- Bottom Actions - Fixed Button -->
+            <div class="fixed bottom-16 left-0 right-0 z-40 bg-[#1a1d21]/95 backdrop-blur-sm border-t border-neutral-800/70 p-4 shadow-lg">
+                <div class="max-w-sm mx-auto px-2">
+                    <button id="confirmButton" class="w-full py-3 bg-gradient-to-r from-[#FE2C55] to-[#25F4EE] text-white font-bold rounded-xl shadow-lg hover:shadow-xl transform hover:scale-[1.02] transition-all duration-200 active:scale-[0.98] text-center">
                         Konfirmasi (0 Produk)
                     </button>
                 </div>
             </div>
             
-            <!-- Add padding bottom to account for fixed button -->
-            <div class="h-20"></div>
+            <!-- Add padding bottom to account for fixed button and navbar -->
+            <div class="h-32"></div>
         </div>
     </div>
 
@@ -223,8 +223,9 @@
             
             // Update UI elements
             function updateUI() {
+                const text = `Konfirmasi (${selectedProducts} Produk)`;
                 if (confirmButton) {
-                    confirmButton.textContent = `Konfirmasi (${selectedProducts} Produk)`;
+                    confirmButton.textContent = text;
                 }
                 if (selectedCount) {
                     selectedCount.textContent = selectedProducts;
@@ -354,6 +355,15 @@
             // Initialize button states on page load
             initializeButtonStates();
             
+            // Auto-select all products on initial page load (if any filter is active)
+            const urlParams = new URLSearchParams(window.location.search);
+            if (urlParams.get('ranking_type') || urlParams.get('profit_type') || (!urlParams.get('ranking_type') && !urlParams.get('profit_type'))) {
+                // Auto-select all products on page load (including default Best 20)
+                setTimeout(() => {
+                    autoSelectAllProducts();
+                }, 100); // Small delay to ensure DOM is ready
+            }
+            
             // Function to show loading state
             function showLoading() {
                 productsContainer.style.display = 'none';
@@ -425,6 +435,9 @@
                     // Re-bind checkbox events
                     bindCheckboxEvents();
                     
+                    // Auto-select all products after filter change
+                    autoSelectAllProducts();
+                    
                 } catch (error) {
                     console.error('Error loading products:', error);
                     // Fallback to page reload if AJAX fails
@@ -443,6 +456,19 @@
                 } else if (filterDisplay) {
                     filterDisplay.style.display = 'none';
                 }
+            }
+            
+            // Function to auto-select all products after filter change
+            function autoSelectAllProducts() {
+                const checkboxes = document.querySelectorAll('#productsContainer input[type="checkbox"]');
+                selectedProducts = 0; // Reset counter
+                
+                checkboxes.forEach(checkbox => {
+                    checkbox.checked = true;
+                    selectedProducts++;
+                });
+                
+                updateUI();
             }
             
             // Function to re-bind checkbox events after AJAX
