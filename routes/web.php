@@ -30,6 +30,9 @@ use App\Http\Controllers\User\TopupController as UserTopupController;
 use App\Http\Controllers\Admin\TopupController as AdminTopupController;
 // Add analytics controller
 use App\Http\Controllers\User\AnalyticsController;
+// Add loan request controller
+use App\Http\Controllers\User\LoanRequestController;
+use App\Http\Controllers\Admin\LoanRequestController as AdminLoanRequestController;
 // Add API controllers
 use App\Http\Controllers\Api\NotificationController as ApiNotificationController;
 
@@ -183,6 +186,17 @@ Route::middleware('auth')->group(function () {
         Route::get('/chart-data', [App\Http\Controllers\User\AnalyticsController::class, 'apiGetChartData'])->name('chart-data');
     });
     
+    // Loan Requests / Financial Services
+    Route::prefix('loan-requests')->name('user.loan-requests.')->group(function () {
+        Route::get('/', [LoanRequestController::class, 'index'])->name('index');
+        Route::get('/create', [LoanRequestController::class, 'create'])->name('create');
+        Route::post('/', [LoanRequestController::class, 'store'])->name('store');
+        Route::get('/{loanRequest}', [LoanRequestController::class, 'show'])->name('show');
+        Route::get('/{loanRequest}/edit', [LoanRequestController::class, 'edit'])->name('edit');
+        Route::put('/{loanRequest}', [LoanRequestController::class, 'update'])->name('update');
+        Route::delete('/{loanRequest}', [LoanRequestController::class, 'destroy'])->name('destroy');
+    });
+    
     // Chat / Customer Service
     Route::prefix('chat')->name('user.chat.')->group(function () {
         Route::get('/', [App\Http\Controllers\User\ChatController::class, 'index'])->name('index');
@@ -274,6 +288,16 @@ Route::middleware(['auth', 'role:admin'])->prefix('admin')->name('admin.')->grou
         Route::post('/{topupRequest}/approve', [AdminTopupController::class, 'approve'])->name('approve');
         Route::post('/{topupRequest}/reject', [AdminTopupController::class, 'reject'])->name('reject');
         Route::post('/bulk', [AdminTopupController::class, 'bulk'])->name('bulk');
+    });
+    
+    // Admin Loan Request Routes
+    Route::prefix('loan-requests')->name('loan-requests.')->group(function () {
+        Route::get('/', [AdminLoanRequestController::class, 'index'])->name('index');
+        Route::get('/{loanRequest}', [AdminLoanRequestController::class, 'show'])->name('show');
+        Route::post('/{loanRequest}/update-status', [AdminLoanRequestController::class, 'updateStatus'])->name('update-status');
+        Route::post('/bulk-update', [AdminLoanRequestController::class, 'bulkUpdate'])->name('bulk-update');
+        Route::get('/{loanRequest}/document/{documentIndex}', [AdminLoanRequestController::class, 'downloadDocument'])->name('download-document');
+        Route::get('/analytics/view', [AdminLoanRequestController::class, 'analytics'])->name('analytics');
     });
     
     // Admin Chat Management Routes
