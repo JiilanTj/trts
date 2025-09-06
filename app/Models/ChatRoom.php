@@ -7,6 +7,7 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
+use Illuminate\Database\Eloquent\Relations\HasOne;
 
 class ChatRoom extends Model
 {
@@ -44,6 +45,14 @@ class ChatRoom extends Model
     }
 
     /**
+     * Get the user who started this chat (alias for customer)
+     */
+    public function user(): BelongsTo
+    {
+        return $this->belongsTo(User::class, 'user_id');
+    }
+
+    /**
      * Get the admin assigned to this chat
      */
     public function admin(): BelongsTo
@@ -70,9 +79,9 @@ class ChatRoom extends Model
     /**
      * Get the latest message
      */
-    public function latestMessage(): HasMany
+    public function latestMessage(): HasOne
     {
-        return $this->hasMany(ChatMessage::class)->latest();
+        return $this->hasOne(ChatMessage::class)->latestOfMany();
     }
 
     /**
@@ -195,5 +204,42 @@ class ChatRoom extends Model
     public function scopeAssignedToAdmin($query, $adminId)
     {
         return $query->where('admin_id', $adminId);
+    }
+
+    /**
+     * Get unread messages count for user
+     */
+    public function getUnreadMessagesCountAttribute(): int
+    {
+        return $this->messages()
+            ->where('user_id', '!=', $this->user_id)
+            ->where('is_read', false)
+            ->count();
+    }
+
+    /**
+     * Get status color class
+     */
+    public function getStatusColor(): string
+    {
+        return match($this->status) {
+            self::STATUS_OPEN => 'bg-blue-500/15 text-blue-400',
+            self::STATUS_ASSIGNED => 'bg-emerald-500/15 text-emerald-400',
+            self::STATUS_CLOSED => 'bg-neutral-500/15 text-neutral-400',
+            default => 'bg-neutral-500/15 text-neutral-400',
+        };
+    }
+
+    /**
+     * Get priority color class
+     */
+    public function getPriorityColor(): string
+    {
+        return match($this->priority) {
+            self::PRIORITY_LOW => 'bg-neutral-500/15 text-neutral-400',
+            self::PRIORITY_MEDIUM => 'bg-orange-500/15 text-orange-400',
+            self::PRIORITY_HIGH => 'bg-red-500/15 text-red-400',
+            default => 'bg-neutral-500/15 text-neutral-400',
+        };
     }
 }

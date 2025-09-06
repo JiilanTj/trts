@@ -1,5 +1,5 @@
 <x-admin-layout>
-    <x-slot name="title">Chat Room - {{ $chatRoom->user->name ?? 'Unknown User' }}</x-slot>
+    <x-slot name="title">Chat Room - {{ $chatRoom->user->full_name ?? $chatRoom->user->username ?? 'Unknown User' }}</x-slot>
 
     <!-- Meta tags for JavaScript -->
     <meta name="csrf-token" content="{{ csrf_token() }}">
@@ -24,11 +24,11 @@
                     <div class="flex items-center space-x-3">
                         <div class="w-10 h-10 bg-blue-500 rounded-full flex items-center justify-center">
                             <span class="text-sm font-bold text-white">
-                                {{ strtoupper(substr($chatRoom->user->name ?? 'U', 0, 1)) }}
+                                {{ strtoupper(substr($chatRoom->user->full_name ?? $chatRoom->user->username ?? 'U', 0, 1)) }}
                             </span>
                         </div>
                         <div>
-                            <h2 class="text-xl font-semibold text-gray-800">{{ $chatRoom->user->name ?? 'Unknown User' }}</h2>
+                            <h2 class="text-xl font-semibold text-gray-800">{{ $chatRoom->user->full_name ?? $chatRoom->user->username ?? 'Unknown User' }}</h2>
                             <p class="text-gray-600 text-sm">{{ $chatRoom->subject ?? 'Chat Support' }}</p>
                         </div>
                     </div>
@@ -97,7 +97,7 @@
                         
                         <!-- Message info -->
                         <div class="mt-1 text-xs text-gray-500 {{ $message->user_id === $chatRoom->user_id ? 'text-right' : 'text-left' }}">
-                            <span>{{ $message->user->name ?? 'Unknown' }}</span>
+                            <span>{{ $message->user->full_name ?? $message->user->username ?? 'Unknown' }}</span>
                             <span class="mx-1">•</span>
                             <span>{{ $message->created_at->format('H:i') }}</span>
                         </div>
@@ -156,7 +156,7 @@
         <div class="p-6 space-y-4">
             <div>
                 <label class="text-sm font-medium text-gray-500">Customer</label>
-                <p class="text-sm text-gray-900">{{ $chatRoom->user->name ?? 'Unknown' }}</p>
+                <p class="text-sm text-gray-900">{{ $chatRoom->user->full_name ?? $chatRoom->user->username ?? 'Unknown' }}</p>
                 <p class="text-sm text-gray-500">{{ $chatRoom->user->email ?? '-' }}</p>
             </div>
             
@@ -167,7 +167,7 @@
             
             <div>
                 <label class="text-sm font-medium text-gray-500">Assigned Admin</label>
-                <p class="text-sm text-gray-900">{{ $chatRoom->admin->name ?? 'Not assigned' }}</p>
+                <p class="text-sm text-gray-900">{{ $chatRoom->admin->full_name ?? $chatRoom->admin->username ?? 'Not assigned' }}</p>
             </div>
             
             <div>
@@ -206,46 +206,24 @@
         const messagesContainer = document.getElementById('messagesContainer');
         const messageForm = document.getElementById('messageForm');
         const messageInput = document.getElementById('messageInput');
-        const chatRoomId = messageForm ? messageForm.dataset.chatRoom : null;
-        
-        let lastMessageId = 0;
-        let pollingInterval = null;
+        const chatRoomId = {{ $chatRoom->id }};
         
         // Auto-scroll to bottom
         if (messagesContainer) {
             messagesContainer.scrollTop = messagesContainer.scrollHeight;
-            
-            // Get last message ID for polling
-            const messages = document.querySelectorAll('[data-message-id]');
-            if (messages.length > 0) {
-                const lastMessage = messages[messages.length - 1];
-                lastMessageId = parseInt(lastMessage.dataset.messageId) || 0;
-            }
         }
         
-        // Check if we're in development or production
-        const isLocalhost = window.location.hostname === 'localhost' || 
-                           window.location.hostname === '127.0.0.1';
-        
-        if (isLocalhost && window.Echo) {
-            console.log('🔌 Using WebSocket (Development)');
-            initializeWebSocket();
-        } else {
-            console.log('🔄 Using Polling (Production)');
-            initializePolling();
-        }
-        
+        console.log('🔄 Admin Chat: Using Polling System Only');
+
         // Handle form submission
         if (messageForm) {
             messageForm.addEventListener('submit', function(e) {
                 e.preventDefault();
                 sendMessage();
             });
-        }
-        
-        // Handle Enter key in textarea
-        if (messageInput) {
-            messageInput.addEventListener('keydown', function(e) {
+            
+            // Handle enter key
+            messageInput?.addEventListener('keydown', (e) => {
                 if (e.key === 'Enter' && !e.shiftKey) {
                     e.preventDefault();
                     sendMessage();
@@ -261,46 +239,6 @@
                 setTimeout(() => alert.remove(), 300);
             });
         }, 5000);
-
-        // WebSocket implementation (development)
-        function initializeWebSocket() {
-            if (!chatRoomId) return;
-            
-            const channel = window.Echo.private(`chat-room.${chatRoomId}`);
-            
-            channel.listen('NewChatMessage', (e) => {
-                addMessageToChat(e.message);
-            });
-        }
-
-        // Polling implementation (production)
-        function initializePolling() {
-            if (!chatRoomId) return;
-            
-            // Poll for new messages every 3 seconds
-            pollingInterval = setInterval(async () => {
-                try {
-                    const response = await fetch(`/admin/api/chat/${chatRoomId}/messages?after=${lastMessageId}`, {
-                        headers: {
-                            'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content,
-                            'X-Requested-With': 'XMLHttpRequest'
-                        }
-                    });
-
-                    if (response.ok) {
-                        const data = await response.json();
-                        if (data.messages && data.messages.length > 0) {
-                            data.messages.forEach(message => {
-                                addMessageToChat(message);
-                                lastMessageId = Math.max(lastMessageId, message.id);
-                            });
-                        }
-                    }
-                } catch (error) {
-                    console.error('Message polling error:', error);
-                }
-            }, 3000);
-        }
 
         // Send message function
         async function sendMessage() {
@@ -327,14 +265,12 @@
                     const data = await response.json();
                     if (data.success) {
                         messageInput.value = '';
-                        // Message will be displayed via polling or WebSocket
-                        if (!pollingInterval) {
-                            // If not polling, add message immediately
-                            addMessageToChat(data.message);
-                        }
+                        // Message will be displayed via polling from chat.js
+                        console.log('✅ Message sent successfully');
                     }
                 } else {
-                    alert('Failed to send message');
+                    const errorData = await response.json();
+                    alert(errorData.error || 'Failed to send message');
                 }
             } catch (error) {
                 console.error('Send message error:', error);
@@ -344,79 +280,10 @@
             }
         }
         
-        // Add message to chat
-        function addMessageToChat(message) {
-            if (!messagesContainer) return;
-            
-            // Check if message already exists
-            if (document.querySelector(`[data-message-id="${message.id}"]`)) {
-                return;
-            }
-            
-            const isFromCustomer = message.user_id === {{ $chatRoom->user_id }};
-            const alignClass = isFromCustomer ? 'justify-end' : 'justify-start';
-            const bgClass = isFromCustomer ? 'bg-blue-600 text-white' : 'bg-gray-100 text-gray-900';
-            const textAlign = isFromCustomer ? 'text-right' : 'text-left';
-            
-            const messageHtml = `
-                <div class="flex ${alignClass}" data-message-id="${message.id}">
-                    <div class="max-w-xs lg:max-w-md">
-                        <div class="px-4 py-3 rounded-lg ${bgClass}">
-                            <p class="text-sm">${escapeHtml(message.message)}</p>
-                        </div>
-                        <div class="mt-1 text-xs text-gray-500 ${textAlign}">
-                            <span>${escapeHtml(message.user_name)}</span>
-                            <span class="mx-1">•</span>
-                            <span>${formatTime(message.created_at)}</span>
-                        </div>
-                    </div>
-                </div>
-            `;
-            
-            messagesContainer.insertAdjacentHTML('beforeend', messageHtml);
-            messagesContainer.scrollTop = messagesContainer.scrollHeight;
-            
-            // Show notification if not from current user
-            if (message.user_id !== {{ auth()->id() }}) {
-                showNotification(`New message from ${message.user_name}`);
-            }
-        }
-        
-        // Utility functions
-        function escapeHtml(text) {
-            const div = document.createElement('div');
-            div.textContent = text;
-            return div.innerHTML;
-        }
-        
-        function formatTime(dateString) {
-            const date = new Date(dateString);
-            return date.toLocaleTimeString('id-ID', { 
-                hour: '2-digit', 
-                minute: '2-digit' 
-            });
-        }
-        
-        function showNotification(message) {
-            if (Notification.permission === 'granted') {
-                new Notification('Chat Update', {
-                    body: message,
-                    icon: '/favicon.ico'
-                });
-            }
-        }
-        
         // Request notification permission
         if (Notification.permission === 'default') {
             Notification.requestPermission();
         }
-        
-        // Cleanup on page unload
-        window.addEventListener('beforeunload', () => {
-            if (pollingInterval) {
-                clearInterval(pollingInterval);
-            }
-        });
     });
     </script>
 </x-admin-layout>

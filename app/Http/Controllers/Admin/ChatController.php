@@ -83,33 +83,34 @@ class ChatController extends Controller
     /**
      * Assign chat room to admin
      */
-    public function assign(Request $request, ChatRoom $chatRoom): JsonResponse
+    public function assign(Request $request, ChatRoom $chatRoom)
     {
         $admin = Auth::user();
 
         if (!$chatRoom->isOpen()) {
-            return response()->json(['error' => 'Chat room is not available for assignment'], 400);
+            return redirect()->back()->with('error', 'Chat room is not available for assignment.');
         }
 
         $success = $chatRoom->assignTo($admin);
 
         if ($success) {
-            broadcast(new ChatRoomAssigned($chatRoom));
-
-            return response()->json([
-                'success' => true,
-                'message' => 'Chat berhasil diambil!',
-                'chat_room' => $chatRoom->load(['customer', 'admin']),
+            // Send system message about assignment
+            $chatRoom->messages()->create([
+                'user_id' => $admin->id,
+                'message' => ($admin->full_name ?? $admin->username) . ' bergabung ke dalam chat.',
+                'message_type' => ChatMessage::TYPE_SYSTEM,
             ]);
+
+            return redirect()->back()->with('success', 'Chat berhasil diambil!');
         }
 
-        return response()->json(['error' => 'Failed to assign chat room'], 500);
+        return redirect()->back()->with('error', 'Gagal mengambil chat room.');
     }
 
     /**
      * Close chat room
      */
-    public function close(Request $request, ChatRoom $chatRoom): JsonResponse
+    public function close(Request $request, ChatRoom $chatRoom)
     {
         $request->validate([
             'reason' => 'sometimes|string|max:500',
@@ -119,7 +120,7 @@ class ChatController extends Controller
 
         // Check if admin can close this chat
         if ($chatRoom->admin_id !== $admin->id && !$admin->isAdmin()) {
-            return response()->json(['error' => 'Unauthorized'], 403);
+            return redirect()->back()->with('error', 'Unauthorized action.');
         }
 
         $success = $chatRoom->close();
@@ -132,13 +133,10 @@ class ChatController extends Controller
                 'message_type' => ChatMessage::TYPE_SYSTEM,
             ]);
 
-            return response()->json([
-                'success' => true,
-                'message' => 'Chat berhasil ditutup!',
-            ]);
+            return redirect()->back()->with('success', 'Chat berhasil ditutup!');
         }
 
-        return response()->json(['error' => 'Failed to close chat room'], 500);
+        return redirect()->back()->with('error', 'Gagal menutup chat room.');
     }
 
     /**
@@ -306,7 +304,7 @@ class ChatController extends Controller
         $afterId = $request->get('after', 0);
         
         $messages = $chatRoom->messages()
-            ->with('user')
+            ->with('sender')
             ->where('id', '>', $afterId)
             ->orderBy('id', 'asc')
             ->get()
@@ -315,7 +313,7 @@ class ChatController extends Controller
                     'id' => $message->id,
                     'message' => $message->message,
                     'user_id' => $message->user_id,
-                    'user_name' => $message->user->name ?? 'Unknown',
+                    'user_name' => $message->sender->name ?? 'Unknown',
                     'created_at' => $message->created_at->toISOString(),
                     'message_type' => $message->message_type ?? 'text',
                 ];

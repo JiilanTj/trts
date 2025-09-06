@@ -158,11 +158,11 @@
                                 <div class="flex items-center">
                                     <div class="w-10 h-10 bg-gray-300 rounded-full flex items-center justify-center">
                                         <span class="text-sm font-medium text-gray-700">
-                                            {{ strtoupper(substr($room->user->name ?? 'U', 0, 1)) }}
+                                            {{ strtoupper(substr($room->user->full_name ?? $room->user->username ?? 'U', 0, 1)) }}
                                         </span>
                                     </div>
                                     <div class="ml-4">
-                                        <div class="text-sm font-medium text-gray-900">{{ $room->user->name ?? 'Unknown' }}</div>
+                                        <div class="text-sm font-medium text-gray-900">{{ $room->user->full_name ?? $room->user->username ?? 'Unknown' }}</div>
                                         <div class="text-sm text-gray-500">{{ $room->user->email ?? '-' }}</div>
                                     </div>
                                 </div>
@@ -202,7 +202,7 @@
                             </td>
                             <td class="px-6 py-4 whitespace-nowrap">
                                 @if($room->admin)
-                                    <div class="text-sm font-medium text-gray-900">{{ $room->admin->name }}</div>
+                                    <div class="text-sm font-medium text-gray-900">{{ $room->admin->full_name ?? $room->admin->username }}</div>
                                 @else
                                     <span class="text-sm text-gray-500">Not assigned</span>
                                 @endif

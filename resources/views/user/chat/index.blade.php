@@ -79,7 +79,7 @@
                 
                 <div class="px-5 space-y-1">
                     <!-- Live Chat dengan CS -->
-                    <a href="#" class="flex items-center justify-between py-3 px-4 rounded-lg bg-neutral-800/40 border border-neutral-700/50 hover:border-[#FE2C55]/30 hover:bg-neutral-800/60 transition group">
+                    <button id="start-chat-btn" class="w-full flex items-center justify-between py-3 px-4 rounded-lg bg-neutral-800/40 border border-neutral-700/50 hover:border-[#FE2C55]/30 hover:bg-neutral-800/60 transition group">
                         <div class="flex items-center space-x-3">
                             <div class="w-10 h-10 rounded-full bg-gradient-to-br from-[#FE2C55]/20 to-[#25F4EE]/20 flex items-center justify-center">
                                 <svg class="w-5 h-5 text-neutral-300 group-hover:text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -97,43 +97,7 @@
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path>
                             </svg>
                         </div>
-                    </a>
-
-                    <!-- WhatsApp Customer Service -->
-                    <a href="#" class="flex items-center justify-between py-3 px-4 rounded-lg bg-neutral-800/40 border border-neutral-700/50 hover:border-emerald-500/30 hover:bg-neutral-800/60 transition group">
-                        <div class="flex items-center space-x-3">
-                            <div class="w-10 h-10 rounded-full bg-gradient-to-br from-emerald-500/20 to-green-500/20 flex items-center justify-center">
-                                <svg class="w-5 h-5 text-neutral-300 group-hover:text-white" fill="currentColor" viewBox="0 0 24 24">
-                                    <path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893A11.821 11.821 0 0020.885 3.488"/>
-                                </svg>
-                            </div>
-                            <div>
-                                <p class="text-sm font-medium text-neutral-100 group-hover:text-white">WhatsApp CS</p>
-                                <p class="text-xs text-neutral-400">Hubungi via WhatsApp</p>
-                            </div>
-                        </div>
-                        <svg class="w-4 h-4 text-neutral-400 group-hover:text-emerald-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path>
-                        </svg>
-                    </a>
-
-                    <!-- Email Support -->
-                    <a href="#" class="flex items-center justify-between py-3 px-4 rounded-lg bg-neutral-800/40 border border-neutral-700/50 hover:border-blue-500/30 hover:bg-neutral-800/60 transition group">
-                        <div class="flex items-center space-x-3">
-                            <div class="w-10 h-10 rounded-full bg-gradient-to-br from-blue-500/20 to-cyan-500/20 flex items-center justify-center">
-                                <svg class="w-5 h-5 text-neutral-300 group-hover:text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"></path>
-                                </svg>
-                            </div>
-                            <div>
-                                <p class="text-sm font-medium text-neutral-100 group-hover:text-white">Email Support</p>
-                                <p class="text-xs text-neutral-400">Kirim email ke support kami</p>
-                            </div>
-                        </div>
-                        <svg class="w-4 h-4 text-neutral-400 group-hover:text-blue-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path>
-                        </svg>
-                    </a>
+                    </button>
 
                     <!-- Ticket Support -->
                     <a href="#" class="flex items-center justify-between py-3 px-4 rounded-lg bg-neutral-800/40 border border-neutral-700/50 hover:border-amber-500/30 hover:bg-neutral-800/60 transition group">
@@ -203,6 +167,74 @@
                 </div>
             </div>
 
+            <!-- Active Chat Rooms -->
+            @if($chatRooms->count() > 0)
+                <div class="rounded-xl mb-6 border border-[#2c3136] bg-[#23272b] shadow-sm relative overflow-hidden">
+                    <div class="h-1 w-full bg-gradient-to-r from-[#fe2c55] via-[#fe2c55]/40 to-[#25f4ee]"></div>
+                    
+                    <div class="p-5 pb-0">
+                        <h3 class="text-xs font-semibold mb-4 text-neutral-400 uppercase tracking-wide">Chat Aktif</h3>
+                    </div>
+                    
+                    <div class="px-5 pb-5 space-y-3">
+                        @foreach($chatRooms as $chatRoom)
+                            <a href="{{ route('user.chat.show', $chatRoom) }}" class="block p-4 rounded-lg bg-neutral-800/40 border border-neutral-700/50 hover:border-[#FE2C55]/30 hover:bg-neutral-800/60 transition group">
+                                <div class="flex items-start justify-between">
+                                    <div class="flex-1 min-w-0">
+                                        <div class="flex items-center space-x-2 mb-2">
+                                            <h4 class="text-sm font-medium text-neutral-100 group-hover:text-white truncate">{{ $chatRoom->subject }}</h4>
+                                            <span class="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium {{ $chatRoom->getStatusColor() }}">
+                                                {{ ucfirst($chatRoom->status) }}
+                                            </span>
+                                        </div>
+                                        
+                                        @if($chatRoom->latestMessage)
+                                            <p class="text-xs text-neutral-400 truncate mb-2">
+                                                {{ $chatRoom->latestMessage->message ?: 'File attachment' }}
+                                            </p>
+                                        @endif
+                                        
+                                        <div class="flex items-center justify-between">
+                                            <div class="flex items-center space-x-2">
+                                                <span class="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium {{ $chatRoom->getPriorityColor() }}">
+                                                    {{ ucfirst($chatRoom->priority) }}
+                                                </span>
+                                                @if($chatRoom->admin)
+                                                    <span class="text-xs text-neutral-500">dengan {{ $chatRoom->admin->full_name ?? $chatRoom->admin->username }}</span>
+                                                @endif
+                                            </div>
+                                            
+                                            <div class="text-right">
+                                                <p class="text-xs text-neutral-500">
+                                                    {{ $chatRoom->last_message_at ? $chatRoom->last_message_at->diffForHumans() : $chatRoom->created_at->diffForHumans() }}
+                                                </p>
+                                                @if($chatRoom->unread_messages_count > 0)
+                                                    <span class="inline-flex items-center justify-center w-5 h-5 bg-[#FE2C55] text-white text-xs font-bold rounded-full">
+                                                        {{ $chatRoom->unread_messages_count }}
+                                                    </span>
+                                                @endif
+                                            </div>
+                                        </div>
+                                    </div>
+                                    
+                                    <div class="ml-3 flex-shrink-0">
+                                        <svg class="w-4 h-4 text-neutral-400 group-hover:text-[#FE2C55]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path>
+                                        </svg>
+                                    </div>
+                                </div>
+                            </a>
+                        @endforeach
+                        
+                        @if($chatRooms->hasPages())
+                            <div class="mt-4">
+                                {{ $chatRooms->links() }}
+                            </div>
+                        @endif
+                    </div>
+                </div>
+            @endif
+
             <!-- Status Info Card -->
             <div class="rounded-xl border border-[#2c3136] bg-[#23272b]/50 p-4">
                 <div class="flex items-center justify-between">
@@ -223,4 +255,166 @@
             </div>
         </div>
     </div>
+
+    <!-- New Chat Modal -->
+    <div id="new-chat-modal" class="fixed inset-0 z-50 hidden">
+        <!-- Backdrop -->
+        <div class="fixed inset-0 bg-black/50 backdrop-blur-sm"></div>
+        
+        <!-- Modal -->
+        <div class="fixed inset-x-4 top-1/2 -translate-y-1/2 max-w-md mx-auto">
+            <div class="bg-[#23272b] border border-[#2c3136] rounded-xl shadow-xl">
+                <div class="p-6">
+                    <div class="flex items-center justify-between mb-4">
+                        <h3 class="text-lg font-semibold text-neutral-100">Mulai Chat Baru</h3>
+                        <button id="close-modal" class="p-2 rounded-lg hover:bg-neutral-800/50 transition">
+                            <svg class="w-5 h-5 text-neutral-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+                            </svg>
+                        </button>
+                    </div>
+                    
+                    <form id="new-chat-form">
+                        @csrf
+                        <div class="space-y-4">
+                            <div>
+                                <label for="subject" class="block text-sm font-medium text-neutral-300 mb-2">Subjek</label>
+                                <input 
+                                    type="text" 
+                                    id="subject" 
+                                    name="subject" 
+                                    placeholder="Masalah apa yang ingin Anda tanyakan?"
+                                    class="w-full px-3 py-2 rounded-lg bg-neutral-800/60 border border-neutral-700/50 focus:border-[#FE2C55]/50 focus:ring-2 focus:ring-[#FE2C55]/20 text-neutral-100 placeholder-neutral-400"
+                                    required
+                                    maxlength="255"
+                                >
+                            </div>
+                            
+                            <div>
+                                <label for="priority" class="block text-sm font-medium text-neutral-300 mb-2">Prioritas</label>
+                                <select 
+                                    id="priority" 
+                                    name="priority"
+                                    class="w-full px-3 py-2 rounded-lg bg-neutral-800/60 border border-neutral-700/50 focus:border-[#FE2C55]/50 focus:ring-2 focus:ring-[#FE2C55]/20 text-neutral-100"
+                                >
+                                    <option value="low">Rendah</option>
+                                    <option value="medium" selected>Sedang</option>
+                                    <option value="high">Tinggi</option>
+                                </select>
+                            </div>
+                            
+                            <div>
+                                <label for="message" class="block text-sm font-medium text-neutral-300 mb-2">Pesan</label>
+                                <textarea 
+                                    id="message" 
+                                    name="message" 
+                                    placeholder="Jelaskan masalah atau pertanyaan Anda..."
+                                    class="w-full px-3 py-2 rounded-lg bg-neutral-800/60 border border-neutral-700/50 focus:border-[#FE2C55]/50 focus:ring-2 focus:ring-[#FE2C55]/20 text-neutral-100 placeholder-neutral-400 resize-none"
+                                    rows="4"
+                                    required
+                                    maxlength="1000"
+                                ></textarea>
+                            </div>
+                            
+                            <div class="flex justify-end space-x-3">
+                                <button 
+                                    type="button" 
+                                    id="cancel-btn"
+                                    class="px-4 py-2 rounded-lg bg-neutral-700/50 hover:bg-neutral-600/50 text-neutral-300 transition"
+                                >
+                                    Batal
+                                </button>
+                                <button 
+                                    type="submit" 
+                                    id="submit-btn"
+                                    class="px-4 py-2 rounded-lg bg-gradient-to-r from-[#FE2C55] to-[#FE2C55]/80 hover:from-[#FE2C55]/90 hover:to-[#FE2C55]/70 text-white transition disabled:opacity-50 disabled:cursor-not-allowed"
+                                >
+                                    Mulai Chat
+                                </button>
+                            </div>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- JavaScript -->
+    <script>
+        const csrfToken = '{{ csrf_token() }}';
+        
+        // DOM elements
+        const startChatBtn = document.getElementById('start-chat-btn');
+        const newChatModal = document.getElementById('new-chat-modal');
+        const closeModal = document.getElementById('close-modal');
+        const cancelBtn = document.getElementById('cancel-btn');
+        const newChatForm = document.getElementById('new-chat-form');
+        const submitBtn = document.getElementById('submit-btn');
+
+        // Show modal
+        startChatBtn.addEventListener('click', () => {
+            newChatModal.classList.remove('hidden');
+            document.getElementById('subject').focus();
+        });
+
+        // Hide modal
+        function hideModal() {
+            newChatModal.classList.add('hidden');
+            newChatForm.reset();
+        }
+
+        closeModal.addEventListener('click', hideModal);
+        cancelBtn.addEventListener('click', hideModal);
+
+        // Close modal on backdrop click
+        newChatModal.addEventListener('click', (e) => {
+            if (e.target === newChatModal) {
+                hideModal();
+            }
+        });
+
+        // Handle form submission
+        newChatForm.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            
+            const formData = new FormData(newChatForm);
+            
+            // Disable button
+            submitBtn.disabled = true;
+            submitBtn.textContent = 'Memproses...';
+            
+            try {
+                const response = await fetch('{{ route("user.chat.create") }}', {
+                    method: 'POST',
+                    headers: {
+                        'X-CSRF-TOKEN': csrfToken
+                    },
+                    body: formData
+                });
+                
+                const data = await response.json();
+                
+                if (data.success) {
+                    // Redirect to new chat room
+                    window.location.href = `/chat/${data.chat_room.id}`;
+                } else {
+                    alert('Gagal membuat chat. Silakan coba lagi.');
+                }
+            } catch (error) {
+                console.error('Error creating chat:', error);
+                alert('Terjadi kesalahan. Silakan coba lagi.');
+            }
+            
+            // Re-enable button
+            submitBtn.disabled = false;
+            submitBtn.textContent = 'Mulai Chat';
+        });
+
+        // ESC key to close modal
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'Escape' && !newChatModal.classList.contains('hidden')) {
+                hideModal();
+            }
+        });
+    </script>
 </x-app-layout>

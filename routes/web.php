@@ -175,7 +175,17 @@ Route::middleware('auth')->group(function () {
     Route::get('additional-menu', [App\Http\Controllers\User\AdditionalMenuController::class,'index'])->name('user.additional-menu.index');
     
     // Chat / Customer Service
-    Route::get('chat', [App\Http\Controllers\User\ChatController::class,'index'])->name('user.chat.index');
+    Route::prefix('chat')->name('user.chat.')->group(function () {
+        Route::get('/', [App\Http\Controllers\User\ChatController::class, 'index'])->name('index');
+        Route::get('/{chatRoom}', [App\Http\Controllers\User\ChatController::class, 'show'])->name('show');
+        Route::post('/create', [App\Http\Controllers\User\ChatController::class, 'store'])->name('create');
+        Route::post('/{chatRoom}/send', [App\Http\Controllers\User\ChatController::class, 'sendMessage'])->name('send');
+        Route::post('/typing', [App\Http\Controllers\User\ChatController::class, 'typing'])->name('typing');
+        Route::post('/mark-read', [App\Http\Controllers\User\ChatController::class, 'markAsRead'])->name('mark-read');
+        
+        // Polling API for production
+        Route::get('/{chatRoom}/poll', [App\Http\Controllers\User\ChatController::class, 'poll'])->name('poll');
+    });
     
     // History / Notifications
     Route::get('history', [App\Http\Controllers\User\HistoryController::class,'index'])->name('user.history.index');

@@ -23,6 +23,10 @@ class ChatController extends Controller
         
         $chatRooms = ChatRoom::where('user_id', $user->id)
             ->with(['admin', 'latestMessage'])
+            ->withCount(['messages as unread_messages_count' => function($query) use ($user) {
+                $query->where('user_id', '!=', $user->id)
+                      ->where('is_read', false);
+            }])
             ->orderBy('last_message_at', 'desc')
             ->orderBy('created_at', 'desc')
             ->paginate(10);
@@ -110,7 +114,7 @@ class ChatController extends Controller
     public function sendMessage(Request $request, ChatRoom $chatRoom): JsonResponse
     {
         $request->validate([
-            'message' => 'required|string|max:1000',
+            'message' => 'sometimes|string|max:1000',
             'attachment' => 'sometimes|file|mimes:jpg,jpeg,png,pdf,doc,docx|max:2048',
         ]);
 
@@ -126,6 +130,11 @@ class ChatController extends Controller
             return response()->json(['error' => 'Chat room is closed'], 400);
         }
 
+        // Either message or attachment must be present
+        if (!$request->message && !$request->hasFile('attachment')) {
+            return response()->json(['error' => 'Message or attachment is required'], 400);
+        }
+
         // Handle file attachment
         $attachmentPath = null;
         if ($request->hasFile('attachment')) {
@@ -139,6 +148,9 @@ class ChatController extends Controller
             'message_type' => $attachmentPath ? ChatMessage::TYPE_FILE : ChatMessage::TYPE_TEXT,
             'attachment_path' => $attachmentPath,
         ]);
+
+        // Update chat room's last message timestamp
+        $chatRoom->update(['last_message_at' => now()]);
 
         return response()->json([
             'success' => true,
@@ -164,9 +176,7 @@ class ChatController extends Controller
             return response()->json(['error' => 'Unauthorized'], 403);
         }
 
-        // Broadcast typing event
-        broadcast(new UserTyping($user, $request->chat_room_id, $request->is_typing));
-
+        // Just return success for polling mode (no real-time typing indicator needed)
         return response()->json(['success' => true]);
     }
 
@@ -196,6 +206,38 @@ class ChatController extends Controller
         return response()->json([
             'success' => true,
             'updated_count' => $updated,
+        ]);
+    }
+
+    /**
+     * Polling API for new messages
+     */
+    public function poll(Request $request, ChatRoom $chatRoom): JsonResponse
+    {
+        $user = Auth::user();
+        
+        // Check if user owns this chat room
+        if ($chatRoom->user_id !== $user->id) {
+            return response()->json(['error' => 'Unauthorized'], 403);
+        }
+
+        $lastMessageId = $request->get('last_message_id', 0);
+        
+        // Get new messages
+        $messages = $chatRoom->messages()
+            ->with('sender')
+            ->where('id', '>', $lastMessageId)
+            ->orderBy('created_at', 'asc')
+            ->get();
+
+        return response()->json([
+            'success' => true,
+            'messages' => $messages,
+            'chat_room' => [
+                'id' => $chatRoom->id,
+                'status' => $chatRoom->status,
+                'last_message_at' => $chatRoom->last_message_at,
+            ],
         ]);
     }
 }
