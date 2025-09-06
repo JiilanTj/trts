@@ -254,6 +254,16 @@ class User extends Authenticatable
     }
 
     /**
+     * Topup requests made by this user.
+     *
+     * @return \Illuminate\Database\Eloquent\Relations\HasMany
+     */
+    public function topupRequests()
+    {
+        return $this->hasMany(TopupRequest::class);
+    }
+
+    /**
      * Add amount to user balance
      *
      * @param int $amount

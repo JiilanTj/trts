@@ -40,6 +40,27 @@
             .glitch-button:hover .glitch-layer-2 {
                 animation: glitch 0.3s ease-in-out 0.1s;
             }
+
+            /* Notification Badge Animation */
+            @keyframes pulse-notification {
+                0%, 100% { transform: scale(1); }
+                50% { transform: scale(1.1); }
+            }
+
+            .notification-pulse {
+                animation: pulse-notification 2s infinite;
+            }
+
+            @keyframes bounce-in {
+                0% { transform: scale(0.3); opacity: 0; }
+                50% { transform: scale(1.05); }
+                70% { transform: scale(0.9); }
+                100% { transform: scale(1); opacity: 1; }
+            }
+
+            .notification-bounce-in {
+                animation: bounce-in 0.6s ease-out;
+            }
         </style>
     </head>
     <body class="font-sans antialiased bg-[#0f1115] text-gray-200 selection:bg-fuchsia-500/30 selection:text-white">
@@ -125,6 +146,10 @@
                                 <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v5l3 3m6-5a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
                             </div>
                         @endif
+                        <!-- Notification Badge -->
+                        <div id="notification-badge" class="absolute -top-1 -right-1 bg-red-500 text-white text-xs rounded-full min-w-[18px] h-[18px] items-center justify-center font-medium shadow-lg" style="display: none;">
+                            <span id="notification-count">0</span>
+                        </div>
                     </a>
 
                     <!-- Profile -->
@@ -146,5 +171,85 @@
                 </div>
             </nav>
         </div>
+
+        <!-- Real-time Notification Script -->
+        <script>
+            document.addEventListener('DOMContentLoaded', function() {
+                const notificationBadge = document.getElementById('notification-badge');
+                const notificationCount = document.getElementById('notification-count');
+                let lastCount = 0;
+                
+                // Function to fetch unread notification count
+                async function fetchNotificationCount() {
+                    try {
+                        const response = await fetch('{{ route('api.notifications.unread-count') }}', {
+                            method: 'GET',
+                            headers: {
+                                'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content'),
+                                'Accept': 'application/json',
+                            },
+                            credentials: 'same-origin'
+                        });
+                        
+                        if (response.ok) {
+                            const data = await response.json();
+                            const count = data.unread_count;
+                            
+                            // Animate if count increased
+                            if (count > lastCount && lastCount !== 0) {
+                                notificationBadge.classList.add('notification-bounce-in');
+                                setTimeout(() => {
+                                    notificationBadge.classList.remove('notification-bounce-in');
+                                }, 600);
+                            }
+                            
+                            if (count > 0) {
+                                notificationCount.textContent = count > 99 ? '99+' : count;
+                                notificationBadge.style.display = 'flex';
+                                
+                                // Add pulse animation for new notifications
+                                if (count > lastCount) {
+                                    notificationBadge.classList.add('notification-pulse');
+                                    setTimeout(() => {
+                                        notificationBadge.classList.remove('notification-pulse');
+                                    }, 4000);
+                                }
+                            } else {
+                                notificationBadge.style.display = 'none';
+                                notificationBadge.classList.remove('notification-pulse');
+                            }
+                            
+                            lastCount = count;
+                        }
+                    } catch (error) {
+                        console.error('Error fetching notification count:', error);
+                        // Optionally show error state or retry
+                    }
+                }
+                
+                // Initial load
+                fetchNotificationCount();
+                
+                // Update every 30 seconds
+                const notificationInterval = setInterval(fetchNotificationCount, 30000);
+                
+                // Update when page becomes visible (tab switching)
+                document.addEventListener('visibilitychange', function() {
+                    if (!document.hidden) {
+                        fetchNotificationCount();
+                    }
+                });
+                
+                // Listen for custom refresh event from history page
+                window.addEventListener('refreshNotificationCount', function() {
+                    fetchNotificationCount();
+                });
+                
+                // Clean up interval when page unloads
+                window.addEventListener('beforeunload', function() {
+                    clearInterval(notificationInterval);
+                });
+            });
+        </script>
     </body>
 </html>

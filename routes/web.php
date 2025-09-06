@@ -24,6 +24,12 @@ use App\Http\Controllers\User\UserDetailController; // added
 // +++ KYC snapshot controllers (user + admin)
 use App\Http\Controllers\User\KycController as UserKycController; // new
 use App\Http\Controllers\Admin\KycController as AdminKycController; // new
+use App\Http\Controllers\User\HistoryController; // new
+// Add topup controllers
+use App\Http\Controllers\User\TopupController as UserTopupController;
+use App\Http\Controllers\Admin\TopupController as AdminTopupController;
+// Add API controllers
+use App\Http\Controllers\Api\NotificationController as ApiNotificationController;
 
 Route::get('/', function () {
     return redirect()->route('login');
@@ -175,6 +181,14 @@ Route::middleware('auth')->group(function () {
     Route::get('history', [App\Http\Controllers\User\HistoryController::class,'index'])->name('user.history.index');
     Route::patch('notifications/{notification}/read', [App\Http\Controllers\User\HistoryController::class,'markAsRead'])->name('user.notifications.read');
     Route::patch('notifications/read-all', [App\Http\Controllers\User\HistoryController::class,'markAllAsRead'])->name('user.notifications.read-all');
+    
+    // User Topup Routes
+    Route::prefix('topup')->name('user.topup.')->group(function () {
+        Route::get('/', [UserTopupController::class, 'index'])->name('index');
+        Route::get('/create', [UserTopupController::class, 'create'])->name('create');
+        Route::post('/', [UserTopupController::class, 'store'])->name('store');
+        Route::get('/{topupRequest}', [UserTopupController::class, 'show'])->name('show');
+    });
 });
 
 // Admin Routes - Only for admin users
@@ -227,6 +241,15 @@ Route::middleware(['auth', 'role:admin'])->prefix('admin')->name('admin.')->grou
         Route::get('/', [AdminKycController::class,'index'])->name('index');
         Route::get('/{kyc}', [AdminKycController::class,'show'])->name('show');
     });
+    
+    // Admin Topup Routes
+    Route::prefix('topup')->name('topup.')->group(function () {
+        Route::get('/', [AdminTopupController::class, 'index'])->name('index');
+        Route::get('/{topupRequest}', [AdminTopupController::class, 'show'])->name('show');
+        Route::post('/{topupRequest}/approve', [AdminTopupController::class, 'approve'])->name('approve');
+        Route::post('/{topupRequest}/reject', [AdminTopupController::class, 'reject'])->name('reject');
+        Route::post('/bulk', [AdminTopupController::class, 'bulk'])->name('bulk');
+    });
 });
 
 // Seller System Routes
@@ -272,5 +295,13 @@ Route::get('/debug-auth', function () {
 Route::get('/test-blade', function () {
     return view('test-blade');
 })->middleware(['auth'])->name('test.blade');
+
+// API Routes for Real-time features
+Route::prefix('api')->middleware(['auth'])->group(function () {
+    Route::get('/notifications/unread-count', [ApiNotificationController::class, 'getUnreadCount'])
+        ->name('api.notifications.unread-count');
+    Route::post('/notifications/mark-all-read', [ApiNotificationController::class, 'markAllAsRead'])
+        ->name('api.notifications.mark-all-read');
+});
 
 require __DIR__.'/auth.php';

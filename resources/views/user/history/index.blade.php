@@ -190,6 +190,8 @@
                 });
 
                 if (response.ok) {
+                    // Trigger notification count refresh in navbar
+                    window.dispatchEvent(new CustomEvent('refreshNotificationCount'));
                     // Reload page to update UI
                     location.reload();
                 }
@@ -210,6 +212,8 @@
                 });
 
                 if (response.ok) {
+                    // Trigger notification count refresh in navbar
+                    window.dispatchEvent(new CustomEvent('refreshNotificationCount'));
                     // Reload page to update UI
                     location.reload();
                 }
