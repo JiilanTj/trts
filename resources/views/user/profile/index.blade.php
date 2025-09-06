@@ -163,13 +163,6 @@
             <section class="space-y-3">
                 <h2 class="text-xs font-semibold tracking-wide text-neutral-400 uppercase">Keamanan</h2>
                 <div class="rounded-xl overflow-hidden divide-y divide-neutral-800 border border-[#2c3136] bg-[#23272b]">
-                    <a href="{{ route('profile.edit') }}#password" class="flex items-center justify-between px-4 py-3 hover:bg-[#272c31] transition">
-                        <div>
-                            <p class="text-sm font-medium">Password</p>
-                            <p class="text-[11px] text-neutral-400">Ubah kata sandi akun.</p>
-                        </div>
-                        <svg class="w-4 h-4 text-neutral-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/></svg>
-                    </a>
                     <form method="POST" action="{{ route('logout') }}" onsubmit="return confirm('Keluar dari akun?');">
                         @csrf
                         <button type="submit" class="w-full flex items-center justify-between px-4 py-3 hover:bg-[#272c31] transition text-left">

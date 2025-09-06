@@ -133,7 +133,7 @@
                     </a>
 
                     <!-- Manajemen Evaluasi -->
-                    <a href="#" class="flex items-center justify-between py-3 px-4 rounded-lg bg-neutral-800/40 border border-neutral-700/50 hover:border-amber-500/30 hover:bg-neutral-800/60 transition group">
+                    <a href="{{ route('user.analytics.index') }}" class="flex items-center justify-between py-3 px-4 rounded-lg bg-neutral-800/40 border border-neutral-700/50 hover:border-amber-500/30 hover:bg-neutral-800/60 transition group">
                         <div class="flex items-center space-x-3">
                             <div class="w-10 h-10 rounded-full bg-gradient-to-br from-amber-500/20 to-orange-500/20 flex items-center justify-center">
                                 <svg class="w-5 h-5 text-neutral-300 group-hover:text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -142,7 +142,7 @@
                             </div>
                             <div>
                                 <p class="text-sm font-medium text-neutral-100 group-hover:text-white">Manajemen Evaluasi</p>
-                                <p class="text-xs text-neutral-400">Evaluasi performa bisnis</p>
+                                <p class="text-xs text-neutral-400">Analytics & performa bisnis</p>
                             </div>
                         </div>
                         <svg class="w-4 h-4 text-neutral-400 group-hover:text-amber-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -163,16 +163,16 @@
 
                 <div class="px-5 pb-5 space-y-1">
                     <!-- Layanan Online -->
-                    <a href="#" class="flex items-center justify-between py-3 px-4 rounded-lg bg-neutral-800/40 border border-neutral-700/50 hover:border-purple-500/30 hover:bg-neutral-800/60 transition group">
+                    <a href="{{ route('user.chat.index') }}" class="flex items-center justify-between py-3 px-4 rounded-lg bg-neutral-800/40 border border-neutral-700/50 hover:border-purple-500/30 hover:bg-neutral-800/60 transition group">
                         <div class="flex items-center space-x-3">
                             <div class="w-10 h-10 rounded-full bg-gradient-to-br from-purple-500/20 to-pink-500/20 flex items-center justify-center">
                                 <svg class="w-5 h-5 text-neutral-300 group-hover:text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 12a9 9 0 01-9 9m9-9a9 9 0 00-9-9m9 9H3m9 9a9 9 0 01-9-9m9 9c1.657 0 3-4.03 3-9s-1.343-9-3-9m0 18c-1.657 0-3-4.03-3-9s1.343-9 3-9m-9 9a9 9 0 019-9"></path>
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4-.8L3 20l1.22-2.44A7.793 7.793 0 013 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"></path>
                                 </svg>
                             </div>
                             <div>
                                 <p class="text-sm font-medium text-neutral-100 group-hover:text-white">Layanan Online</p>
-                                <p class="text-xs text-neutral-400">Platform digital terintegrasi</p>
+                                <p class="text-xs text-neutral-400">Customer Service & Live Chat</p>
                             </div>
                         </div>
                         <svg class="w-4 h-4 text-neutral-400 group-hover:text-purple-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">

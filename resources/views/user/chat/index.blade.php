@@ -129,24 +129,6 @@
                 </div>
 
                 <div class="px-5 pb-5 space-y-1">
-                    <!-- FAQ -->
-                    <a href="#" class="flex items-center justify-between py-3 px-4 rounded-lg bg-neutral-800/40 border border-neutral-700/50 hover:border-purple-500/30 hover:bg-neutral-800/60 transition group">
-                        <div class="flex items-center space-x-3">
-                            <div class="w-10 h-10 rounded-full bg-gradient-to-br from-purple-500/20 to-pink-500/20 flex items-center justify-center">
-                                <svg class="w-5 h-5 text-neutral-300 group-hover:text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8.228 9c.549-1.165 2.03-2 3.772-2 2.21 0 4 1.343 4 3 0 1.4-1.278 2.575-3.006 2.907-.542.104-.994.54-.994 1.093m0 3h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
-                                </svg>
-                            </div>
-                            <div>
-                                <p class="text-sm font-medium text-neutral-100 group-hover:text-white">FAQ</p>
-                                <p class="text-xs text-neutral-400">Pertanyaan yang sering diajukan</p>
-                            </div>
-                        </div>
-                        <svg class="w-4 h-4 text-neutral-400 group-hover:text-purple-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path>
-                        </svg>
-                    </a>
-
                     <!-- Panduan Pengguna -->
                     <a href="#" class="flex items-center justify-between py-3 px-4 rounded-lg bg-neutral-800/40 border border-neutral-700/50 hover:border-indigo-500/30 hover:bg-neutral-800/60 transition group">
                         <div class="flex items-center space-x-3">

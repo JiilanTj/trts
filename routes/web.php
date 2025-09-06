@@ -28,6 +28,8 @@ use App\Http\Controllers\User\HistoryController; // new
 // Add topup controllers
 use App\Http\Controllers\User\TopupController as UserTopupController;
 use App\Http\Controllers\Admin\TopupController as AdminTopupController;
+// Add analytics controller
+use App\Http\Controllers\User\AnalyticsController;
 // Add API controllers
 use App\Http\Controllers\Api\NotificationController as ApiNotificationController;
 
@@ -173,6 +175,13 @@ Route::middleware('auth')->group(function () {
     
     // Additional Menu
     Route::get('additional-menu', [App\Http\Controllers\User\AdditionalMenuController::class,'index'])->name('user.additional-menu.index');
+    
+    // Analytics / Business Evaluation
+    Route::prefix('analytics')->name('user.analytics.')->group(function () {
+        Route::get('/', [App\Http\Controllers\User\AnalyticsController::class, 'index'])->name('index');
+        Route::get('/stats', [App\Http\Controllers\User\AnalyticsController::class, 'getStats'])->name('stats');
+        Route::get('/chart-data', [App\Http\Controllers\User\AnalyticsController::class, 'apiGetChartData'])->name('chart-data');
+    });
     
     // Chat / Customer Service
     Route::prefix('chat')->name('user.chat.')->group(function () {
