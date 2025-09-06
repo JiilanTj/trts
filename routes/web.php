@@ -189,6 +189,11 @@ Route::middleware('auth')->group(function () {
         Route::post('/', [UserTopupController::class, 'store'])->name('store');
         Route::get('/{topupRequest}', [UserTopupController::class, 'show'])->name('show');
     });
+    
+    // User Wholesale Routes
+    Route::prefix('wholesale')->name('user.wholesale.')->group(function () {
+        Route::get('/', [App\Http\Controllers\User\WholesaleController::class, 'index'])->name('index');
+    });
 });
 
 // Admin Routes - Only for admin users
