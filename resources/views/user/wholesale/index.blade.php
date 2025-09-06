@@ -96,8 +96,89 @@
                 </div>
             </div>
 
+            <!-- Manual Search Section - Only show for "Pilihan Manual" -->
+            <div id="manualFilterSection" class="rounded-xl mb-6 border border-[#2c3136] bg-[#23272b] shadow-sm relative overflow-hidden" style="display: none;">
+                <div class="h-1 w-full bg-gradient-to-r from-[#25F4EE] via-[#25F4EE]/40 to-[#FE2C55]"></div>
+                
+                <div class="p-4">
+                    <form id="manualSearchForm" method="GET" action="{{ route('user.wholesale.index') }}">
+                        <!-- Row 1: SKU Search with Icon -->
+                        <div class="mb-3">
+                            <div class="flex items-center gap-2 p-3 bg-neutral-800/30 rounded-lg border border-neutral-700/50">
+                                <div class="flex items-center gap-2 text-xs text-neutral-300 min-w-fit">
+                                    <i class="fas fa-barcode text-[#FE2C55]"></i>
+                                    <span class="whitespace-nowrap">Kode Produk</span>
+                                </div>
+                                <input type="text" name="sku" value="{{ request('sku') }}" 
+                                       class="flex-1 bg-transparent border-0 text-sm text-white placeholder-neutral-400 focus:outline-none focus:ring-0" 
+                                       placeholder="Scan atau ketik SKU produk">
+                            </div>
+                        </div>
+                        
+                        <!-- Row 2: Category and Price Range in horizontal layout -->
+                        <div class="mb-3">
+                            <div class="flex items-center gap-2">
+                                <!-- Category Filter -->
+                                <div class="flex items-center gap-2 p-3 bg-neutral-800/30 rounded-lg border border-neutral-700/50 flex-1">
+                                    <i class="fas fa-tag text-[#25F4EE] text-xs"></i>
+                                    <select name="category_id" class="bg-transparent border-0 text-sm text-white focus:outline-none focus:ring-0 flex-1">
+                                        <option value="">Pilih Kategori</option>
+                                        @if(isset($categories) && $categories)
+                                            @foreach($categories as $category)
+                                                <option value="{{ $category->id }}" {{ request('category_id') == $category->id ? 'selected' : '' }}>
+                                                    {{ $category->name }}
+                                                </option>
+                                            @endforeach
+                                        @endif
+                                    </select>
+                                </div>
+                                
+                                <!-- Price Range -->
+                                <div class="flex items-center gap-1">
+                                    <div class="flex items-center gap-1 p-3 bg-neutral-800/30 rounded-lg border border-neutral-700/50">
+                                        <i class="fas fa-dollar-sign text-[#FE2C55] text-xs"></i>
+                                        <input type="number" name="price_min" value="{{ request('price_min') }}" 
+                                               class="price-input bg-transparent border-0 text-sm text-white placeholder-neutral-400 focus:outline-none focus:ring-0 w-20" 
+                                               placeholder="Min">
+                                    </div>
+                                    <span class="text-neutral-500 text-xs px-1">—</span>
+                                    <div class="flex items-center gap-1 p-3 bg-neutral-800/30 rounded-lg border border-neutral-700/50">
+                                        <input type="number" name="price_max" value="{{ request('price_max') }}" 
+                                               class="price-input bg-transparent border-0 text-sm text-white placeholder-neutral-400 focus:outline-none focus:ring-0 w-20" 
+                                               placeholder="Max">
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- Row 3: Product Name Search with Actions -->
+                        <div class="mb-3">
+                            <div class="flex items-center gap-2">
+                                <div class="flex items-center gap-2 p-3 bg-neutral-800/30 rounded-lg border border-neutral-700/50 flex-1">
+                                    <i class="fas fa-search text-[#25F4EE] text-xs"></i>
+                                    <input type="text" name="product_name" value="{{ request('product_name') }}" 
+                                           class="flex-1 bg-transparent border-0 text-sm text-white placeholder-neutral-400 focus:outline-none focus:ring-0" 
+                                           placeholder="Cari nama produk">
+                                </div>
+                                
+                                <!-- Action Buttons -->
+                                <div class="flex gap-2">
+                                    <button type="submit" class="px-4 py-3 bg-gradient-to-r from-[#FE2C55] to-[#25F4EE] text-white rounded-lg hover:shadow-lg transition-all duration-200 text-xs font-medium whitespace-nowrap">
+                                        <i class="fas fa-search mr-1"></i>Cari
+                                    </button>
+                                    <button type="button" onclick="document.getElementById('manualSearchForm').reset(); loadAllProducts();" 
+                                            class="px-3 py-3 bg-neutral-700 text-neutral-300 rounded-lg hover:bg-neutral-600 transition-colors text-xs whitespace-nowrap">
+                                        <i class="fas fa-undo mr-1"></i>Reset
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </form>
+                </div>
+            </div>
+
             <!-- Active Filter Display -->
-            @if(request('ranking_type') || request('profit_type'))
+            @if(request('ranking_type') || request('profit_type') || request('price_min') || request('price_max') || request('category_id') || request('sku') || request('product_name'))
             <div class="mb-4 p-3 bg-gradient-to-r from-[#FE2C55]/10 to-[#25F4EE]/10 border border-[#FE2C55]/20 rounded-lg">
                 <div class="flex items-center space-x-2 text-sm">
                     <svg class="w-4 h-4 text-[#FE2C55]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -114,6 +195,36 @@
                     @if(request('profit_type') == 'profit')
                         <span class="px-2 py-1 bg-[#25F4EE]/20 text-[#25F4EE] rounded text-xs font-medium">
                             Keuntungan Terbaik (Top {{ request('profit_limit', 20) }})
+                        </span>
+                    @endif
+                    
+                    @if(request('price_min') || request('price_max'))
+                        <span class="px-2 py-1 bg-[#25F4EE]/20 text-[#25F4EE] rounded text-xs font-medium">
+                            Harga: 
+                            @if(request('price_min'))Rp {{ number_format(request('price_min'), 0, ',', '.') }}@endif
+                            @if(request('price_min') && request('price_max')) - @endif
+                            @if(request('price_max'))Rp {{ number_format(request('price_max'), 0, ',', '.') }}@endif
+                        </span>
+                    @endif
+                    
+                    @if(request('category_id') && isset($categories))
+                        @php($selectedCategory = $categories->find(request('category_id')))
+                        @if($selectedCategory)
+                            <span class="px-2 py-1 bg-[#25F4EE]/20 text-[#25F4EE] rounded text-xs font-medium">
+                                Kategori: {{ $selectedCategory->name }}
+                            </span>
+                        @endif
+                    @endif
+                    
+                    @if(request('sku'))
+                        <span class="px-2 py-1 bg-[#25F4EE]/20 text-[#25F4EE] rounded text-xs font-medium">
+                            SKU: {{ request('sku') }}
+                        </span>
+                    @endif
+                    
+                    @if(request('product_name'))
+                        <span class="px-2 py-1 bg-[#25F4EE]/20 text-[#25F4EE] rounded text-xs font-medium">
+                            Nama: {{ request('product_name') }}
                         </span>
                     @endif
                     
@@ -213,6 +324,88 @@
         </div>
     </div>
 
+    <style>
+        /* Custom responsive styles for wholesale page */
+        @media (max-width: 640px) {
+            /* Mobile layout adjustments */
+            #manualFilterSection .flex.items-center.gap-2 {
+                flex-direction: column;
+                gap: 0.75rem;
+            }
+            
+            #manualFilterSection .flex.items-center.gap-2 > .flex-1 {
+                width: 100%;
+            }
+            
+            #manualFilterSection .flex.items-center.gap-1 {
+                justify-content: space-between;
+                width: 100%;
+            }
+            
+            /* Price range inputs on mobile */
+            #manualFilterSection .flex.items-center.gap-1 > div {
+                flex: 1;
+            }
+            
+            /* Action buttons on mobile */
+            #manualFilterSection .flex.gap-2 {
+                width: 100%;
+                justify-content: stretch;
+            }
+            
+            #manualFilterSection .flex.gap-2 button {
+                flex: 1;
+            }
+            
+            /* Product grid responsive */
+            .grid.grid-cols-2 {
+                grid-template-columns: repeat(2, minmax(0, 1fr));
+                gap: 0.75rem;
+            }
+            
+            /* Tab buttons responsive - only for main tabs */
+            .flex.bg-neutral-800 > button {
+                font-size: 0.75rem;
+                padding: 0.5rem 0.75rem;
+            }
+            
+            /* Quick filter buttons on mobile */
+            .grid.grid-cols-3 {
+                grid-template-columns: repeat(3, minmax(0, 1fr));
+                gap: 0.5rem;
+            }
+        }
+        
+        @media (max-width: 480px) {
+            /* Very small screens */
+            #manualFilterSection input[type="number"] {
+                width: 100%;
+                min-width: auto;
+            }
+            
+            /* Make sure icons don't shrink */
+            .fas {
+                flex-shrink: 0;
+            }
+        }
+        
+        /* Custom focus styles */
+        #manualFilterSection input:focus,
+        #manualFilterSection select:focus {
+            outline: none;
+            box-shadow: 0 0 0 2px rgba(254, 44, 85, 0.2);
+        }
+        
+        /* Better touch targets on mobile - only for manual filter section */
+        @media (max-width: 768px) {
+            #manualFilterSection button, 
+            #manualFilterSection input, 
+            #manualFilterSection select {
+                min-height: 44px;
+            }
+        }
+    </style>
+
     <script>
         document.addEventListener('DOMContentLoaded', function() {
             let selectedProducts = 0;
@@ -220,6 +413,30 @@
             const confirmButton = document.getElementById('confirmButton');
             const clearButton = document.getElementById('clearButton');
             const selectedCount = document.getElementById('selectedCount');
+            
+            // Quick Filter Tab functionality (State Changer)
+            const tabDaftarCepat = document.getElementById('tabDaftarCepat');
+            const tabPilihanManual = document.getElementById('tabPilihanManual');
+            const tabPilihanStrategis = document.getElementById('tabPilihanStrategis');
+            const filterSection = document.getElementById('filterSection');
+            const manualFilterSection = document.getElementById('manualFilterSection');
+            
+            // Filter buttons - Define early to avoid reference errors
+            const rankingButtons = document.querySelectorAll('.ranking-btn');
+            const profitButtons = document.querySelectorAll('.profit-btn');
+            const productsContainer = document.getElementById('productsContainer');
+            const loadingState = document.getElementById('loadingState');
+            
+            // Debug: Check if elements are found
+            console.log('Tab elements found:', {
+                tabDaftarCepat: !!tabDaftarCepat,
+                tabPilihanManual: !!tabPilihanManual,
+                tabPilihanStrategis: !!tabPilihanStrategis,
+                filterSection: !!filterSection,
+                manualFilterSection: !!manualFilterSection,
+                rankingButtons: rankingButtons.length,
+                profitButtons: profitButtons.length
+            });
             
             // Update UI elements
             function updateUI() {
@@ -229,6 +446,185 @@
                 }
                 if (selectedCount) {
                     selectedCount.textContent = selectedProducts;
+                }
+            }
+            
+            // Function to set button to active state (PINK!)
+            function setButtonActive(button) {
+                // Remove all background classes and add pink background
+                button.classList.remove('bg-neutral-700/50', 'text-neutral-300', 'hover:bg-neutral-600/50');
+                button.style.backgroundColor = '#FE2C55';
+                button.style.color = 'white';
+                button.classList.add('text-white');
+            }
+            
+            // Function to set button to inactive state
+            function setButtonInactive(button) {
+                // Remove active styles and add inactive classes
+                button.style.backgroundColor = '';
+                button.style.color = '';
+                button.classList.remove('text-white');
+                button.classList.add('bg-neutral-700/50', 'text-neutral-300', 'hover:bg-neutral-600/50');
+            }
+            
+            // Function to reset all filters
+            function resetAllFilters() {
+                console.log('Resetting all filters');
+                
+                // Reset ranking buttons
+                [...rankingButtons, ...profitButtons].forEach(btn => {
+                    setButtonInactive(btn);
+                });
+                
+                // Clear URL parameters
+                const url = new URL(window.location);
+                url.searchParams.delete('ranking_type');
+                url.searchParams.delete('ranking_limit');
+                url.searchParams.delete('profit_type');
+                url.searchParams.delete('profit_limit');
+                url.searchParams.delete('price_min');
+                url.searchParams.delete('price_max');
+                url.searchParams.delete('category_id');
+                url.searchParams.delete('sku');
+                url.searchParams.delete('product_name');
+                
+                // Update URL without reload
+                window.history.pushState({}, '', url.toString());
+            }
+            
+            // Function to reset manual form
+            function resetManualForm() {
+                const form = document.getElementById('manualSearchForm');
+                if (form) {
+                    form.reset();
+                }
+            }
+            
+            // Function to show loading state
+            function showLoading() {
+                productsContainer.style.display = 'none';
+                loadingState.style.display = 'block';
+            }
+            
+            // Function to hide loading state
+            function hideLoading() {
+                loadingState.style.display = 'none';
+                productsContainer.style.display = 'grid';
+            }
+            
+            // Generic function to load products via AJAX
+            async function loadProductsAjax(params = {}) {
+                const url = new URL(window.location.origin + window.location.pathname);
+                
+                // Add parameters
+                Object.keys(params).forEach(key => {
+                    if (params[key]) {
+                        url.searchParams.set(key, params[key]);
+                    }
+                });
+                
+                url.searchParams.set('ajax', '1');
+                
+                try {
+                    showLoading();
+                    
+                    const response = await fetch(url.toString(), {
+                        method: 'GET',
+                        headers: {
+                            'X-Requested-With': 'XMLHttpRequest',
+                            'Accept': 'application/json',
+                        }
+                    });
+                    
+                    if (!response.ok) throw new Error('Network response was not ok');
+                    
+                    const data = await response.json();
+                    
+                    // Update products grid
+                    productsContainer.innerHTML = data.html;
+                    
+                    // Re-bind checkbox events
+                    bindCheckboxEvents();
+                    
+                    // Auto-select all products after filter change
+                    autoSelectAllProducts();
+                    
+                } catch (error) {
+                    console.error('Error loading products:', error);
+                } finally {
+                    hideLoading();
+                }
+            }
+            
+            // Function to load default products (Best 20)
+            async function loadDefaultProducts() {
+                console.log('Loading default products (Best 20)');
+                
+                // Set Best 20 as active
+                const defaultBtn = Array.from(rankingButtons).find(btn => 
+                    btn.dataset.rankingType === 'best_seller' && btn.dataset.rankingLimit === '20'
+                );
+                if (defaultBtn) {
+                    setButtonActive(defaultBtn);
+                }
+                
+                // Load products via AJAX
+                await loadProductsAjax({
+                    ranking_type: 'best_seller',
+                    ranking_limit: '20'
+                });
+            }
+            
+            // Function to load all products for manual search
+            async function loadAllProducts() {
+                console.log('Loading all products for manual search');
+                
+                await loadProductsAjax({});
+            }
+            
+            // Function to switch tabs
+            function switchTab(activeTab) {
+                console.log('Switching to tab:', activeTab.id); // Debug log
+                
+                // Remove active class from all tabs
+                [tabDaftarCepat, tabPilihanManual, tabPilihanStrategis].forEach(tab => {
+                    tab.classList.remove('bg-[#FE2C55]', 'text-white');
+                    tab.classList.add('text-neutral-400');
+                });
+                
+                // Add active class to clicked tab
+                activeTab.classList.remove('text-neutral-400');
+                activeTab.classList.add('bg-[#FE2C55]', 'text-white');
+                
+                // Reset filters when switching tabs
+                resetAllFilters();
+                
+                // Show/hide filter sections based on active tab
+                if (activeTab === tabDaftarCepat) {
+                    console.log('Showing Daftar Cepat section'); // Debug log
+                    filterSection.style.display = 'block';
+                    manualFilterSection.style.display = 'none';
+                    
+                    // Load default best seller products
+                    loadDefaultProducts();
+                    
+                } else if (activeTab === tabPilihanManual) {
+                    console.log('Showing Manual Filter section'); // Debug log
+                    filterSection.style.display = 'none';
+                    manualFilterSection.style.display = 'block';
+                    
+                    // Reset manual form
+                    resetManualForm();
+                    // Load all products for manual filtering
+                    loadAllProducts();
+                    
+                } else {
+                    console.log('Hiding all sections'); // Debug log
+                    filterSection.style.display = 'none';
+                    manualFilterSection.style.display = 'none';
+                    
+                    // Load default products
+                    loadDefaultProducts();
                 }
             }
             
@@ -255,61 +651,43 @@
                 });
             }
             
-            // Quick Filter Tab functionality (State Changer)
-            const tabDaftarCepat = document.getElementById('tabDaftarCepat');
-            const tabPilihanManual = document.getElementById('tabPilihanManual');
-            const tabPilihanStrategis = document.getElementById('tabPilihanStrategis');
-            const filterSection = document.getElementById('filterSection');
+            // Check URL params to determine initial tab state
+            const initialUrlParams = new URLSearchParams(window.location.search);
+            const hasManualFilters = initialUrlParams.get('price_min') || initialUrlParams.get('price_max') || 
+                                    initialUrlParams.get('category_id') || initialUrlParams.get('sku') || 
+                                    initialUrlParams.get('product_name');
             
-            // Function to switch tabs
-            function switchTab(activeTab) {
-                // Remove active class from all tabs
-                [tabDaftarCepat, tabPilihanManual, tabPilihanStrategis].forEach(tab => {
-                    tab.classList.remove('bg-[#FE2C55]', 'text-white');
-                    tab.classList.add('text-neutral-400');
+            // Set initial tab based on filters
+            if (hasManualFilters) {
+                switchTab(tabPilihanManual);
+            } else {
+                switchTab(tabDaftarCepat);
+            }
+            
+            // Add event listeners to tabs with additional safety checks
+            if (tabDaftarCepat) {
+                tabDaftarCepat.addEventListener('click', (e) => {
+                    e.preventDefault();
+                    console.log('Daftar Cepat clicked'); // Debug log
+                    switchTab(tabDaftarCepat);
                 });
-                
-                // Add active class to clicked tab
-                activeTab.classList.remove('text-neutral-400');
-                activeTab.classList.add('bg-[#FE2C55]', 'text-white');
-                
-                // Show/hide filter section based on active tab
-                if (activeTab === tabDaftarCepat) {
-                    filterSection.style.display = 'block';
-                } else {
-                    filterSection.style.display = 'none';
-                }
             }
             
-            // Add event listeners to tabs
-            tabDaftarCepat.addEventListener('click', () => switchTab(tabDaftarCepat));
-            tabPilihanManual.addEventListener('click', () => switchTab(tabPilihanManual));
-            tabPilihanStrategis.addEventListener('click', () => switchTab(tabPilihanStrategis));
-            
-            // Filter buttons functionality (Ranking and Profit) - AJAX VERSION
-            const rankingButtons = document.querySelectorAll('.ranking-btn');
-            const profitButtons = document.querySelectorAll('.profit-btn');
-            const productsContainer = document.getElementById('productsContainer');
-            const loadingState = document.getElementById('loadingState');
-            
-            // Function to set button to active state (PINK!)
-            function setButtonActive(button) {
-                // Remove all background classes and add pink background
-                button.classList.remove('bg-neutral-700/50', 'text-neutral-300', 'hover:bg-neutral-600/50');
-                button.style.backgroundColor = '#FE2C55';
-                button.style.color = 'white';
-                button.classList.add('text-white');
+            if (tabPilihanManual) {
+                tabPilihanManual.addEventListener('click', (e) => {
+                    e.preventDefault();
+                    console.log('Pilihan Manual clicked'); // Debug log
+                    switchTab(tabPilihanManual);
+                });
             }
             
-            // Function to set button to inactive state
-            function setButtonInactive(button) {
-                // Remove active styles and add inactive classes
-                button.style.backgroundColor = '';
-                button.style.color = '';
-                button.classList.remove('text-white');
-                button.classList.add('bg-neutral-700/50', 'text-neutral-300', 'hover:bg-neutral-600/50');
+            if (tabPilihanStrategis) {
+                tabPilihanStrategis.addEventListener('click', (e) => {
+                    e.preventDefault();
+                    console.log('Pilihan Strategis clicked'); // Debug log
+                    switchTab(tabPilihanStrategis);
+                });
             }
-            
             // Function to initialize button states on page load
             function initializeButtonStates() {
                 // Check URL parameters to set correct active states
@@ -356,24 +734,12 @@
             initializeButtonStates();
             
             // Auto-select all products on initial page load (if any filter is active)
-            const urlParams = new URLSearchParams(window.location.search);
-            if (urlParams.get('ranking_type') || urlParams.get('profit_type') || (!urlParams.get('ranking_type') && !urlParams.get('profit_type'))) {
+            const autoSelectUrlParams = new URLSearchParams(window.location.search);
+            if (autoSelectUrlParams.get('ranking_type') || autoSelectUrlParams.get('profit_type') || (!autoSelectUrlParams.get('ranking_type') && !autoSelectUrlParams.get('profit_type'))) {
                 // Auto-select all products on page load (including default Best 20)
                 setTimeout(() => {
                     autoSelectAllProducts();
                 }, 100); // Small delay to ensure DOM is ready
-            }
-            
-            // Function to show loading state
-            function showLoading() {
-                productsContainer.style.display = 'none';
-                loadingState.style.display = 'block';
-            }
-            
-            // Function to hide loading state
-            function hideLoading() {
-                loadingState.style.display = 'none';
-                productsContainer.style.display = 'grid';
             }
             
             // Function to apply filters with AJAX (Next.js style!)
@@ -525,6 +891,24 @@
                     
                     // Apply filters with AJAX (super fast!)
                     applyFiltersAjax();
+                });
+            });
+            
+            // Price input formatting (remove dots for submission)
+            const priceInputs = document.querySelectorAll('.price-input');
+            priceInputs.forEach(input => {
+                input.addEventListener('input', function() {
+                    // Remove non-numeric characters
+                    let value = this.value.replace(/[^0-9]/g, '');
+                    
+                    // Format with thousand separators for display (optional)
+                    if (value) {
+                        // Store the raw value for form submission
+                        this.setAttribute('data-raw-value', value);
+                        // Display formatted value (you can comment this line if you want plain numbers)
+                        // this.value = new Intl.NumberFormat('id-ID').format(value);
+                        this.value = value; // Keep it simple for now
+                    }
                 });
             });
         });

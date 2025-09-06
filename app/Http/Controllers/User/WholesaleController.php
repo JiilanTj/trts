@@ -13,21 +13,31 @@ class WholesaleController extends Controller
 {
     public function index(Request $request)
     {
-        // Get filter parameters - MUTUALLY EXCLUSIVE!
+        // Get filter parameters - MUTUALLY EXCLUSIVE for quick filters!
         $rankingType = $request->get('ranking_type'); // best_seller
         $rankingLimit = $request->get('ranking_limit', 20); // 20, 30, 50
         $profitType = $request->get('profit_type'); // profit
         $profitLimit = $request->get('profit_limit', 20);
         
-        // MUTUALLY EXCLUSIVE LOGIC: Only one filter can be active
+        // Additional filter parameters for manual search
+        $priceMin = $request->get('price_min');
+        $priceMax = $request->get('price_max');
+        $categoryId = $request->get('category_id');
+        $sku = $request->get('sku');
+        $productName = $request->get('product_name');
+        
+        // MUTUALLY EXCLUSIVE LOGIC: Only one quick filter can be active
         if ($profitType && $rankingType) {
             // If both are present, prioritize the most recent one (profit)
             $rankingType = null;
             $rankingLimit = null;
         }
         
+        // Check if manual filters are being used
+        $hasManualFilters = $priceMin || $priceMax || $categoryId || $sku || $productName;
+        
         // Default to best seller 20 if no filters are active
-        if (!$rankingType && !$profitType) {
+        if (!$rankingType && !$profitType && !$hasManualFilters) {
             $rankingType = 'best_seller';
             $rankingLimit = 20;
         }
@@ -35,9 +45,20 @@ class WholesaleController extends Controller
         // Get basic stats for wholesale dashboard
         $totalProducts = Product::where('status', 'active')->count();
         $totalCategories = Category::count();
+        $categories = Category::where('status', 'active')->orderBy('name')->get();
         
         // Get featured products based on filters
-        $featuredProducts = $this->getFilteredProducts($rankingType, $rankingLimit, $profitType, $profitLimit);
+        $featuredProducts = $this->getFilteredProducts(
+            $rankingType, 
+            $rankingLimit, 
+            $profitType, 
+            $profitLimit,
+            $priceMin,
+            $priceMax,
+            $categoryId,
+            $sku,
+            $productName
+        );
         
         // Ensure featuredProducts is always a collection
         if (!$featuredProducts) {
@@ -51,11 +72,17 @@ class WholesaleController extends Controller
             return response()->json([
                 'html' => $html,
                 'filters' => [
-                    'hasFilters' => $rankingType || $profitType,
+                    'hasFilters' => $rankingType || $profitType || $hasManualFilters,
                     'rankingType' => $rankingType,
                     'rankingLimit' => $rankingLimit,
                     'profitType' => $profitType,
                     'profitLimit' => $profitLimit,
+                    'priceMin' => $priceMin,
+                    'priceMax' => $priceMax,
+                    'categoryId' => $categoryId,
+                    'sku' => $sku,
+                    'productName' => $productName,
+                    'hasManualFilters' => $hasManualFilters,
                 ],
                 'count' => $featuredProducts->count()
             ]);
@@ -64,19 +91,34 @@ class WholesaleController extends Controller
         return view('user.wholesale.index', compact(
             'totalProducts', 
             'totalCategories', 
+            'categories',
             'featuredProducts',
             'rankingType',
             'rankingLimit',
             'profitType',
-            'profitLimit'
+            'profitLimit',
+            'priceMin',
+            'priceMax',
+            'categoryId',
+            'sku',
+            'productName',
+            'hasManualFilters'
         ));
     }
     
     /**
-     * Get filtered products based on parameters (MUTUALLY EXCLUSIVE)
+     * Get filtered products based on parameters (MUTUALLY EXCLUSIVE for quick filters)
      */
-    private function getFilteredProducts($rankingType, $rankingLimit, $profitType, $profitLimit)
+    private function getFilteredProducts($rankingType, $rankingLimit, $profitType, $profitLimit, $priceMin = null, $priceMax = null, $categoryId = null, $sku = null, $productName = null)
     {
+        // Check if manual filters are being used
+        $hasManualFilters = $priceMin || $priceMax || $categoryId || $sku || $productName;
+        
+        // If manual filters are used, prioritize them over quick filters
+        if ($hasManualFilters) {
+            return $this->getManualFilteredProducts($priceMin, $priceMax, $categoryId, $sku, $productName);
+        }
+        
         // PROFIT FILTER takes priority (mutually exclusive)
         if ($profitType === 'profit') {
             return $this->getTopProfitProducts($profitLimit);
@@ -143,5 +185,56 @@ class WholesaleController extends Controller
             ->orderByDesc('stock') // Secondary sort by stock
             ->take($limit)
             ->get();
+    }
+    
+    /**
+     * Get products filtered by manual search criteria
+     */
+    private function getManualFilteredProducts($priceMin = null, $priceMax = null, $categoryId = null, $sku = null, $productName = null)
+    {
+        $query = Product::where('status', 'active')
+            ->where('stock', '>', 0); // At least some stock
+        
+        // If no filters provided, return all active products (limited)
+        $hasFilters = $priceMin || $priceMax || $categoryId || $sku || $productName;
+        
+        if ($hasFilters) {
+            // Filter by price range
+            if ($priceMin) {
+                $query->where('sell_price', '>=', (int) str_replace('.', '', $priceMin));
+            }
+            
+            if ($priceMax) {
+                $query->where('sell_price', '<=', (int) str_replace('.', '', $priceMax));
+            }
+            
+            // Filter by category
+            if ($categoryId) {
+                $query->where('category_id', $categoryId);
+            }
+            
+            // Filter by SKU (product code)
+            if ($sku) {
+                $query->where('sku', 'like', '%' . $sku . '%');
+            }
+            
+            // Filter by product name
+            if ($productName) {
+                $query->where('name', 'like', '%' . $productName . '%');
+            }
+            
+            // Order by stock and profit for better wholesale distribution
+            return $query->orderByDesc('stock')
+                ->orderByDesc('profit')
+                ->limit(100) // Reasonable limit for manual search
+                ->get();
+        } else {
+            // No filters: return recent products with good stock
+            return $query->where('stock', '>', 10)
+                ->orderByDesc('created_at')
+                ->orderByDesc('stock')
+                ->limit(50) // Show recent products for manual browsing
+                ->get();
+        }
     }
 }
