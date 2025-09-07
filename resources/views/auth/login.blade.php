@@ -47,8 +47,8 @@
     @endphp
     
     <!-- Background -->
-    <div id="background-container" class="min-h-screen relative overflow-hidden bg-cover bg-center bg-no-repeat bg-gray-900" 
-         data-bg="{{ asset('backgroundlogin.png') }}">
+    <div class="min-h-screen relative overflow-hidden bg-cover bg-center bg-no-repeat" 
+         style="background-image: url('{{ asset('backgroundlogin.png') }}');">
          
         <!-- Overlay -->
         <div class="absolute inset-0 bg-black/40"></div>
@@ -144,9 +144,11 @@
                 
                 <!-- Bottom Text -->
                 <div class="mt-12 text-center">
-                    <p class="text-white/80 text-xs">
-                        Tukar Bahasa|Bantuan|Hubungi|layanan pelanggan
-                    </p>
+                    <div class="text-white/80 text-xs flex justify-center space-x-4">
+                        <span class="cursor-pointer hover:text-cyan-400 hover:underline transition-all duration-200">Tukar Bahasa</span>
+                        <span class="cursor-pointer hover:text-cyan-400 hover:underline transition-all duration-200">Bantuan</span>
+                        <span class="cursor-pointer hover:text-cyan-400 hover:underline transition-all duration-200">Hubungi Layanan Pelanggan</span>
+                    </div>
                 </div>
                 
                 </div>
@@ -154,29 +156,6 @@
             
         </div>
     </div>
-    
-    <!-- Lazy Load Background Script -->
-    <script>
-        document.addEventListener('DOMContentLoaded', function() {
-            const bgContainer = document.getElementById('background-container');
-            const bgUrl = bgContainer.getAttribute('data-bg');
-            
-            // Create a new image to preload
-            const img = new Image();
-            img.onload = function() {
-                // Once loaded, apply background
-                bgContainer.style.backgroundImage = `url('${bgUrl}')`;
-                bgContainer.classList.add('opacity-100');
-            };
-            
-            // Start loading the image
-            img.src = bgUrl;
-            
-            // Add initial opacity for smooth transition
-            bgContainer.style.opacity = '0.7';
-            bgContainer.style.transition = 'opacity 0.5s ease-in-out';
-        });
-    </script>
     
 </body>
 </html>
