@@ -19,11 +19,13 @@ class ChatMessage extends Model
         'attachment_path',
         'is_read',
         'read_at',
+        'is_from_guest',
     ];
 
     protected $casts = [
         'is_read' => 'boolean',
         'read_at' => 'datetime',
+        'is_from_guest' => 'boolean',
     ];
 
     const TYPE_TEXT = 'text';
@@ -131,5 +133,63 @@ class ChatMessage extends Model
     public function scopeFromUser($query, $userId)
     {
         return $query->where('user_id', $userId);
+    }
+
+    /**
+     * Check if this message is from a guest
+     */
+    public function isFromGuest(): bool
+    {
+        return $this->is_from_guest === true;
+    }
+
+    /**
+     * Check if this message is from a user
+     */
+    public function isFromUser(): bool
+    {
+        return !$this->is_from_guest && $this->user_id !== null;
+    }
+
+    /**
+     * Get sender name (guest, user, or admin)
+     */
+    public function getSenderName(): string
+    {
+        if ($this->isFromGuest()) {
+            return $this->chatRoom->guest_name ?? 'Guest';
+        }
+
+        return $this->sender?->full_name ?? 'Unknown';
+    }
+
+    /**
+     * Scope for messages from guests
+     */
+    public function scopeFromGuests($query)
+    {
+        return $query->where('is_from_guest', true);
+    }
+
+    /**
+     * Scope for messages from authenticated users (not guests)
+     */
+    public function scopeFromAuthenticatedUsers($query)
+    {
+        return $query->where('is_from_guest', false)->whereNotNull('user_id');
+    }
+
+    /**
+     * Create a guest message
+     */
+    public static function createGuestMessage(int $chatRoomId, string $message, string $messageType = self::TYPE_TEXT): self
+    {
+        return self::create([
+            'chat_room_id' => $chatRoomId,
+            'user_id' => null,
+            'message' => $message,
+            'message_type' => $messageType,
+            'is_from_guest' => true,
+        ]);
     }
 }

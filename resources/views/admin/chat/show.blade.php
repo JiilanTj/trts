@@ -1,5 +1,5 @@
 <x-admin-layout>
-    <x-slot name="title">Chat Room - {{ $chatRoom->user->full_name ?? $chatRoom->user->username ?? 'Unknown User' }}</x-slot>
+    <x-slot name="title">Chat Room - {{ $chatRoom->getInitiatorName() }}</x-slot>
 
     <!-- Meta tags for JavaScript -->
     <meta name="csrf-token" content="{{ csrf_token() }}">
@@ -24,12 +24,19 @@
                     <div class="flex items-center space-x-3">
                         <div class="w-10 h-10 bg-blue-500 rounded-full flex items-center justify-center">
                             <span class="text-sm font-bold text-white">
-                                {{ strtoupper(substr($chatRoom->user->full_name ?? $chatRoom->user->username ?? 'U', 0, 1)) }}
+                                {{ strtoupper(substr($chatRoom->getInitiatorName(), 0, 1)) }}
                             </span>
                         </div>
                         <div>
-                            <h2 class="text-xl font-semibold text-gray-800">{{ $chatRoom->user->full_name ?? $chatRoom->user->username ?? 'Unknown User' }}</h2>
-                            <p class="text-gray-600 text-sm">{{ $chatRoom->subject ?? 'Chat Support' }}</p>
+                            <h2 class="text-xl font-semibold text-gray-800">{{ $chatRoom->getInitiatorName() }}</h2>
+                            <p class="text-gray-600 text-sm">
+                                {{ $chatRoom->subject ?? 'Chat Support' }}
+                                @if($chatRoom->isGuestChat())
+                                    <span class="ml-2 inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-purple-100 text-purple-800">
+                                        Guest Chat
+                                    </span>
+                                @endif
+                            </p>
                         </div>
                     </div>
                 </div>
@@ -88,16 +95,19 @@
         <!-- Chat Messages Area -->
         <div class="h-96 overflow-y-auto p-6 space-y-4" id="messagesContainer">
             @forelse($messages as $message)
-                <div class="flex {{ $message->user_id === $chatRoom->user_id ? 'justify-end' : 'justify-start' }}" data-message-id="{{ $message->id }}">
+                @php
+                    $isFromInitiator = $chatRoom->isGuestChat() ? $message->is_from_guest : ($message->user_id === $chatRoom->user_id);
+                @endphp
+                <div class="flex {{ $isFromInitiator ? 'justify-end' : 'justify-start' }}" data-message-id="{{ $message->id }}">
                     <div class="max-w-xs lg:max-w-md">
                         <!-- Message bubble -->
-                        <div class="px-4 py-3 rounded-lg {{ $message->user_id === $chatRoom->user_id ? 'bg-blue-600 text-white' : 'bg-gray-100 text-gray-900' }}">
+                        <div class="px-4 py-3 rounded-lg {{ $isFromInitiator ? 'bg-blue-600 text-white' : 'bg-gray-100 text-gray-900' }}">
                             <p class="text-sm">{{ $message->message }}</p>
                         </div>
                         
                         <!-- Message info -->
-                        <div class="mt-1 text-xs text-gray-500 {{ $message->user_id === $chatRoom->user_id ? 'text-right' : 'text-left' }}">
-                            <span>{{ $message->user->full_name ?? $message->user->username ?? 'Unknown' }}</span>
+                        <div class="mt-1 text-xs text-gray-500 {{ $isFromInitiator ? 'text-right' : 'text-left' }}">
+                            <span>{{ $message->getSenderName() }}</span>
                             <span class="mx-1">•</span>
                             <span>{{ $message->created_at->format('H:i') }}</span>
                         </div>
@@ -155,9 +165,18 @@
         </div>
         <div class="p-6 space-y-4">
             <div>
-                <label class="text-sm font-medium text-gray-500">Customer</label>
-                <p class="text-sm text-gray-900">{{ $chatRoom->user->full_name ?? $chatRoom->user->username ?? 'Unknown' }}</p>
-                <p class="text-sm text-gray-500">{{ $chatRoom->user->email ?? '-' }}</p>
+                <label class="text-sm font-medium text-gray-500">
+                    {{ $chatRoom->isGuestChat() ? 'Guest' : 'Customer' }}
+                </label>
+                <p class="text-sm text-gray-900">{{ $chatRoom->getInitiatorName() }}</p>
+                <p class="text-sm text-gray-500">
+                    {{ $chatRoom->getInitiatorEmail() ?? '-' }}
+                    @if($chatRoom->isGuestChat())
+                        <span class="ml-2 inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-purple-100 text-purple-800">
+                            Guest Session
+                        </span>
+                    @endif
+                </p>
             </div>
             
             <div>

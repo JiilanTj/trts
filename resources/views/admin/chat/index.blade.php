@@ -6,7 +6,7 @@
     <meta name="user-id" content="{{ auth()->id() }}">
 
     <!-- Statistics Cards -->
-    <div class="grid grid-cols-1 md:grid-cols-4 gap-6 mb-6">
+    <div class="grid grid-cols-1 md:grid-cols-6 gap-6 mb-6">
         <!-- Total Rooms -->
         <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
             <div class="flex items-center">
@@ -66,6 +66,36 @@
                 </div>
             </div>
         </div>
+
+        <!-- Guest Rooms -->
+        <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+            <div class="flex items-center">
+                <div class="w-12 h-12 bg-purple-100 rounded-lg flex items-center justify-center">
+                    <svg class="w-6 h-6 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"></path>
+                    </svg>
+                </div>
+                <div class="ml-4">
+                    <p class="text-2xl font-bold text-gray-900" data-stat="guest_rooms">{{ $statistics['guest_rooms'] ?? 0 }}</p>
+                    <p class="text-gray-600 text-sm">Guest Chats</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- User Rooms -->
+        <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+            <div class="flex items-center">
+                <div class="w-12 h-12 bg-indigo-100 rounded-lg flex items-center justify-center">
+                    <svg class="w-6 h-6 text-indigo-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"></path>
+                    </svg>
+                </div>
+                <div class="ml-4">
+                    <p class="text-2xl font-bold text-gray-900" data-stat="user_rooms">{{ $statistics['user_rooms'] ?? 0 }}</p>
+                    <p class="text-gray-600 text-sm">User Chats</p>
+                </div>
+            </div>
+        </div>
     </div>
 
     <!-- Chat Rooms Table -->
@@ -109,11 +139,18 @@
                             <option value="low" {{ request('priority') === 'low' ? 'selected' : '' }}>Low</option>
                         </select>
                     </div>
+                    <div class="flex-1">
+                        <select name="type" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
+                            <option value="">All Types</option>
+                            <option value="user" {{ request('type') === 'user' ? 'selected' : '' }}>User Chat</option>
+                            <option value="guest" {{ request('type') === 'guest' ? 'selected' : '' }}>Guest Chat</option>
+                        </select>
+                    </div>
                     <button type="submit" 
                             class="bg-gray-600 hover:bg-gray-700 text-white px-6 py-2 rounded-lg text-sm font-medium transition-colors">
                         Filter
                     </button>
-                    @if(request('status') || request('priority'))
+                    @if(request('status') || request('priority') || request('type'))
                         <a href="{{ route('admin.chat.index') }}" 
                            class="bg-gray-300 hover:bg-gray-400 text-gray-700 px-4 py-2 rounded-lg text-sm font-medium transition-colors">
                             Reset
@@ -158,12 +195,19 @@
                                 <div class="flex items-center">
                                     <div class="w-10 h-10 bg-gray-300 rounded-full flex items-center justify-center">
                                         <span class="text-sm font-medium text-gray-700">
-                                            {{ strtoupper(substr($room->user->full_name ?? $room->user->username ?? 'U', 0, 1)) }}
+                                            {{ strtoupper(substr($room->getInitiatorName(), 0, 1)) }}
                                         </span>
                                     </div>
                                     <div class="ml-4">
-                                        <div class="text-sm font-medium text-gray-900">{{ $room->user->full_name ?? $room->user->username ?? 'Unknown' }}</div>
-                                        <div class="text-sm text-gray-500">{{ $room->user->email ?? '-' }}</div>
+                                        <div class="text-sm font-medium text-gray-900">{{ $room->getInitiatorName() }}</div>
+                                        <div class="text-sm text-gray-500">
+                                            {{ $room->getInitiatorEmail() ?? '-' }}
+                                            @if($room->isGuestChat())
+                                                <span class="ml-2 inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-purple-100 text-purple-800">
+                                                    Guest
+                                                </span>
+                                            @endif
+                                        </div>
                                     </div>
                                 </div>
                             </td>

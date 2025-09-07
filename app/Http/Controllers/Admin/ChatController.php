@@ -25,6 +25,7 @@ class ChatController extends Controller
         // Get filters from request
         $status = request('status');
         $priority = request('priority');
+        $type = request('type'); // guest or user filter
         
         // Build query with filters
         $query = ChatRoom::with(['user', 'assignedAdmin', 'messages' => function($q) {
@@ -39,13 +40,23 @@ class ChatController extends Controller
             $query->where('priority', $priority);
         }
         
+        // Filter by chat type
+        if ($type === 'guest') {
+            $query->where('is_guest', true);
+        } elseif ($type === 'user') {
+            $query->where('is_guest', false);
+        }
+        
         $chatRooms = $query->orderBy('created_at', 'desc')->paginate(20);
 
-        // Calculate statistics
+        // Calculate statistics including guest stats
         $statistics = [
             'total_rooms' => ChatRoom::count(),
             'open_rooms' => ChatRoom::where('status', 'open')->count(),
             'assigned_rooms' => ChatRoom::where('status', 'assigned')->count(),
+            'guest_rooms' => ChatRoom::where('is_guest', true)->count(),
+            'user_rooms' => ChatRoom::where('is_guest', false)->count(),
+            'open_guest_chats' => ChatRoom::where('status', 'open')->where('is_guest', true)->count(),
             'avg_response_time' => '2m 30s', // This would be calculated from actual data
         ];
 
@@ -71,11 +82,20 @@ class ChatController extends Controller
             broadcast(new ChatRoomAssigned($chatRoom));
         }
 
-        // Mark messages as read (messages from customer to admin)
-        ChatMessage::where('chat_room_id', $chatRoom->id)
-            ->where('user_id', $chatRoom->user_id)
-            ->where('is_read', false)
-            ->update(['is_read' => true, 'read_at' => now()]);
+        // Mark messages as read (handle both guest and user chats)
+        if ($chatRoom->isGuestChat()) {
+            // For guest chats, mark all guest messages as read
+            ChatMessage::where('chat_room_id', $chatRoom->id)
+                ->where('is_from_guest', true)
+                ->where('is_read', false)
+                ->update(['is_read' => true, 'read_at' => now()]);
+        } else {
+            // For user chats, mark user messages as read
+            ChatMessage::where('chat_room_id', $chatRoom->id)
+                ->where('user_id', $chatRoom->user_id)
+                ->where('is_read', false)
+                ->update(['is_read' => true, 'read_at' => now()]);
+        }
 
         return view('admin.chat.show', compact('chatRoom', 'messages'));
     }
@@ -94,10 +114,11 @@ class ChatController extends Controller
         $success = $chatRoom->assignTo($admin);
 
         if ($success) {
-            // Send system message about assignment
+            // Send system message about assignment (show who is being helped)
+            $initiatorName = $chatRoom->isGuestChat() ? $chatRoom->guest_name : $chatRoom->user->full_name;
             $chatRoom->messages()->create([
                 'user_id' => $admin->id,
-                'message' => ($admin->full_name ?? $admin->username) . ' bergabung ke dalam chat.',
+                'message' => ($admin->full_name ?? $admin->username) . ' bergabung untuk membantu ' . $initiatorName . '.',
                 'message_type' => ChatMessage::TYPE_SYSTEM,
             ]);
 
@@ -187,7 +208,9 @@ class ChatController extends Controller
                 'id' => $message->id,
                 'message' => $message->message,
                 'user_id' => $message->user_id,
-                'user_name' => $message->user->name,
+                'user_name' => $message->user->full_name ?? $message->user->username,
+                'is_from_admin' => true,
+                'is_from_guest' => false,
                 'created_at' => $message->created_at->toISOString(),
                 'time' => $message->created_at->format('H:i'),
             ],
@@ -228,8 +251,12 @@ class ChatController extends Controller
         $stats = [
             'open_chats' => ChatRoom::where('status', 'open')->count(),
             'assigned_chats' => ChatRoom::where('status', 'assigned')->count(),
-            'my_chats' => ChatRoom::where('assigned_admin_id', $admin->id)->count(),
+            'my_chats' => ChatRoom::where('admin_id', $admin->id)->count(),
             'closed_today' => ChatRoom::where('status', 'closed')->whereDate('updated_at', today())->count(),
+            'guest_chats' => ChatRoom::where('is_guest', true)->count(),
+            'user_chats' => ChatRoom::where('is_guest', false)->count(),
+            'open_guest_chats' => ChatRoom::where('status', 'open')->where('is_guest', true)->count(),
+            'open_user_chats' => ChatRoom::where('status', 'open')->where('is_guest', false)->count(),
         ];
 
         return response()->json($stats);
@@ -308,12 +335,14 @@ class ChatController extends Controller
             ->where('id', '>', $afterId)
             ->orderBy('id', 'asc')
             ->get()
-            ->map(function ($message) {
+            ->map(function ($message) use ($chatRoom) {
                 return [
                     'id' => $message->id,
                     'message' => $message->message,
                     'user_id' => $message->user_id,
-                    'user_name' => $message->sender->name ?? 'Unknown',
+                    'user_name' => $message->getSenderName(),
+                    'is_from_guest' => $message->is_from_guest,
+                    'is_from_admin' => $message->isFromAdmin(),
                     'created_at' => $message->created_at->toISOString(),
                     'message_type' => $message->message_type ?? 'text',
                 ];
@@ -363,7 +392,9 @@ class ChatController extends Controller
                 'id' => $message->id,
                 'message' => $message->message,
                 'user_id' => $message->user_id,
-                'user_name' => $admin->name,
+                'user_name' => $admin->full_name ?? $admin->username,
+                'is_from_admin' => true,
+                'is_from_guest' => false,
                 'created_at' => $message->created_at->toISOString(),
             ]
         ]);

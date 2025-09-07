@@ -21,11 +21,16 @@ class ChatRoom extends Model
         'priority',
         'last_message_at',
         'closed_at',
+        'is_guest',
+        'guest_session_id',
+        'guest_name',
+        'guest_email',
     ];
 
     protected $casts = [
         'last_message_at' => 'datetime',
         'closed_at' => 'datetime',
+        'is_guest' => 'boolean',
     ];
 
     const STATUS_OPEN = 'open';
@@ -241,5 +246,87 @@ class ChatRoom extends Model
             self::PRIORITY_HIGH => 'bg-red-500/15 text-red-400',
             default => 'bg-neutral-500/15 text-neutral-400',
         };
+    }
+
+    /**
+     * Check if this is a guest chat
+     */
+    public function isGuestChat(): bool
+    {
+        return $this->is_guest === true;
+    }
+
+    /**
+     * Check if this is a user chat
+     */
+    public function isUserChat(): bool
+    {
+        return !$this->is_guest && $this->user_id !== null;
+    }
+
+    /**
+     * Get chat initiator name (guest or user)
+     */
+    public function getInitiatorName(): string
+    {
+        if ($this->isGuestChat()) {
+            return $this->guest_name ?? 'Guest';
+        }
+
+        return $this->user?->full_name ?? 'Unknown User';
+    }
+
+    /**
+     * Get chat initiator email
+     */
+    public function getInitiatorEmail(): ?string
+    {
+        if ($this->isGuestChat()) {
+            return $this->guest_email;
+        }
+
+        return $this->user?->email;
+    }
+
+    /**
+     * Scope for guest chats
+     */
+    public function scopeGuestChats($query)
+    {
+        return $query->where('is_guest', true);
+    }
+
+    /**
+     * Scope for user chats
+     */
+    public function scopeUserChats($query)
+    {
+        return $query->where('is_guest', false);
+    }
+
+    /**
+     * Scope for finding guest chat by session
+     */
+    public function scopeByGuestSession($query, string $sessionId)
+    {
+        return $query->where('is_guest', true)->where('guest_session_id', $sessionId);
+    }
+
+    /**
+     * Create a guest chat room
+     */
+    public static function createGuestChat(string $sessionId, ?string $guestName = null, ?string $guestEmail = null): self
+    {
+        return self::create([
+            'user_id' => null,
+            'admin_id' => null,
+            'subject' => 'Guest butuh bantuan',
+            'status' => self::STATUS_OPEN,
+            'priority' => self::PRIORITY_MEDIUM,
+            'is_guest' => true,
+            'guest_session_id' => $sessionId,
+            'guest_name' => $guestName ?? 'Guest',
+            'guest_email' => $guestEmail,
+        ]);
     }
 }

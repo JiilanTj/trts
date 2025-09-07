@@ -35,6 +35,8 @@ use App\Http\Controllers\User\LoanRequestController;
 use App\Http\Controllers\Admin\LoanRequestController as AdminLoanRequestController;
 // Add API controllers
 use App\Http\Controllers\Api\NotificationController as ApiNotificationController;
+// Add Guest chat controller
+use App\Http\Controllers\Guest\ChatController as GuestChatController;
 
 Route::get('/', function () {
     return redirect()->route('login');
@@ -378,6 +380,17 @@ Route::prefix('api')->middleware(['auth'])->group(function () {
         Route::post('/typing', [App\Http\Controllers\User\ChatController::class, 'typing'])->name('typing');
         Route::post('/read', [App\Http\Controllers\User\ChatController::class, 'markAsRead'])->name('read');
     });
+});
+
+// Guest Chat Routes (no authentication required)
+Route::get('guest/chat', [GuestChatController::class, 'index'])->name('guest.chat');
+Route::prefix('guest/chat')->name('guest.chat.')->group(function () {
+    Route::post('/start', [GuestChatController::class, 'startChat'])->name('start');
+    Route::post('/send-message', [GuestChatController::class, 'sendMessage'])->name('send-message');
+    Route::get('/messages', [GuestChatController::class, 'getMessages'])->name('messages');
+    Route::get('/status', [GuestChatController::class, 'getChatStatus'])->name('status');
+    Route::post('/end', [GuestChatController::class, 'endChat'])->name('end');
+    Route::get('/poll', [GuestChatController::class, 'pollMessages'])->name('poll');
 });
 
 require __DIR__.'/auth.php';

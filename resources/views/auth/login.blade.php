@@ -147,7 +147,7 @@
                     <div class="text-white/80 text-xs flex justify-center space-x-4">
                         <span class="cursor-pointer hover:text-cyan-400 hover:underline transition-all duration-200">Tukar Bahasa</span>
                         <span class="cursor-pointer hover:text-cyan-400 hover:underline transition-all duration-200">Bantuan</span>
-                        <span class="cursor-pointer hover:text-cyan-400 hover:underline transition-all duration-200">Hubungi Layanan Pelanggan</span>
+                        <a href="{{ route('guest.chat') }}" class="cursor-pointer hover:text-cyan-400 hover:underline transition-all duration-200">Hubungi Layanan Pelanggan</a>
                     </div>
                 </div>
                 
