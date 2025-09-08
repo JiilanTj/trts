@@ -139,6 +139,30 @@ class OrderController extends Controller
         return back()->with('success', 'Order dibatalkan.');
     }
 
+    /** Refund for balance-paid orders */
+    public function refund(Request $request, Order $order)
+    {
+        if (!$order->isBalancePayment() || $order->payment_status !== 'paid') {
+            return back()->withErrors(['refund' => 'Order tidak valid untuk refund.']);
+        }
+        if (in_array($order->status, ['shipped','delivered','completed'])) {
+            return back()->withErrors(['refund' => 'Tidak bisa refund setelah pengiriman dimulai.']);
+        }
+        DB::transaction(function () use ($order, $request) {
+            $user = $order->user()->lockForUpdate()->first();
+            $user->increment('balance', $order->grand_total);
+            $order->update([
+                'payment_status' => 'refunded',
+                'status' => 'cancelled',
+                'payment_refunded_at' => now(),
+                'payment_refunded_by' => $request->user()->id,
+            ]);
+            $this->createOrderNotification($order, 'payment', 'Order Direfund', 
+                "Order #{$order->id} telah direfund. Saldo dikembalikan sebesar Rp" . number_format($order->grand_total, 0, ',', '.') . ".");
+        });
+        return back()->with('success', 'Refund berhasil.');
+    }
+
     /**
      * Create notification for order-related actions
      */

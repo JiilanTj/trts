@@ -98,16 +98,10 @@ class OrderController extends Controller
     }
 
     /**
-     * Store a new order (manual payment workflow).
-     * Expected payload:
-     * purchase_type: self|external
-     * external_customer_name/phone (when external or optionally overridden for self)
-     * address (required)
-     * items: [ { product_id, quantity } ]
+     * Store a new order with support for balance payment.
      */
     public function store(Request $request)
     {
-        // Normalize potential array inputs coming from malformed submissions/autofill
         foreach (['external_customer_name','external_customer_phone','address'] as $field) {
             $val = $request->input($field);
             if (is_array($val)) {
@@ -119,21 +113,20 @@ class OrderController extends Controller
         $user = $request->user()->loadMissing('detail');
         $data = $request->validate([
             'purchase_type' => 'required|in:self,external',
-            'external_customer_name' => 'nullable|string|max:120', // made nullable to allow manual override for self but optional
-            'external_customer_phone' => 'nullable|string|max:40',  // optional for self, required manually for external if desired in future
+            'external_customer_name' => 'nullable|string|max:120',
+            'external_customer_phone' => 'nullable|string|max:40',
             'address' => 'required|string|max:255',
             'items' => 'required|array|min:1',
             'items.*.product_id' => 'required|exists:products,id',
             'items.*.quantity' => 'required|integer|min:1',
             'user_notes' => 'nullable|string',
+            'payment_method' => 'required|in:manual_transfer,balance',
         ]);
 
-        // Validate that only sellers can buy as external/seller
         if ($data['purchase_type'] === 'external' && !$user->isSeller()) {
             return back()->withErrors(['purchase_type' => 'Hanya seller yang dapat membeli untuk pelanggan eksternal.'])->withInput();
         }
 
-        // If external purchase, enforce name/phone presence as before (backwards compatibility)
         if ($data['purchase_type'] === 'external') {
             if (empty($data['external_customer_name'])) {
                 return back()->withErrors(['external_customer_name' => 'Nama pelanggan wajib diisi untuk pembelian pelanggan.'])->withInput();
@@ -143,7 +136,6 @@ class OrderController extends Controller
             }
         }
 
-        // For self purchase: supply defaults only if user left blank.
         if ($data['purchase_type'] === 'self') {
             $data['external_customer_name'] = $data['external_customer_name'] ?: $user->full_name;
             $data['external_customer_phone'] = $data['external_customer_phone'] ?: ($user->detail->phone ?? $user->detail->secondary_phone ?? null);
@@ -151,8 +143,9 @@ class OrderController extends Controller
 
         $purchaseType = $data['purchase_type'];
         $itemsInput = $data['items'];
+        $paymentMethod = $data['payment_method'];
 
-        $order = DB::transaction(function () use ($user, $data, $itemsInput, $purchaseType) {
+        $order = DB::transaction(function () use ($user, $data, $itemsInput, $purchaseType, $paymentMethod) {
             $subtotal = 0; $discountTotal = 0; $marginTotal = 0; $grandTotal = 0;
 
             $order = Order::create([
@@ -165,9 +158,9 @@ class OrderController extends Controller
                 'discount_total' => 0,
                 'grand_total' => 0,
                 'seller_margin_total' => 0,
-                'payment_method' => 'manual_transfer',
-                'payment_status' => 'unpaid',
-                'status' => 'pending',
+                'payment_method' => $paymentMethod,
+                'payment_status' => 'unpaid', // temp
+                'status' => 'pending', // temp
                 'user_notes' => $data['user_notes'] ?? null,
             ]);
 
@@ -177,10 +170,10 @@ class OrderController extends Controller
                     abort(422, 'Produk tidak tersedia.');
                 }
                 $qty = (int)$row['quantity'];
-                $basePrice = $product->harga_biasa; // snapshot
-                $sellPrice = $product->harga_jual;  // snapshot
+                $basePrice = $product->harga_biasa;
+                $sellPrice = $product->harga_jual;
                 $unitPrice = $product->getApplicablePrice($user, $purchaseType);
-                $discount = 0; // future: apply promo logic
+                $discount = 0;
                 $sellerMargin = 0;
                 if ($user->isSeller() && $purchaseType === 'external') {
                     $sellerMargin = max(0, $sellPrice - $basePrice);
@@ -205,6 +198,13 @@ class OrderController extends Controller
                 $grandTotal += $lineTotal;
             }
 
+            // Balance validation & deduction if needed
+            if ($paymentMethod === 'balance') {
+                if ($user->balance < $grandTotal) {
+                    abort(422, 'Saldo tidak cukup untuk pembayaran.');
+                }
+            }
+
             $order->update([
                 'subtotal' => $subtotal,
                 'discount_total' => $discountTotal,
@@ -212,21 +212,55 @@ class OrderController extends Controller
                 'grand_total' => $grandTotal,
             ]);
 
+            if ($paymentMethod === 'balance') {
+                // Deduct balance immediately and mark paid & move workflow forward
+                $user->decrement('balance', $grandTotal);
+                $order->update([
+                    'payment_status' => 'paid',
+                    'status' => 'packaging',
+                    'payment_confirmed_at' => now(),
+                    'payment_confirmed_by' => $user->id, // self auto-confirm context
+                ]);
+                $order->processSellerMarginPayout();
+            } else {
+                $order->update([
+                    'payment_status' => 'unpaid',
+                    'status' => 'pending',
+                ]);
+            }
+
             return $order->fresh(['items.product']);
         });
 
-        // Create notification for new order
-        Notification::create([
-            'for_user_id' => $user->id,
-            'category' => 'order',
-            'title' => 'Order Berhasil Dibuat',
-            'description' => "Order #{$order->id} telah berhasil dibuat dengan total Rp" . number_format($order->grand_total, 0, ',', '.') . ". Silakan lakukan pembayaran dan upload bukti transfer.",
-        ]);
+        if ($order->payment_method === 'balance') {
+            Notification::create([
+                'for_user_id' => $user->id,
+                'category' => 'payment',
+                'title' => 'Pembayaran Saldo Berhasil',
+                'description' => "Order #{$order->id} telah dibayar otomatis menggunakan saldo Anda. Order masuk tahap dikemas.",
+            ]);
+        } else {
+            Notification::create([
+                'for_user_id' => $user->id,
+                'category' => 'order',
+                'title' => 'Order Berhasil Dibuat',
+                'description' => "Order #{$order->id} telah dibuat dengan total Rp" . number_format($order->grand_total, 0, ',', '.') . ". Silakan lakukan pembayaran dan upload bukti transfer.",
+            ]);
+        }
 
-        // Clear wholesale session data after successful order creation
+        // Add margin payout notification for balance-paid external orders
+        if ($order->payment_method === 'balance' && $order->purchase_type === 'external' && $order->seller_margin_total > 0) {
+            Notification::create([
+                'for_user_id' => $user->id,
+                'category' => 'payment',
+                'title' => 'Margin Seller Diterima',
+                'description' => "Margin sebesar Rp" . number_format($order->seller_margin_total, 0, ',', '.') . " telah ditambahkan ke saldo Anda. Credit score +5 poin!",
+            ]);
+        }
+
         session()->forget('wholesale_products');
 
-        return redirect()->route('user.orders.show', $order)->with('success', 'Order berhasil dibuat.');
+        return redirect()->route('user.orders.show', $order)->with('success', $order->payment_method === 'balance' ? 'Order berhasil dibuat & dibayar dengan saldo.' : 'Order berhasil dibuat.');
     }
 
     /** Show single order (ownership enforced) */
@@ -245,6 +279,9 @@ class OrderController extends Controller
         if (!$order->canUploadProof()) {
             return back()->withErrors(['payment_proof' => 'Tidak bisa upload bukti pada status saat ini.']);
         }
+        if ($order->isBalancePayment()) {
+            return back()->withErrors(['payment_proof' => 'Order ini sudah dibayar via saldo.']);
+        }
         $data = $request->validate([
             'payment_proof' => 'required|file|mimes:jpg,jpeg,png,pdf|max:2048',
         ]);
@@ -260,18 +297,17 @@ class OrderController extends Controller
             'status' => 'awaiting_confirmation',
         ]);
 
-        // Create notification for proof upload
         Notification::create([
             'for_user_id' => $order->user_id,
             'category' => 'payment',
             'title' => 'Bukti Pembayaran Diterima',
-            'description' => "Bukti pembayaran untuk order #{$order->id} telah diterima dan sedang menunggu konfirmasi admin. Proses verifikasi biasanya memakan waktu 1x24 jam.",
+            'description' => "Bukti pembayaran untuk order #{$order->id} diterima dan menunggu konfirmasi admin.",
         ]);
 
         return back()->with('success', 'Bukti pembayaran diupload. Menunggu konfirmasi admin.');
     }
 
-    /** Cancel order (only if still pending/unpaid or rejected) */
+    /** Cancel order */
     public function cancel(Request $request, Order $order)
     {
         abort_unless($order->user_id === $request->user()->id, 403);

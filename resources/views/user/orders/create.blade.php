@@ -175,11 +175,27 @@
                                 <div class="flex items-center justify-between"><span class="text-gray-400">Margin Seller</span><span id="margin_total" class="text-emerald-300">Rp 0</span></div>
                                 @endif
                             </div>
-                            <button type="submit" class="w-full py-3 rounded-xl text-sm font-medium text-white bg-gradient-to-r from-fuchsia-500 via-rose-500 to-cyan-500 hover:from-fuchsia-500/90 hover:via-rose-500/90 hover:to-cyan-500/90 disabled:from-gray-600 disabled:via-gray-500 disabled:to-gray-400 disabled:cursor-not-allowed shadow-sm shadow-fuchsia-500/30 flex items-center justify-center gap-2 focus:outline-none focus:ring-2 focus:ring-fuchsia-500/60">
+                            <!-- Payment Method Selection -->
+                            @php $userBalance = auth()->user()->balance; @endphp
+                            <div class="mt-5 space-y-3">
+                                <p class="text-[11px] font-semibold text-gray-400 tracking-wide">Metode Pembayaran</p>
+                                <div class="flex flex-col gap-2" id="payment-method-wrapper">
+                                    <label class="flex items-center gap-2 text-xs bg-[#1f252c] border border-white/5 rounded-lg px-3 py-2 cursor-pointer hover:border-fuchsia-500/40">
+                                        <input type="radio" name="payment_method" value="manual_transfer" class="text-fuchsia-500 focus:ring-fuchsia-500/60 bg-[#1b1f25] border-white/10" checked>
+                                        <span class="text-gray-200">Transfer Manual</span>
+                                    </label>
+                                    <label class="flex items-center gap-2 text-xs bg-[#1f252c] border border-white/5 rounded-lg px-3 py-2 cursor-pointer relative group hover:border-cyan-500/40" id="balance-method-label">
+                                        <input type="radio" name="payment_method" value="balance" id="balance_method_radio" class="text-cyan-500 focus:ring-cyan-500/60 bg-[#1b1f25] border-white/10">
+                                        <span class="text-gray-200">Saldo (Rp {{ number_format($userBalance,0,',','.') }})</span>
+                                        <span id="balance_insufficient_badge" class="hidden ml-auto text-[10px] font-medium px-2 py-0.5 rounded-md bg-red-600/20 text-red-300 border border-red-600/30">Saldo kurang</span>
+                                    </label>
+                                    <p class="text-[10px] text-gray-500 leading-relaxed" id="payment_method_note">Setelah order dibuat, upload bukti transfer di halaman detail order.</p>
+                                </div>
+                            </div>
+                            <button type="submit" id="create-order-btn" class="w-full mt-2 py-3 rounded-xl text-sm font-medium text-white bg-gradient-to-r from-fuchsia-500 via-rose-500 to-cyan-500 hover:from-fuchsia-500/90 hover:via-rose-500/90 hover:to-cyan-500/90 disabled:from-gray-600 disabled:via-gray-500 disabled:to-gray-400 disabled:cursor-not-allowed shadow-sm shadow-fuchsia-500/30 flex items-center justify-center gap-2 focus:outline-none focus:ring-2 focus:ring-fuchsia-500/60">
                                 <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2 9m5-9v9m4-9v9m4-9l2 9" /></svg>
                                 Buat Order
                             </button>
-                            <p class="text-[10px] text-gray-500 leading-relaxed">Setelah order dibuat, upload bukti transfer di halaman detail order untuk verifikasi admin.</p>
                         </div>
                     </div>
                 </div>
@@ -210,12 +226,19 @@
             const phoneField = document.getElementById('customer_phone_field');
             const addressField = document.getElementById('address_field');
             const selfData = @json($selfPrefill);
+            // Payment method elements
+            const balanceRadio = document.getElementById('balance_method_radio');
+            const paymentMethodNote = document.getElementById('payment_method_note');
+            const balanceInsufficientBadge = document.getElementById('balance_insufficient_badge');
+            const userBalance = {{ (int)($userBalance ?? 0) }};
+
+            let currentTotals = { subtotal:0, discount:0, grand:0, margin:0 };
 
             const rupiah = n => 'Rp ' + (n||0).toLocaleString('id-ID');
 
             switches.forEach(sw=>{
                 sw.addEventListener('change',()=>{
-                    purchaseTypeInput.value = document.querySelector('.purchase-type-switch:checked').value;
+                    purchaseTypeInput.value = document.querySelector('.purchase-type-switch:checked')?.value;
                     if(purchaseTypeInput.value==='self'){
                         if(!nameField.value.trim()){ nameField.value = selfData.name || ''; }
                         if(!phoneField.value.trim()){ phoneField.value = selfData.phone || ''; }
@@ -265,11 +288,42 @@
                     grand += line;
                     margin += sellerMargin(prod) * qty;
                 });
+                currentTotals = { subtotal, discount, grand, margin };
                 subtotalEl.textContent = rupiah(subtotal);
                 discountEl.textContent = rupiah(discount);
                 grandTotalEl.textContent = rupiah(grand);
                 if(marginTotalEl) marginTotalEl.textContent = rupiah(margin);
+                updatePaymentMethodState();
             }
+
+            function updatePaymentMethodState(){
+                if(!balanceRadio) return;
+                const grand = currentTotals.grand;
+                const canUseBalance = userBalance >= grand && grand>0;
+                balanceRadio.disabled = !canUseBalance;
+                balanceInsufficientBadge.classList.toggle('hidden', canUseBalance || grand===0);
+                // If selected but now insufficient, switch back
+                if(balanceRadio.checked && !canUseBalance){
+                    const manual = document.querySelector('input[name="payment_method"][value="manual_transfer"]');
+                    if(manual){ manual.checked = true; }
+                    setPaymentNote('manual_transfer');
+                } else if (balanceRadio.checked){
+                    setPaymentNote('balance');
+                }
+            }
+
+            function setPaymentNote(method){
+                if(!paymentMethodNote) return;
+                if(method==='balance'){
+                    paymentMethodNote.textContent = 'Pembayaran menggunakan saldo akan diproses otomatis & order langsung masuk proses kemas.';
+                } else {
+                    paymentMethodNote.textContent = 'Setelah order dibuat, upload bukti transfer di halaman detail order.';
+                }
+            }
+
+            document.querySelectorAll('input[name="payment_method"]').forEach(r=>{
+                r.addEventListener('change',()=> setPaymentNote(r.value));
+            });
 
             productsContainer.addEventListener('click',e=>{
                 const btn = e.target.closest('button[data-product-id]');
@@ -308,9 +362,6 @@
             
             function initWholesaleMode(){
                 if(wholesaleMode && wholesaleProducts.length > 0){
-                    console.log('Initializing wholesale mode with products:', wholesaleProducts);
-                    
-                    // Add all wholesale products to the order
                     wholesaleProducts.forEach(item => {
                         const prod = {
                             id: item.product.id,
@@ -319,11 +370,7 @@
                             harga_biasa: item.product.harga_biasa || item.product.sell_price,
                             harga_jual: item.product.harga_jual || item.product.sell_price
                         };
-                        
-                        // Build the row
                         buildRow(prod);
-                        
-                        // Set the quantity from wholesale selection
                         const row = itemsWrapper.querySelector(`.item-row:last-child`);
                         if(row) {
                             const qtyInput = row.querySelector('[data-field="quantity"]');
@@ -333,8 +380,6 @@
                             }
                         }
                     });
-                    
-                    // Add event listeners for wholesale quantity controls
                     document.querySelectorAll('[data-wholesale-qty]').forEach((input, index) => {
                         input.addEventListener('input', () => {
                             const row = itemsWrapper.querySelectorAll('.item-row')[index];
@@ -347,29 +392,18 @@
                             }
                         });
                     });
-                    
-                    // Add event listeners for wholesale quantity buttons
                     document.querySelectorAll('[data-action]').forEach(btn => {
                         btn.addEventListener('click', () => {
                             const action = btn.dataset.action;
                             const index = parseInt(btn.dataset.index, 10);
                             const input = document.querySelector(`[data-wholesale-qty="${index}"]`);
                             const row = itemsWrapper.querySelectorAll('.item-row')[index];
-                            
                             if(input && row) {
                                 let newValue = parseInt(input.value, 10) || 1;
-                                if(action === 'increase') {
-                                    newValue += 1;
-                                } else if(action === 'decrease') {
-                                    newValue = Math.max(1, newValue - 1);
-                                }
-                                
+                                if(action === 'increase') newValue += 1; else if(action === 'decrease') newValue = Math.max(1, newValue - 1);
                                 input.value = newValue;
                                 const qtyInput = row.querySelector('[data-field="quantity"]');
-                                if(qtyInput) {
-                                    qtyInput.value = newValue;
-                                    recalc();
-                                }
+                                if(qtyInput) { qtyInput.value = newValue; recalc(); }
                             }
                         });
                     });
@@ -378,6 +412,7 @@
 
             initSingleMode();
             initWholesaleMode();
+            recalc(); // initial
         })();
     </script>
 </x-app-layout>

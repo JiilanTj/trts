@@ -280,6 +280,7 @@ Route::middleware(['auth', 'role:admin'])->prefix('admin')->name('admin.')->grou
         Route::post('/{order}/reject-payment', [AdminOrderController::class,'rejectPayment'])->name('reject-payment');
         Route::post('/{order}/advance-status', [AdminOrderController::class,'advanceStatus'])->name('advance-status');
         Route::post('/{order}/cancel', [AdminOrderController::class,'cancel'])->name('cancel');
+        Route::post('/{order}/refund', [AdminOrderController::class,'refund'])->name('refund'); // added refund route
     });
     
     // Admin KYC management routes (JSON minimal)

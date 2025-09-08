@@ -17,6 +17,7 @@
             'waiting_confirmation' => 'bg-yellow-100 text-yellow-800',
             'paid' => 'bg-green-100 text-green-800',
             'rejected' => 'bg-red-100 text-red-800',
+            'refunded' => 'bg-rose-100 text-rose-800',
         ];
     @endphp
 
@@ -80,6 +81,7 @@
                         <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Tipe</th>
                         <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Subtotal</th>
                         <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Grand Total</th>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Metode</th>
                         <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Pembayaran</th>
                         <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
                         <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Dibuat</th>
@@ -96,6 +98,9 @@
                             </td>
                             <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-700">Rp {{ number_format($order->subtotal,0,',','.') }}</td>
                             <td class="px-6 py-4 whitespace-nowrap text-sm font-semibold text-gray-900">Rp {{ number_format($order->grand_total,0,',','.') }}</td>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm">
+                                <span class="inline-flex px-2 py-1 text-xs font-semibold rounded-full {{ $order->isBalancePayment() ? 'bg-cyan-100 text-cyan-800' : 'bg-fuchsia-100 text-fuchsia-800' }}">{{ $order->isBalancePayment() ? 'Saldo' : 'Transfer' }}</span>
+                            </td>
                             <td class="px-6 py-4 whitespace-nowrap">
                                 @php $ps = $order->payment_status; @endphp
                                 <span class="inline-flex px-2 py-1 text-xs font-semibold rounded-full {{ $paymentColors[$ps] ?? 'bg-gray-100 text-gray-800' }}">{{ $order->paymentStatusLabel() }}</span>
@@ -111,7 +116,7 @@
                         </tr>
                     @empty
                         <tr>
-                            <td colspan="9" class="px-6 py-12 text-center text-gray-500">
+                            <td colspan="10" class="px-6 py-12 text-center text-gray-500">
                                 <svg class="mx-auto h-12 w-12 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 7h18M3 12h18M3 17h18"></path></svg>
                                 <h3 class="mt-2 text-sm font-medium text-gray-900">Belum ada order</h3>
                                 <p class="mt-1 text-sm text-gray-500">Order baru akan tampil di sini.</p>

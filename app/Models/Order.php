@@ -10,19 +10,22 @@ class Order extends Model
 {
     protected $fillable = [
         'user_id','purchase_type','external_customer_name','external_customer_phone',
-        'address', // added address field
+        'address',
         'subtotal','discount_total','grand_total','seller_margin_total',
         'payment_method','payment_status','payment_proof_path','payment_confirmed_at','payment_confirmed_by',
+        'payment_refunded_at','payment_refunded_by',
         'status','admin_notes','user_notes'
     ];
 
     protected $casts = [
         'payment_confirmed_at' => 'datetime',
+        'payment_refunded_at' => 'datetime',
     ];
 
     // Relationships
     public function user(): BelongsTo { return $this->belongsTo(User::class); }
     public function confirmer(): BelongsTo { return $this->belongsTo(User::class,'payment_confirmed_by'); }
+    public function refunder(): BelongsTo { return $this->belongsTo(User::class,'payment_refunded_by'); }
     public function items(): HasMany { return $this->hasMany(OrderItem::class); }
 
     // Scopes / Helpers
@@ -36,6 +39,7 @@ class Order extends Model
 
     public function canUploadProof(): bool { return in_array($this->payment_status, ['unpaid','rejected']); }
     public function canBeConfirmed(): bool { return $this->payment_status === 'waiting_confirmation'; }
+    public function isBalancePayment(): bool { return $this->payment_method === 'balance'; }
 
     // Label helpers
     public static function statusOptions(): array
@@ -58,6 +62,7 @@ class Order extends Model
             'waiting_confirmation' => 'Menunggu Konfirmasi',
             'paid' => 'Dibayar',
             'rejected' => 'Ditolak',
+            'refunded' => 'Refunded',
         ];
     }
 

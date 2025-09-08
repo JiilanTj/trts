@@ -38,6 +38,7 @@
                             <span class="px-2.5 py-1 rounded-full bg-[#1f252c] border border-white/5 text-gray-300">Status: {{ $order->status }}</span>
                             <span class="px-2.5 py-1 rounded-full bg-[#1f252c] border border-white/5 text-gray-300">Tipe: {{ $order->purchase_type==='external' ? 'Eksternal':'Pribadi' }}</span>
                             <span class="px-2.5 py-1 rounded-full bg-[#1f252c] border border-white/5 text-gray-300">Total Item: {{ $order->items->sum('quantity') }}</span>
+                            <span class="px-2.5 py-1 rounded-full {{ $order->isBalancePayment() ? 'bg-cyan-600/20 text-cyan-300 border border-cyan-500/30':'bg-fuchsia-600/20 text-fuchsia-300 border border-fuchsia-500/30' }}">Metode: {{ $order->isBalancePayment() ? 'Saldo':'Transfer' }}</span>
                         </div>
                         @if($order->user_notes)
                             <div class="p-4 rounded-xl bg-[#1f252c] border border-white/5">
@@ -49,6 +50,18 @@
                             <div class="p-4 rounded-xl bg-[#1f252c] border border-white/5">
                                 <p class="text-[11px] font-semibold text-gray-400 mb-1">Catatan Admin:</p>
                                 <p class="text-sm text-gray-300 leading-relaxed">{{ $order->admin_notes }}</p>
+                            </div>
+                        @endif
+                        @if($order->isBalancePayment())
+                            <div class="p-4 rounded-xl bg-cyan-600/10 border border-cyan-500/30">
+                                <p class="text-[11px] font-semibold text-cyan-300 mb-1">Pembayaran Saldo</p>
+                                <p class="text-[12px] leading-relaxed text-cyan-200">Order ini telah dibayar otomatis menggunakan saldo Anda pada {{ optional($order->payment_confirmed_at)->format('d M Y H:i') ?: '-' }}.</p>
+                            </div>
+                        @endif
+                        @if($order->payment_status==='refunded')
+                            <div class="p-4 rounded-xl bg-rose-600/10 border border-rose-500/30">
+                                <p class="text-[11px] font-semibold text-rose-300 mb-1">Refund</p>
+                                <p class="text-[12px] leading-relaxed text-rose-200">Order ini telah direfund pada {{ optional($order->payment_refunded_at)->format('d M Y H:i') ?: '-' }}.</p>
                             </div>
                         @endif
                     </div>
@@ -70,7 +83,7 @@
 
                     <div class="bg-[#181d23] border border-white/10 rounded-xl sm:rounded-2xl p-4 sm:p-5 lg:p-6 space-y-4 sm:space-y-6">
                         <h2 class="text-sm font-semibold text-white">Pembayaran</h2>
-                        @if(isset($setting) && $setting && $order->canUploadProof())
+                        @if(!$order->isBalancePayment() && isset($setting) && $setting && $order->canUploadProof())
                             <div class="p-3 sm:p-4 lg:p-5 rounded-xl bg-[#1f252c] border border-white/5 space-y-4 sm:space-y-5 text-sm">
                                 <div class="flex items-center justify-between">
                                     <p class="text-[11px] font-semibold tracking-wide text-gray-400">INSTRUKSI TRANSFER</p>
@@ -123,7 +136,7 @@
                                 </div>
                             </div>
                         @endif
-                        @if($order->canUploadProof())
+                        @if(!$order->isBalancePayment() && $order->canUploadProof())
                             <form method="POST" action="{{ route('user.orders.upload-proof',$order) }}" enctype="multipart/form-data" class="space-y-4">
                                 @csrf
                                 <div>
@@ -135,6 +148,8 @@
                                     Upload
                                 </button>
                             </form>
+                        @elseif($order->isBalancePayment())
+                            <div class="text-sm text-cyan-300">Pembayaran menggunakan saldo telah selesai. Tidak perlu upload bukti.</div>
                         @else
                             <div class="text-sm text-gray-400">Status pembayaran: <span class="text-gray-300 font-medium">{{ $order->payment_status }}</span>.</div>
                             @if($order->payment_proof_path)
@@ -174,14 +189,13 @@
                                 <div class="flex items-center justify-between"><span class="text-gray-400">Margin Seller</span><span class="text-emerald-300">Rp {{ number_format($order->seller_margin_total,0,',','.') }}</span></div>
                             @endif
                         </div>
-                        <p class="text-[10px] text-gray-500 leading-relaxed">Admin akan memproses order setelah bukti pembayaran valid.</p>
+                        <p class="text-[10px] text-gray-500 leading-relaxed">@if($order->isBalancePayment()) Order sedang diproses tanpa kebutuhan konfirmasi manual. @else Admin akan memproses order setelah bukti pembayaran valid. @endif</p>
                     </div>
                 </div>
             </div>
         </div>
     </div>
     <script>
-        // Enhanced copy-to-clipboard: swaps icon temporarily to a check mark
         document.addEventListener('click', function(e){
             const btn = e.target.closest('[data-copy]');
             if(!btn) return;
