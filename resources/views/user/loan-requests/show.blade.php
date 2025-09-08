@@ -105,6 +105,33 @@
                                 </div>
                                 
                                 <div>
+                                    <label class="block text-sm font-medium text-neutral-400 mb-2">Metode Pencairan</label>
+                                    <div class="flex items-center space-x-2">
+                                        @if($loanRequest->disbursement_method === 'saldo')
+                                            <div class="w-8 h-8 rounded-full bg-[#25F4EE]/20 flex items-center justify-center">
+                                                <svg class="w-4 h-4 text-[#25F4EE]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2m2 4h10a2 2 0 002-2v-6a2 2 0 00-2-2H9a2 2 0 00-2 2v6a2 2 0 002 2zm7-5a2 2 0 11-4 0 2 2 0 014 0z"></path>
+                                                </svg>
+                                            </div>
+                                            <div>
+                                                <p class="text-lg font-medium text-[#25F4EE]">Transfer ke Saldo</p>
+                                                <p class="text-xs text-neutral-400">Dana langsung masuk ke saldo aplikasi</p>
+                                            </div>
+                                        @else
+                                            <div class="w-8 h-8 rounded-full bg-[#FE2C55]/20 flex items-center justify-center">
+                                                <svg class="w-4 h-4 text-[#FE2C55]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z"></path>
+                                                </svg>
+                                            </div>
+                                            <div>
+                                                <p class="text-lg font-medium text-[#FE2C55]">Transfer Bank</p>
+                                                <p class="text-xs text-neutral-400">{{ $loanRequest->bank_account_info }}</p>
+                                            </div>
+                                        @endif
+                                    </div>
+                                </div>
+                                
+                                <div>
                                     <label class="block text-sm font-medium text-neutral-400 mb-2">Tanggal Pengajuan</label>
                                     <p class="text-lg font-medium text-white">{{ $loanRequest->created_at->format('d M Y') }}</p>
                                 </div>
@@ -136,6 +163,30 @@
                                 </div>
                             </div>
                         </div>
+
+                        <!-- Bank Account Details (if bank transfer) -->
+                        @if($loanRequest->disbursement_method === 'bank_transfer')
+                            <div class="rounded-xl border border-[#2c3136] bg-[#23272b] p-6">
+                                <h3 class="text-xl font-semibold text-white mb-6">Detail Rekening Bank</h3>
+                                
+                                <div class="bg-neutral-800 rounded-lg p-4">
+                                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                        <div>
+                                            <label class="block text-sm font-medium text-neutral-400 mb-1">Nama Bank</label>
+                                            <p class="text-white font-medium">{{ $loanRequest->bank_name }}</p>
+                                        </div>
+                                        <div>
+                                            <label class="block text-sm font-medium text-neutral-400 mb-1">Nomor Rekening</label>
+                                            <p class="text-white font-medium font-mono">{{ $loanRequest->bank_account_number }}</p>
+                                        </div>
+                                        <div class="md:col-span-2">
+                                            <label class="block text-sm font-medium text-neutral-400 mb-1">Nama Pemilik Rekening</label>
+                                            <p class="text-white font-medium">{{ $loanRequest->bank_account_name }}</p>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        @endif
 
                         <!-- Documents -->
                         @if($loanRequest->documents && count($loanRequest->documents) > 0)

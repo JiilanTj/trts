@@ -16,10 +16,16 @@ class LoanRequest extends Model
         'duration_months',
         'purpose',
         'purpose_description',
+        'disbursement_method',
+        'bank_name',
+        'bank_account_number',
+        'bank_account_name',
         'interest_rate',
         'monthly_payment',
         'status',
         'admin_notes',
+        'disbursement_notes',
+        'disbursement_reference',
         'rejection_reason',
         'documents',
         'credit_assessment',
@@ -141,6 +147,29 @@ class LoanRequest extends Model
             'defaulted' => 'Gagal Bayar',
             default => 'Tidak Diketahui'
         };
+    }
+
+    /**
+     * Get disbursement method label
+     */
+    public function getDisbursementMethodLabelAttribute(): string
+    {
+        return match($this->disbursement_method) {
+            'saldo' => 'Transfer ke Saldo',
+            'bank_transfer' => 'Transfer ke Rekening Bank',
+            default => 'Tidak Diketahui'
+        };
+    }
+
+    /**
+     * Get formatted bank account info
+     */
+    public function getBankAccountInfoAttribute(): string
+    {
+        if ($this->disbursement_method === 'bank_transfer') {
+            return $this->bank_name . ' - ' . $this->bank_account_number . ' (' . $this->bank_account_name . ')';
+        }
+        return 'Transfer ke Saldo User';
     }
 
     /**

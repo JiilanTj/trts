@@ -49,6 +49,17 @@
         @if(session('error'))
             <div class="mx-6 mt-4 bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg text-sm">{{ session('error') }}</div>
         @endif
+        
+        <!-- Validation Errors -->
+        @if($errors->any())
+            <div class="mx-6 mt-4 bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg text-sm">
+                <ul class="list-disc pl-5">
+                    @foreach($errors->all() as $error)
+                        <li>{{ $error }}</li>
+                    @endforeach
+                </ul>
+            </div>
+        @endif
 
         <!-- Body -->
         <div class="p-6 space-y-10">
@@ -95,6 +106,27 @@
                             <label class="block text-xs font-medium text-gray-600">Tujuan</label>
                             <p class="mt-1 text-sm text-gray-900 bg-gray-50 px-3 py-2 rounded-md">{{ $loanRequest->purpose_label }}</p>
                         </div>
+                        <div>
+                            <label class="block text-xs font-medium text-gray-600">Metode Pencairan</label>
+                            <div class="mt-1 bg-gray-50 px-3 py-2 rounded-md">
+                                @if($loanRequest->disbursement_method === 'saldo')
+                                    <div class="flex items-center text-green-600">
+                                        <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2m2 4h10a2 2 0 002-2v-6a2 2 0 00-2-2H9a2 2 0 00-2 2v6a2 2 0 002 2zm7-5a2 2 0 11-4 0 2 2 0 014 0z"></path>
+                                        </svg>
+                                        <span class="text-sm font-medium">Transfer ke Saldo</span>
+                                    </div>
+                                @else
+                                    <div class="flex items-center text-blue-600">
+                                        <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z"></path>
+                                        </svg>
+                                        <span class="text-sm font-medium">Transfer Bank</span>
+                                    </div>
+                                    <div class="text-xs text-gray-500 mt-1">{{ $loanRequest->bank_account_info }}</div>
+                                @endif
+                            </div>
+                        </div>
                         @if($loanRequest->due_date)
                         <div>
                             <label class="block text-xs font-medium text-gray-600">Jatuh Tempo</label>
@@ -105,18 +137,31 @@
                 </div>
             </div>
 
-            <!-- Detail Pengajuan -->
-            @if($loanRequest->purpose_description)
+            <!-- Detail Rekening Bank (jika bank transfer) -->
+            @if($loanRequest->disbursement_method === 'bank_transfer')
             <div>
-                <h3 class="text-lg font-medium text-gray-900 mb-4">Deskripsi Tujuan</h3>
-                <div class="bg-gray-50 px-4 py-3 rounded-md">
-                    <p class="text-sm text-gray-700">{{ $loanRequest->purpose_description }}</p>
+                <h3 class="text-lg font-medium text-gray-900 mb-4">Detail Rekening Bank</h3>
+                <div class="bg-gray-50 border border-gray-200 rounded-lg p-4">
+                    <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                        <div>
+                            <label class="block text-xs font-medium text-gray-600">Nama Bank</label>
+                            <p class="mt-1 text-sm font-semibold text-gray-900">{{ $loanRequest->bank_name }}</p>
+                        </div>
+                        <div>
+                            <label class="block text-xs font-medium text-gray-600">Nomor Rekening</label>
+                            <p class="mt-1 text-sm font-mono text-gray-900">{{ $loanRequest->bank_account_number }}</p>
+                        </div>
+                        <div>
+                            <label class="block text-xs font-medium text-gray-600">Nama Pemilik</label>
+                            <p class="mt-1 text-sm font-semibold text-gray-900">{{ $loanRequest->bank_account_name }}</p>
+                        </div>
+                    </div>
                 </div>
             </div>
             @endif
 
             <!-- Catatan Admin -->
-            @if($loanRequest->admin_notes || $loanRequest->rejection_reason)
+            @if($loanRequest->admin_notes || $loanRequest->rejection_reason || $loanRequest->disbursement_notes || $loanRequest->disbursement_reference)
             <div>
                 <h3 class="text-lg font-medium text-gray-900 mb-4">Catatan Admin</h3>
                 <div class="space-y-4">
@@ -133,6 +178,22 @@
                         <label class="block text-xs font-medium text-gray-600">Alasan Penolakan</label>
                         <div class="mt-1 bg-red-50 border border-red-200 px-4 py-3 rounded-md">
                             <p class="text-sm text-red-700">{{ $loanRequest->rejection_reason }}</p>
+                        </div>
+                    </div>
+                    @endif
+                    @if($loanRequest->disbursement_notes)
+                    <div>
+                        <label class="block text-xs font-medium text-gray-600">Catatan Pencairan</label>
+                        <div class="mt-1 bg-blue-50 border border-blue-200 px-4 py-3 rounded-md">
+                            <p class="text-sm text-blue-700">{{ $loanRequest->disbursement_notes }}</p>
+                        </div>
+                    </div>
+                    @endif
+                    @if($loanRequest->disbursement_reference)
+                    <div>
+                        <label class="block text-xs font-medium text-gray-600">Referensi Pencairan</label>
+                        <div class="mt-1 bg-green-50 border border-green-200 px-4 py-3 rounded-md">
+                            <p class="text-sm text-green-700 font-mono">{{ $loanRequest->disbursement_reference }}</p>
                         </div>
                     </div>
                     @endif
@@ -248,6 +309,26 @@
                            class="w-full px-3 py-2 border border-gray-300 rounded-lg text-gray-900 focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
                 </div>
                 
+                <!-- Disbursement Section -->
+                <div id="disbursement-section" class="mb-4" style="display: none;">
+                    <div class="space-y-4">
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-2">Catatan Pencairan</label>
+                            <textarea name="disbursement_notes" rows="3" 
+                                      placeholder="Tambahkan catatan mengenai pencairan dana..."
+                                      class="w-full px-3 py-2 border border-gray-300 rounded-lg text-gray-900 placeholder-gray-500 focus:ring-2 focus:ring-blue-500 focus:border-blue-500">{{ $loanRequest->disbursement_notes }}</textarea>
+                        </div>
+                        <div id="bank-reference-field" style="display: {{ $loanRequest->disbursement_method === 'bank_transfer' ? 'block' : 'none' }};">
+                            <label class="block text-sm font-medium text-gray-700 mb-2">Referensi Transfer Bank</label>
+                            <input type="text" name="disbursement_reference" 
+                                   value="{{ $loanRequest->disbursement_reference }}"
+                                   placeholder="e.g., TXN123456789"
+                                   class="w-full px-3 py-2 border border-gray-300 rounded-lg text-gray-900 placeholder-gray-500 focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
+                            <p class="mt-1 text-xs text-gray-500">Nomor referensi atau kode transaksi bank</p>
+                        </div>
+                    </div>
+                </div>
+                
                 <div class="flex items-center justify-end space-x-3">
                     <button type="button" onclick="closeStatusModal()" 
                             class="px-4 py-2 bg-gray-300 text-gray-700 rounded-lg hover:bg-gray-400 transition">
@@ -270,6 +351,7 @@
             const rejectionSection = document.getElementById('rejection-section');
             const interestSection = document.getElementById('interest-section');
             const dueDateSection = document.getElementById('due-date-section');
+            const disbursementSection = document.getElementById('disbursement-section');
             
             modalStatus.value = status;
             
@@ -277,6 +359,7 @@
             rejectionSection.style.display = 'none';
             interestSection.style.display = 'none';
             dueDateSection.style.display = 'none';
+            disbursementSection.style.display = 'none';
             
             switch(status) {
                 case 'approved':
@@ -290,6 +373,7 @@
                 case 'disbursed':
                     modalTitle.textContent = 'Cairkan Dana';
                     dueDateSection.style.display = 'block';
+                    disbursementSection.style.display = 'block';
                     break;
                 case 'under_review':
                     modalTitle.textContent = 'Mulai Tinjauan';

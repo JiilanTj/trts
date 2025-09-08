@@ -69,6 +69,8 @@ class LoanRequestController extends Controller
             'rejection_reason' => 'nullable|string|max:500|required_if:status,rejected',
             'interest_rate' => 'nullable|numeric|min:1|max:50|required_if:status,approved',
             'due_date' => 'nullable|date|after:today|required_if:status,disbursed',
+            'disbursement_notes' => 'nullable|string|max:1000',
+            'disbursement_reference' => 'nullable|string|max:100',
         ]);
 
         $oldStatus = $loanRequest->status;
@@ -76,6 +78,7 @@ class LoanRequestController extends Controller
         $updateData = [
             'status' => $validated['status'],
             'admin_notes' => $validated['admin_notes'],
+            'disbursement_notes' => $validated['disbursement_notes'],
         ];
 
         // Handle status-specific updates
@@ -97,6 +100,17 @@ class LoanRequestController extends Controller
             case 'disbursed':
                 $updateData['disbursed_at'] = now();
                 $updateData['due_date'] = $validated['due_date'];
+                $updateData['disbursement_reference'] = $validated['disbursement_reference'];
+                
+                // If disbursement method is saldo, add to user's balance
+                if ($loanRequest->disbursement_method === 'saldo') {
+                    $user = $loanRequest->user;
+                    $user->balance += $loanRequest->amount_requested;
+                    $user->save();
+                    
+                    // Create balance history record (if you have a balance history table)
+                    // You might want to create this for audit trail
+                }
                 break;
                 
             case 'active':

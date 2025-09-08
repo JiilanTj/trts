@@ -67,6 +67,10 @@ class LoanRequestController extends Controller
             'duration_months' => 'required|integer|min:3|max:60', // 3 months to 5 years
             'purpose' => ['required', Rule::in(['business_expansion', 'inventory', 'equipment', 'working_capital', 'other'])],
             'purpose_description' => 'required|string|max:1000',
+            'disbursement_method' => ['required', Rule::in(['saldo', 'bank_transfer'])],
+            'bank_name' => 'required_if:disbursement_method,bank_transfer|nullable|string|max:100',
+            'bank_account_number' => 'required_if:disbursement_method,bank_transfer|nullable|string|max:50',
+            'bank_account_name' => 'required_if:disbursement_method,bank_transfer|nullable|string|max:100',
             'documents.*' => 'nullable|file|mimes:pdf,jpg,jpeg,png|max:2048', // 2MB max per file
         ]);
 
@@ -106,6 +110,10 @@ class LoanRequestController extends Controller
             'duration_months' => $validated['duration_months'],
             'purpose' => $validated['purpose'],
             'purpose_description' => $validated['purpose_description'],
+            'disbursement_method' => $validated['disbursement_method'],
+            'bank_name' => $validated['bank_name'] ?? null,
+            'bank_account_number' => $validated['bank_account_number'] ?? null,
+            'bank_account_name' => $validated['bank_account_name'] ?? null,
             'interest_rate' => $interestRate,
             'documents' => $documents,
             'status' => 'pending',
@@ -172,6 +180,10 @@ class LoanRequestController extends Controller
             'duration_months' => 'required|integer|min:3|max:60',
             'purpose' => ['required', Rule::in(['business_expansion', 'inventory', 'equipment', 'working_capital', 'other'])],
             'purpose_description' => 'required|string|max:1000',
+            'disbursement_method' => ['required', Rule::in(['saldo', 'bank_transfer'])],
+            'bank_name' => 'required_if:disbursement_method,bank_transfer|nullable|string|max:100',
+            'bank_account_number' => 'required_if:disbursement_method,bank_transfer|nullable|string|max:50',
+            'bank_account_name' => 'required_if:disbursement_method,bank_transfer|nullable|string|max:100',
             'documents.*' => 'nullable|file|mimes:pdf,jpg,jpeg,png|max:2048',
         ]);
 
@@ -197,6 +209,10 @@ class LoanRequestController extends Controller
             'duration_months' => $validated['duration_months'],
             'purpose' => $validated['purpose'],
             'purpose_description' => $validated['purpose_description'],
+            'disbursement_method' => $validated['disbursement_method'],
+            'bank_name' => $validated['bank_name'] ?? null,
+            'bank_account_number' => $validated['bank_account_number'] ?? null,
+            'bank_account_name' => $validated['bank_account_name'] ?? null,
             'interest_rate' => $interestRate,
             'documents' => $documents,
         ]);

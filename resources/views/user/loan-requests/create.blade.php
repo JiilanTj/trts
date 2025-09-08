@@ -154,6 +154,140 @@
                     </div>
                 </div>
 
+                <!-- Disbursement Method Section -->
+                <div class="rounded-xl border border-[#2c3136] bg-[#23272b] p-6 mb-6">
+                    <h2 class="text-xl font-semibold mb-6 text-neutral-100">Metode Pencairan Dana</h2>
+                    
+                    <div class="space-y-6">
+                        <!-- Disbursement Method Selection -->
+                        <div>
+                            <label class="block text-sm font-medium text-neutral-300 mb-3">
+                                Pilih Metode Pencairan <span class="text-red-400">*</span>
+                            </label>
+                            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                <!-- Saldo Option -->
+                                <label class="relative cursor-pointer">
+                                    <input type="radio" 
+                                           name="disbursement_method" 
+                                           value="saldo" 
+                                           {{ old('disbursement_method', 'saldo') == 'saldo' ? 'checked' : '' }}
+                                           class="sr-only peer">
+                                    <div class="peer-checked:ring-2 peer-checked:ring-[#FE2C55] peer-checked:border-[#FE2C55] border-2 border-neutral-700 rounded-lg p-4 bg-neutral-800 hover:bg-neutral-750 transition-all">
+                                        <div class="flex items-center space-x-3">
+                                            <div class="w-10 h-10 rounded-full bg-gradient-to-br from-[#FE2C55] to-[#25F4EE] flex items-center justify-center">
+                                                <svg class="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2m2 4h10a2 2 0 002-2v-6a2 2 0 00-2-2H9a2 2 0 00-2 2v6a2 2 0 002 2zm7-5a2 2 0 11-4 0 2 2 0 014 0z"></path>
+                                                </svg>
+                                            </div>
+                                            <div>
+                                                <h3 class="font-semibold text-neutral-100">Transfer ke Saldo</h3>
+                                                <p class="text-sm text-neutral-400">Dana langsung masuk ke saldo aplikasi Anda</p>
+                                            </div>
+                                        </div>
+                                        <div class="mt-3 text-xs text-neutral-500">
+                                            ✓ Instant transfer • ✓ Tanpa biaya admin • ✓ Dapat digunakan langsung
+                                        </div>
+                                    </div>
+                                </label>
+
+                                <!-- Bank Transfer Option -->
+                                <label class="relative cursor-pointer">
+                                    <input type="radio" 
+                                           name="disbursement_method" 
+                                           value="bank_transfer" 
+                                           {{ old('disbursement_method') == 'bank_transfer' ? 'checked' : '' }}
+                                           class="sr-only peer">
+                                    <div class="peer-checked:ring-2 peer-checked:ring-[#FE2C55] peer-checked:border-[#FE2C55] border-2 border-neutral-700 rounded-lg p-4 bg-neutral-800 hover:bg-neutral-750 transition-all">
+                                        <div class="flex items-center space-x-3">
+                                            <div class="w-10 h-10 rounded-full bg-gradient-to-br from-[#25F4EE] to-[#FE2C55] flex items-center justify-center">
+                                                <svg class="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z"></path>
+                                                </svg>
+                                            </div>
+                                            <div>
+                                                <h3 class="font-semibold text-neutral-100">Transfer Bank</h3>
+                                                <p class="text-sm text-neutral-400">Dana ditransfer ke rekening bank Anda</p>
+                                            </div>
+                                        </div>
+                                        <div class="mt-3 text-xs text-neutral-500">
+                                            ✓ Ke rekening pribadi • ✓ 1-2 hari kerja • ✓ Biaya admin bank berlaku
+                                        </div>
+                                    </div>
+                                </label>
+                            </div>
+                            @error('disbursement_method')
+                                <p class="mt-1 text-sm text-red-400">{{ $message }}</p>
+                            @enderror
+                        </div>
+
+                        <!-- Bank Account Details (Hidden by default) -->
+                        <div id="bank-details" class="space-y-4 {{ old('disbursement_method') == 'bank_transfer' ? '' : 'hidden' }}">
+                            <div class="border-t border-neutral-700 pt-4">
+                                <h3 class="text-lg font-medium text-neutral-200 mb-4">Informasi Rekening Bank</h3>
+                                
+                                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                    <!-- Bank Name -->
+                                    <div>
+                                        <label for="bank_name" class="block text-sm font-medium text-neutral-300 mb-2">
+                                            Nama Bank <span class="text-red-400">*</span>
+                                        </label>
+                                        <select id="bank_name" 
+                                                name="bank_name" 
+                                                class="w-full px-4 py-3 bg-neutral-800 border border-neutral-700 rounded-lg text-neutral-100 focus:ring-2 focus:ring-[#FE2C55] focus:border-transparent @error('bank_name') border-red-500 @enderror">
+                                            <option value="">Pilih Bank</option>
+                                            <option value="BCA" {{ old('bank_name') == 'BCA' ? 'selected' : '' }}>Bank Central Asia (BCA)</option>
+                                            <option value="BNI" {{ old('bank_name') == 'BNI' ? 'selected' : '' }}>Bank Negara Indonesia (BNI)</option>
+                                            <option value="BRI" {{ old('bank_name') == 'BRI' ? 'selected' : '' }}>Bank Rakyat Indonesia (BRI)</option>
+                                            <option value="Mandiri" {{ old('bank_name') == 'Mandiri' ? 'selected' : '' }}>Bank Mandiri</option>
+                                            <option value="CIMB" {{ old('bank_name') == 'CIMB' ? 'selected' : '' }}>CIMB Niaga</option>
+                                            <option value="Danamon" {{ old('bank_name') == 'Danamon' ? 'selected' : '' }}>Bank Danamon</option>
+                                            <option value="Permata" {{ old('bank_name') == 'Permata' ? 'selected' : '' }}>Bank Permata</option>
+                                            <option value="BTN" {{ old('bank_name') == 'BTN' ? 'selected' : '' }}>Bank BTN</option>
+                                            <option value="BSI" {{ old('bank_name') == 'BSI' ? 'selected' : '' }}>Bank Syariah Indonesia (BSI)</option>
+                                        </select>
+                                        @error('bank_name')
+                                            <p class="mt-1 text-sm text-red-400">{{ $message }}</p>
+                                        @enderror
+                                    </div>
+
+                                    <!-- Account Number -->
+                                    <div>
+                                        <label for="bank_account_number" class="block text-sm font-medium text-neutral-300 mb-2">
+                                            Nomor Rekening <span class="text-red-400">*</span>
+                                        </label>
+                                        <input type="text" 
+                                               id="bank_account_number" 
+                                               name="bank_account_number" 
+                                               value="{{ old('bank_account_number') }}"
+                                               class="w-full px-4 py-3 bg-neutral-800 border border-neutral-700 rounded-lg text-neutral-100 placeholder-neutral-400 focus:ring-2 focus:ring-[#FE2C55] focus:border-transparent @error('bank_account_number') border-red-500 @enderror"
+                                               placeholder="e.g., 1234567890">
+                                        @error('bank_account_number')
+                                            <p class="mt-1 text-sm text-red-400">{{ $message }}</p>
+                                        @enderror
+                                    </div>
+                                </div>
+
+                                <!-- Account Name -->
+                                <div class="mt-4">
+                                    <label for="bank_account_name" class="block text-sm font-medium text-neutral-300 mb-2">
+                                        Nama Pemilik Rekening <span class="text-red-400">*</span>
+                                    </label>
+                                    <input type="text" 
+                                           id="bank_account_name" 
+                                           name="bank_account_name" 
+                                           value="{{ old('bank_account_name') }}"
+                                           class="w-full px-4 py-3 bg-neutral-800 border border-neutral-700 rounded-lg text-neutral-100 placeholder-neutral-400 focus:ring-2 focus:ring-[#FE2C55] focus:border-transparent @error('bank_account_name') border-red-500 @enderror"
+                                           placeholder="Nama sesuai rekening bank">
+                                    @error('bank_account_name')
+                                        <p class="mt-1 text-sm text-red-400">{{ $message }}</p>
+                                    @enderror
+                                    <p class="mt-1 text-xs text-neutral-400">Pastikan nama sesuai dengan yang tertera di rekening bank</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
                 <!-- Document Upload Section -->
                 <div class="rounded-xl border border-[#2c3136] bg-[#23272b] p-6 mb-6">
                     <h2 class="text-xl font-semibold mb-6 text-neutral-100">Dokumen Pendukung</h2>
@@ -229,12 +363,14 @@
         </div>
     </div>
 
-    <!-- JavaScript for Monthly Payment Calculation -->
+    <!-- JavaScript for Monthly Payment Calculation and Disbursement Method -->
     <script>
         document.addEventListener('DOMContentLoaded', function() {
             const amountInput = document.getElementById('amount_requested');
             const durationSelect = document.getElementById('duration_months');
             const monthlyPaymentDiv = document.getElementById('monthly-payment-preview');
+            const disbursementRadios = document.querySelectorAll('input[name="disbursement_method"]');
+            const bankDetails = document.getElementById('bank-details');
 
             function calculateMonthlyPayment() {
                 const amount = parseFloat(amountInput.value) || 0;
@@ -261,8 +397,25 @@
                 }
             }
 
+            function toggleBankDetails() {
+                const selectedMethod = document.querySelector('input[name="disbursement_method"]:checked');
+                if (selectedMethod && selectedMethod.value === 'bank_transfer') {
+                    bankDetails.classList.remove('hidden');
+                } else {
+                    bankDetails.classList.add('hidden');
+                }
+            }
+
+            // Event listeners
             amountInput.addEventListener('input', calculateMonthlyPayment);
             durationSelect.addEventListener('change', calculateMonthlyPayment);
+            
+            disbursementRadios.forEach(radio => {
+                radio.addEventListener('change', toggleBankDetails);
+            });
+
+            // Initialize bank details visibility
+            toggleBankDetails();
         });
     </script>
 </x-app-layout>
