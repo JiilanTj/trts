@@ -6,6 +6,7 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class User extends Authenticatable
 {
@@ -113,21 +114,6 @@ class User extends Authenticatable
     public function getAvatarAttribute(): string
     {
         return $this->photo_url ?? asset('images/default-avatar.png');
-    }
-
-    /**
-     * Hash password if set directly (safety net in addition to cast)
-     *
-     * @param  string  $value
-     * @return void
-     */
-    public function setPasswordAttribute($value): void
-    {
-        if ($value && !Hash::needsRehash($value)) {
-            $this->attributes['password'] = Hash::make($value);
-        } else {
-            $this->attributes['password'] = $value;
-        }
     }
 
     /**

@@ -118,4 +118,88 @@
             @include('components.quick-shortcuts')
         </div>
     </div>
+
+    <!-- PWA Install Prompt (Custom) -->
+    <div x-data="pwaInstallPrompt()" x-show="visible" x-cloak class="fixed inset-0 z-[200] flex items-end sm:items-center justify-center">
+        <div class="absolute inset-0 bg-black/60 backdrop-blur-sm" @click="dismiss()"></div>
+        <div class="relative w-full sm:max-w-sm mx-auto bg-[#1e2226] border border-neutral-700/70 rounded-t-2xl sm:rounded-2xl p-5 shadow-2xl shadow-black/40 animate-[fadeIn_.25s_ease]">
+            <div class="flex items-start space-x-4">
+                <div class="w-12 h-12 rounded-xl overflow-hidden ring-1 ring-white/10 bg-[#121416] flex items-center justify-center">
+                    <img src="/icons/icon-192.png" alt="TT Shop" class="w-11 h-11 object-contain" />
+                </div>
+                <div class="flex-1">
+                    <h3 class="text-base font-semibold mb-1">Install Aplikasi</h3>
+                    <p class="text-xs text-neutral-400 leading-relaxed">Tambah ke layar utama untuk akses lebih cepat & pengalaman seperti aplikasi native.</p>
+                </div> 
+                <button @click="dismiss()" class="text-neutral-400 hover:text-neutral-200 transition" aria-label="Tutup">&times;</button>
+            </div>
+            <div class="mt-4 flex items-center space-x-3">
+                <button @click="install()" :disabled="installing" class="px-4 py-2 rounded-md text-sm font-medium bg-gradient-to-r from-[#FE2C55] to-[#25F4EE] text-white shadow disabled:opacity-50 disabled:cursor-wait">Install</button>
+                <button @click="later()" class="px-3 py-2 text-xs font-medium rounded-md bg-neutral-700/40 hover:bg-neutral-600/40 text-neutral-300">Nanti</button>
+            </div>
+            <template x-if="error">
+                <p class="mt-3 text-xs text-rose-400" x-text="error"></p>
+            </template>
+        </div>
+    </div>
+
+    <script>
+        document.addEventListener('alpine:init', () => {
+            Alpine.data('pwaInstallPrompt', () => ({
+                deferred: null,
+                visible: false,
+                installing: false,
+                error: null,
+                init() {
+                    // Jangan tampilkan jika sudah standalone / pernah dismiss
+                    if (this.isStandalone() || localStorage.getItem('pwaInstalled') === '1' || localStorage.getItem('pwaInstallPromptDismissed') === '1') {
+                        return;
+                    }
+                    window.addEventListener('beforeinstallprompt', (e) => {
+                        e.preventDefault();
+                        this.deferred = e;
+                        // Tunda sedikit agar tidak mengganggu initial paint
+                        setTimeout(() => { this.visible = true; }, 800);
+                    });
+                    window.matchMedia('(display-mode: standalone)').addEventListener('change', (e) => {
+                        if (e.matches) {
+                            localStorage.setItem('pwaInstalled','1');
+                            this.visible = false;
+                        }
+                    });
+                },
+                isStandalone() {
+                    return window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone === true;
+                },
+                async install() {
+                    this.error = null;
+                    if (!this.deferred) {
+                        this.error = 'Install tidak tersedia di browser ini.';
+                        return;
+                    }
+                    try {
+                        this.installing = true;
+                        this.deferred.prompt();
+                        const choice = await this.deferred.userChoice;
+                        if (choice.outcome === 'accepted') {
+                            localStorage.setItem('pwaInstalled','1');
+                        } else {
+                            localStorage.setItem('pwaInstallPromptDismissed','1');
+                        }
+                        this.visible = false;
+                        this.deferred = null;
+                    } catch (err) {
+                        this.error = 'Gagal memulai instalasi.';
+                    } finally {
+                        this.installing = false;
+                    }
+                },
+                later() {
+                    localStorage.setItem('pwaInstallPromptDismissed','1');
+                    this.visible = false;
+                },
+                dismiss() { this.later(); }
+            }));
+        });
+    </script>
 </x-app-layout>

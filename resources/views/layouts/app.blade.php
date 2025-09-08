@@ -4,6 +4,13 @@
         <meta charset="utf-8">
         <meta name="viewport" content="width=device-width, initial-scale=1">
         <meta name="csrf-token" content="{{ csrf_token() }}">
+        <meta name="theme-color" content="#0f172a" />
+        <link rel="manifest" href="/manifest.webmanifest" crossorigin="anonymous">
+        <link rel="preload" href="/manifest.webmanifest" as="fetch" type="application/manifest+json" crossorigin>
+        <meta name="mobile-web-app-capable" content="yes">
+        <meta name="apple-mobile-web-app-capable" content="yes">
+        <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+        <link rel="apple-touch-icon" href="/icons/icon-192.png">
 
         <title>{{ config('app.name', 'Laravel') }}</title>
 
