@@ -132,6 +132,15 @@
                             <span id="open-chats-count" class="bg-orange-500 text-white text-xs rounded-full px-2 py-1 hidden"></span>
                         </a>
                     </li>
+                    <li>
+                        <a href="{{ route('admin.tickets.index') }}" class="flex items-center space-x-3 px-3 py-2.5 rounded-lg {{ request()->routeIs('admin.tickets.*') ? 'bg-blue-50 text-blue-700 border border-blue-200' : 'text-gray-600 hover:bg-gray-100 hover:text-gray-900' }} transition-all duration-200">
+                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 5v2m0 4v2m0 4v2M5 5a2 2 0 00-2 2v3a2 2 0 110 4v3a2 2 0 002 2h14a2 2 0 002-2v-3a2 2 0 110-4V7a2 2 0 00-2-2H5z"/>
+                            </svg>
+                            <span class="font-medium">Tiket Support</span>
+                            <span id="open-tickets-count" class="bg-red-500 text-white text-xs rounded-full px-2 py-1 hidden"></span>
+                        </a>
+                    </li>
                 </ul>
             </div>
 
@@ -165,9 +174,9 @@
                         <a href="{{ route('admin.kyc.requests.index') }}" class="flex items-center space-x-3 px-3 py-2.5 rounded-lg {{ request()->routeIs('admin.kyc.requests.*') ? 'bg-blue-50 text-blue-700 border border-blue-200' : 'text-gray-600 hover:bg-gray-100 hover:text-gray-900' }} transition-all duration-200">
                             <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1"></path>
-                            </svg>
-                            <span class="font-medium">Permintaan KYC</span>
-                        </a>
+                        </svg>
+                        <span class="font-medium">Permintaan KYC</span>
+                    </a>
                     </li>
                     <li>
                         <a href="{{ route('admin.kyc.snapshots.index') }}" class="flex items-center space-x-3 px-3 py-2.5 rounded-lg {{ request()->routeIs('admin.kyc.snapshots.*') ? 'bg-blue-50 text-blue-700 border border-blue-200' : 'text-gray-600 hover:bg-gray-100 hover:text-gray-900' }} transition-all duration-200">
@@ -228,9 +237,47 @@ function updatePendingCount() {
         .catch(error => console.log('Error fetching pending count:', error));
 }
 
-// Update count on page load and every 30 seconds
+// Update open tickets count
+function updateTicketsCount() {
+    fetch('/admin/api/tickets/count')
+        .then(response => response.json())
+        .then(data => {
+            const badge = document.getElementById('open-tickets-count');
+            if (data.count > 0) {
+                badge.textContent = data.count;
+                badge.classList.remove('hidden');
+            } else {
+                badge.classList.add('hidden');
+            }
+        })
+        .catch(error => console.log('Error fetching tickets count:', error));
+}
+
+// Update open chats count
+function updateChatsCount() {
+    fetch('/admin/api/chats/count')
+        .then(response => response.json())
+        .then(data => {
+            const badge = document.getElementById('open-chats-count');
+            if (data.count > 0) {
+                badge.textContent = data.count;
+                badge.classList.remove('hidden');
+            } else {
+                badge.classList.add('hidden');
+            }
+        })
+        .catch(error => console.log('Error fetching chats count:', error));
+}
+
+// Update counts on page load and every 30 seconds
 document.addEventListener('DOMContentLoaded', function() {
     updatePendingCount();
-    setInterval(updatePendingCount, 30000);
+    updateTicketsCount();
+    updateChatsCount();
+    setInterval(function() {
+        updatePendingCount();
+        updateTicketsCount();
+        updateChatsCount();
+    }, 30000);
 });
 </script>

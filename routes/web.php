@@ -37,6 +37,9 @@ use App\Http\Controllers\Admin\LoanRequestController as AdminLoanRequestControll
 use App\Http\Controllers\Api\NotificationController as ApiNotificationController;
 // Add Guest chat controller
 use App\Http\Controllers\Guest\ChatController as GuestChatController;
+// Add ticket controllers
+use App\Http\Controllers\User\TicketController as UserTicketController;
+use App\Http\Controllers\Admin\TicketController as AdminTicketController;
 
 Route::get('/', function () {
     return redirect()->route('login');
@@ -199,6 +202,16 @@ Route::middleware('auth')->group(function () {
         Route::delete('/{loanRequest}', [LoanRequestController::class, 'destroy'])->name('destroy');
     });
     
+    // Tickets / Support System
+    Route::prefix('tickets')->name('user.tickets.')->group(function () {
+        Route::get('/', [UserTicketController::class, 'index'])->name('index');
+        Route::get('/create', [UserTicketController::class, 'create'])->name('create');
+        Route::post('/', [UserTicketController::class, 'store'])->name('store');
+        Route::get('/{ticket}', [UserTicketController::class, 'show'])->name('show');
+        Route::post('/{ticket}/comment', [UserTicketController::class, 'addComment'])->name('comment');
+        Route::get('/{ticket}/download/{type}/{index}', [UserTicketController::class, 'downloadAttachment'])->name('download');
+    });
+    
     // Chat / Customer Service
     Route::prefix('chat')->name('user.chat.')->group(function () {
         Route::get('/', [App\Http\Controllers\User\ChatController::class, 'index'])->name('index');
@@ -302,6 +315,17 @@ Route::middleware(['auth', 'role:admin'])->prefix('admin')->name('admin.')->grou
         Route::get('/analytics/view', [AdminLoanRequestController::class, 'analytics'])->name('analytics');
     });
     
+    // Admin Ticket Management Routes
+    Route::prefix('tickets')->name('tickets.')->group(function () {
+        Route::get('/', [AdminTicketController::class, 'index'])->name('index');
+        Route::get('/{ticket}', [AdminTicketController::class, 'show'])->name('show');
+        Route::post('/{ticket}/assign', [AdminTicketController::class, 'assign'])->name('assign');
+        Route::post('/{ticket}/status', [AdminTicketController::class, 'updateStatus'])->name('update-status');
+        Route::post('/{ticket}/comment', [AdminTicketController::class, 'addComment'])->name('comment');
+        Route::post('/bulk-update', [AdminTicketController::class, 'bulkUpdate'])->name('bulk-update');
+        Route::get('/{ticket}/download/{type}/{index}', [AdminTicketController::class, 'downloadAttachment'])->name('download');
+    });
+    
     // Admin Chat Management Routes
     Route::prefix('chat')->name('chat.')->group(function () {
         Route::get('/', [App\Http\Controllers\Admin\ChatController::class, 'index'])->name('index');
@@ -322,6 +346,12 @@ Route::middleware(['auth', 'role:admin'])->prefix('admin')->name('admin.')->grou
         Route::get('/{chatRoom}/messages', [App\Http\Controllers\Admin\ChatController::class, 'getNewMessages'])->name('messages');
         Route::post('/{chatRoom}/send', [App\Http\Controllers\Admin\ChatController::class, 'sendMessageApi'])->name('send');
         Route::get('/{chatRoom}/typing', [App\Http\Controllers\Admin\ChatController::class, 'getTypingStatus'])->name('typing-status');
+    });
+    
+    // Admin API Routes for sidebar counts
+    Route::prefix('api')->name('api.')->group(function () {
+        Route::get('/tickets/count', [AdminTicketController::class, 'getCount'])->name('tickets.count');
+        Route::get('/chats/count', [App\Http\Controllers\Admin\ChatController::class, 'getCount'])->name('chats.count');
     });
 });
 

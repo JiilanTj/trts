@@ -100,7 +100,7 @@
                     </button>
 
                     <!-- Ticket Support -->
-                    <a href="#" class="flex items-center justify-between py-3 px-4 rounded-lg bg-neutral-800/40 border border-neutral-700/50 hover:border-amber-500/30 hover:bg-neutral-800/60 transition group">
+                    <a href="{{ route('user.tickets.index') }}" class="flex items-center justify-between py-3 px-4 rounded-lg bg-neutral-800/40 border border-neutral-700/50 hover:border-amber-500/30 hover:bg-neutral-800/60 transition group">
                         <div class="flex items-center space-x-3">
                             <div class="w-10 h-10 rounded-full bg-gradient-to-br from-amber-500/20 to-orange-500/20 flex items-center justify-center">
                                 <svg class="w-5 h-5 text-neutral-300 group-hover:text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -108,8 +108,8 @@
                                 </svg>
                             </div>
                             <div>
-                                <p class="text-sm font-medium text-neutral-100 group-hover:text-white">Buat Tiket</p>
-                                <p class="text-xs text-neutral-400">Buat tiket support baru</p>
+                                <p class="text-sm font-medium text-neutral-100 group-hover:text-white">Kelola Tiket</p>
+                                <p class="text-xs text-neutral-400">Lihat & kelola tiket support</p>
                             </div>
                         </div>
                         <svg class="w-4 h-4 text-neutral-400 group-hover:text-amber-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
