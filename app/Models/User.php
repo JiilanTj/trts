@@ -26,6 +26,8 @@ class User extends Authenticatable
         'balance',
         'level',
         'credit_score',
+        'visitors',
+        'followers',
         'role',
         'is_seller',
     ];
@@ -52,6 +54,8 @@ class User extends Authenticatable
             'balance' => 'integer',
             'level' => 'integer',
             'credit_score' => 'integer',
+            'visitors' => 'integer',
+            'followers' => 'integer',
             'is_seller' => 'boolean',
         ];
     }
@@ -269,6 +273,69 @@ class User extends Authenticatable
     public function addCreditScore(int $points): void
     {
         $this->increment('credit_score', $points);
+    }
+
+    /**
+     * Increment visitor count
+     *
+     * @param int $count
+     * @return void
+     */
+    public function incrementVisitors(int $count = 1): void
+    {
+        $this->increment('visitors', $count);
+    }
+
+    /**
+     * Increment follower count
+     *
+     * @param int $count
+     * @return void
+     */
+    public function incrementFollowers(int $count = 1): void
+    {
+        $this->increment('followers', $count);
+    }
+
+    /**
+     * Decrement follower count
+     *
+     * @param int $count
+     * @return void
+     */
+    public function decrementFollowers(int $count = 1): void
+    {
+        $this->decrement('followers', $count);
+    }
+
+    /**
+     * Get formatted visitor count
+     *
+     * @return string
+     */
+    public function getFormattedVisitorsAttribute(): string
+    {
+        if ($this->visitors >= 1000000) {
+            return round($this->visitors / 1000000, 1) . 'M';
+        } elseif ($this->visitors >= 1000) {
+            return round($this->visitors / 1000, 1) . 'K';
+        }
+        return (string) $this->visitors;
+    }
+
+    /**
+     * Get formatted follower count
+     *
+     * @return string
+     */
+    public function getFormattedFollowersAttribute(): string
+    {
+        if ($this->followers >= 1000000) {
+            return round($this->followers / 1000000, 1) . 'M';
+        } elseif ($this->followers >= 1000) {
+            return round($this->followers / 1000, 1) . 'K';
+        }
+        return (string) $this->followers;
     }
 
     /**

@@ -25,6 +25,9 @@ class UpdateUserRequest extends FormRequest
             'password' => ['nullable', 'string', 'min:6'],
             'balance' => ['nullable', 'integer', 'min:0'],
             'level' => ['nullable', 'integer', 'min:1', 'max:10'],
+            'credit_score' => ['nullable', 'integer', 'min:0', 'max:1000'],
+            'visitors' => ['nullable', 'integer', 'min:0'],
+            'followers' => ['nullable', 'integer', 'min:0'],
             'role' => ['required', Rule::in(['admin', 'user'])],
             'photo' => ['nullable', 'image', 'mimes:jpeg,png,jpg,gif', 'max:2048'],
         ];

@@ -34,26 +34,35 @@
                                     @if(auth()->user()->isSeller() && auth()->user()->sellerInfo)
                                         <!-- Seller Stats -->
                                         <div class="text-center">
-                                            <span class="text-sm font-semibold">{{ auth()->user()->sellerInfo->followers }}</span>
+                                            <span class="text-sm font-semibold">{{ auth()->user()->formatted_followers }}</span>
                                             <p class="text-[10px] uppercase tracking-wide text-neutral-400 mt-0.5">Mengikuti</p>
                                         </div>
                                         <div class="text-center">
-                                            <span class="text-sm font-semibold">{{ number_format(auth()->user()->sellerInfo->visitors) }}</span>
+                                            <span class="text-sm font-semibold">{{ auth()->user()->formatted_visitors }}</span>
                                             <p class="text-[10px] uppercase tracking-wide text-neutral-400 mt-0.5">Kunjungan</p>
-                                        </div>                        <div class="text-center">
-                            <span class="text-sm font-semibold">{{ auth()->user()->credit_score ?? 0 }}</span>
-                            <p class="text-[10px] uppercase tracking-wide text-neutral-400 mt-0.5">Skor kredit</p>
-                        </div>
-                    @else
-                        <!-- Regular User Stats -->
-                        <div class="text-center">
-                            <span class="text-sm font-semibold">{{ auth()->user()->orders()->count() }}</span>
-                            <p class="text-[10px] uppercase tracking-wide text-neutral-400 mt-0.5">Order</p>
-                        </div>
-                        <div class="text-center">
-                            <span class="text-sm font-semibold">{{ auth()->user()->level }}</span>
-                            <p class="text-[10px] uppercase tracking-wide text-neutral-400 mt-0.5">Level</p>
-                        </div>
+                                        </div>
+                                        <div class="text-center">
+                                            <span class="text-sm font-semibold">{{ auth()->user()->credit_score ?? 0 }}</span>
+                                            <p class="text-[10px] uppercase tracking-wide text-neutral-400 mt-0.5">Skor kredit</p>
+                                        </div>
+                                    @else
+                                        <!-- Regular User Stats -->
+                                        <div class="text-center">
+                                            <span class="text-sm font-semibold">{{ auth()->user()->orders()->count() }}</span>
+                                            <p class="text-[10px] uppercase tracking-wide text-neutral-400 mt-0.5">Order</p>
+                                        </div>
+                                        <div class="text-center">
+                                            <span class="text-sm font-semibold">{{ auth()->user()->formatted_visitors }}</span>
+                                            <p class="text-[10px] uppercase tracking-wide text-neutral-400 mt-0.5">Kunjungan</p>
+                                        </div>
+                                        <div class="text-center">
+                                            <span class="text-sm font-semibold">{{ auth()->user()->formatted_followers }}</span>
+                                            <p class="text-[10px] uppercase tracking-wide text-neutral-400 mt-0.5">Mengikuti</p>
+                                        </div>
+                                        <div class="text-center">
+                                            <span class="text-sm font-semibold">{{ auth()->user()->credit_score ?? 0 }}</span>
+                                            <p class="text-[10px] uppercase tracking-wide text-neutral-400 mt-0.5">Skor kredit</p>
+                                        </div>
                         <div class="text-center">
                             <span class="text-sm font-semibold">{{ auth()->user()->credit_score ?? 0 }}</span>
                             <p class="text-[10px] uppercase tracking-wide text-neutral-400 mt-0.5">Skor kredit</p>
