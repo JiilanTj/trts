@@ -72,6 +72,19 @@
             </div>
             <span class="text-[11px] font-medium tracking-wide text-neutral-400 group-hover:text-white">Topup</span>
         </a>
+        <!-- Penarikan Saldo -->
+        <a href="{{ route('user.withdrawals.index') }}" class="group relative flex flex-col items-center gap-1.5 p-3 rounded-xl bg-neutral-800/60 border border-neutral-700 hover:border-orange-500/70 transition shadow-sm">
+            <div class="relative">
+                <div class="absolute -inset-1 rounded-full opacity-0 group-hover:opacity-100 transition blur-sm bg-gradient-to-r from-orange-400/60 to-red-500/60"></div>
+                <div class="w-10 h-10 rounded-full flex items-center justify-center relative bg-neutral-900 text-neutral-200 group-hover:text-white">
+                    <div class="absolute inset-0 rounded-full ring-1 ring-neutral-700/80 group-hover:ring-transparent"></div>
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24" aria-hidden="true">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M19.5 13.5 12 21l-7.5-7.5M12 21V7.5" />
+                    </svg>
+                </div>
+            </div>
+            <span class="text-[11px] font-medium tracking-wide text-neutral-400 group-hover:text-white">Tarik Saldo</span>
+        </a>
         <!-- Order Saya -->
         <a href="{{ route('user.orders.index') }}" class="group relative flex flex-col items-center gap-1.5 p-3 rounded-xl bg-neutral-800/60 border border-neutral-700 hover:border-purple-500/70 transition shadow-sm">
             <div class="relative">

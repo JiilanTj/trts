@@ -23,15 +23,15 @@ class WithdrawalController extends Controller
             ->latest()
             ->paginate(10);
 
-        $statusCounts = [
-            'all' => auth()->user()->withdrawalRequests()->count(),
+        $stats = [
+            'total' => auth()->user()->withdrawalRequests()->count(),
             'pending' => auth()->user()->withdrawalRequests()->where('status', WithdrawalRequest::STATUS_PENDING)->count(),
             'processing' => auth()->user()->withdrawalRequests()->where('status', WithdrawalRequest::STATUS_PROCESSING)->count(),
             'completed' => auth()->user()->withdrawalRequests()->where('status', WithdrawalRequest::STATUS_COMPLETED)->count(),
             'rejected' => auth()->user()->withdrawalRequests()->where('status', WithdrawalRequest::STATUS_REJECTED)->count(),
         ];
 
-        return view('user.withdrawals.index', compact('withdrawals', 'statusCounts'));
+        return view('user.withdrawals.index', compact('withdrawals', 'stats'));
     }
 
     /**
