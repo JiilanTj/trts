@@ -181,6 +181,11 @@ Route::middleware('auth')->group(function () {
     Route::get('profile/edit', [UserDetailController::class,'editCombined'])->name('user.profile.edit');
     Route::put('profile/edit', [UserDetailController::class,'updateCombined'])->name('user.profile.update');
     
+    // Password management
+    Route::get('password/edit', function() {
+        return view('user.password.edit');
+    })->name('user.password.edit');
+    
     // Additional Menu
     Route::get('additional-menu', [App\Http\Controllers\User\AdditionalMenuController::class,'index'])->name('user.additional-menu.index');
     
