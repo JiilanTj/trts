@@ -369,4 +369,46 @@ class User extends Authenticatable
     {
         return $this->hasMany(ChatRoomParticipant::class, 'user_id');
     }
+
+    /**
+     * Get withdrawal requests made by user
+     */
+    public function withdrawalRequests(): HasMany
+    {
+        return $this->hasMany(WithdrawalRequest::class);
+    }
+
+    /**
+     * Get withdrawal requests processed by this user (admin)
+     */
+    public function processedWithdrawals(): HasMany
+    {
+        return $this->hasMany(WithdrawalRequest::class, 'processed_by');
+    }
+
+    /**
+     * Deduct amount from user balance
+     *
+     * @param float $amount
+     * @return bool
+     */
+    public function deductBalance(float $amount): bool
+    {
+        if ($this->balance >= $amount) {
+            $this->decrement('balance', $amount);
+            return true;
+        }
+        return false;
+    }
+
+    /**
+     * Check if user has sufficient balance
+     *
+     * @param float $amount
+     * @return bool
+     */
+    public function hasSufficientBalance(float $amount): bool
+    {
+        return $this->balance >= $amount;
+    }
 }

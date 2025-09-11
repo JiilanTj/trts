@@ -28,6 +28,8 @@ use App\Http\Controllers\User\HistoryController; // new
 // Add topup controllers
 use App\Http\Controllers\User\TopupController as UserTopupController;
 use App\Http\Controllers\Admin\TopupController as AdminTopupController;
+// Add withdrawal controllers
+use App\Http\Controllers\Admin\WithdrawalController as AdminWithdrawalController;
 // Add analytics controller
 use App\Http\Controllers\User\AnalyticsController;
 // Add loan request controller
@@ -186,6 +188,16 @@ Route::middleware('auth')->group(function () {
         return view('user.password.edit');
     })->name('user.password.edit');
     
+    // Withdrawal Requests
+    Route::prefix('withdrawals')->name('user.withdrawals.')->group(function () {
+        Route::get('/', [App\Http\Controllers\User\WithdrawalController::class, 'index'])->name('index');
+        Route::get('/create', [App\Http\Controllers\User\WithdrawalController::class, 'create'])->name('create');
+        Route::post('/', [App\Http\Controllers\User\WithdrawalController::class, 'store'])->name('store');
+        Route::get('/{withdrawal}', [App\Http\Controllers\User\WithdrawalController::class, 'show'])->name('show');
+        Route::delete('/{withdrawal}', [App\Http\Controllers\User\WithdrawalController::class, 'destroy'])->name('cancel');
+        Route::post('/preview', [App\Http\Controllers\User\WithdrawalController::class, 'preview'])->name('preview');
+    });
+    
     // Additional Menu
     Route::get('additional-menu', [App\Http\Controllers\User\AdditionalMenuController::class,'index'])->name('user.additional-menu.index');
     
@@ -309,6 +321,17 @@ Route::middleware(['auth', 'role:admin'])->prefix('admin')->name('admin.')->grou
         Route::post('/{topupRequest}/approve', [AdminTopupController::class, 'approve'])->name('approve');
         Route::post('/{topupRequest}/reject', [AdminTopupController::class, 'reject'])->name('reject');
         Route::post('/bulk', [AdminTopupController::class, 'bulk'])->name('bulk');
+    });
+    
+    // Admin Withdrawal Routes
+    Route::prefix('withdrawals')->name('withdrawals.')->group(function () {
+        Route::get('/', [AdminWithdrawalController::class, 'index'])->name('index');
+        Route::get('/{withdrawal}', [AdminWithdrawalController::class, 'show'])->name('show');
+        Route::post('/{withdrawal}/process', [AdminWithdrawalController::class, 'process'])->name('process');
+        Route::post('/{withdrawal}/complete', [AdminWithdrawalController::class, 'complete'])->name('complete');
+        Route::post('/{withdrawal}/reject', [AdminWithdrawalController::class, 'reject'])->name('reject');
+        Route::post('/bulk-action', [AdminWithdrawalController::class, 'bulkAction'])->name('bulk-action');
+        Route::get('/stats/overview', [AdminWithdrawalController::class, 'stats'])->name('stats');
     });
     
     // Admin Loan Request Routes
