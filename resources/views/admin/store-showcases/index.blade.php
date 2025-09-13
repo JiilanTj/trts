@@ -23,16 +23,14 @@
         <div class="p-6">
             <!-- Filters -->
             <div class="mb-6">
-                <form method="GET" action="{{ route('admin.showcases.index') }}" class="flex flex-col md:flex-row gap-3">
+                <form method="GET" action="{{ route('admin.showcases.index') }}" class="flex flex-col md:flex-row gap-3" id="filterForm">
                     <div class="flex-1">
-                        <select name="user_id" class="w-full rounded-lg border-gray-300 focus:ring-blue-500 focus:border-blue-500" onchange="this.form.submit()">
-                            <option value="">Semua Pengguna</option>
-                            @foreach($users as $user)
-                                <option value="{{ $user->id }}" {{ request('user_id') == $user->id ? 'selected' : '' }}>
-                                    {{ $user->full_name }}
-                                </option>
-                            @endforeach
-                        </select>
+                        <input type="text" 
+                               name="search_user" 
+                               placeholder="Cari pengguna (nama, username, atau nama toko)..." 
+                               value="{{ request('search_user') }}"
+                               class="w-full rounded-lg border-gray-300 focus:ring-blue-500 focus:border-blue-500"
+                               id="searchUser">
                     </div>
                     <div class="w-full md:w-48">
                         <select name="status" class="w-full rounded-lg border-gray-300 focus:ring-blue-500 focus:border-blue-500" onchange="this.form.submit()">
@@ -42,7 +40,7 @@
                             <option value="featured" {{ request('status') == 'featured' ? 'selected' : '' }}>Unggulan</option>
                         </select>
                     </div>
-                    @if(request()->anyFilled(['user_id', 'status']))
+                    @if(request()->anyFilled(['search_user', 'status']))
                         <a href="{{ route('admin.showcases.index') }}" 
                            class="bg-gray-600 hover:bg-gray-700 text-white px-4 py-2 rounded-lg text-sm font-medium transition-colors">
                             <svg class="w-4 h-4 inline mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -220,7 +218,7 @@
                                     </svg>
                                     <h3 class="text-lg font-medium text-gray-900 mb-2">Tidak ada etalase ditemukan</h3>
                                     <p class="text-gray-500">
-                                        @if(request()->anyFilled(['user_id', 'status']))
+                                    @if(request()->anyFilled(['search_user', 'status']))
                                             Coba sesuaikan filter atau 
                                             <a href="{{ route('admin.showcases.index') }}" class="text-blue-600 hover:text-blue-500">reset semua filter</a>
                                         @else
@@ -478,6 +476,22 @@
             if (e.target === this) {
                 closeStatsModal();
             }
+        });
+
+        // Search functionality with debounce
+        let searchTimeout;
+        document.getElementById('searchUser').addEventListener('input', function() {
+            clearTimeout(searchTimeout);
+            const form = document.getElementById('filterForm');
+            
+            searchTimeout = setTimeout(() => {
+                form.submit();
+            }, 500); // Wait 500ms after user stops typing
+        });
+
+        // Submit form when status changes
+        document.querySelector('select[name="status"]').addEventListener('change', function() {
+            document.getElementById('filterForm').submit();
         });
     </script>
 </x-admin-layout>

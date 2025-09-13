@@ -14,12 +14,19 @@ class StoreShowcaseController extends Controller
      */
     public function index(Request $request)
     {
-        $query = StoreShowcase::with(['user', 'product'])
+        $query = StoreShowcase::with(['user.sellerInfo', 'product.category'])
             ->latest();
 
-        // Filter by user
-        if ($request->filled('user_id')) {
-            $query->where('user_id', $request->user_id);
+        // Search by user (name, username, or store name)
+        if ($request->filled('search_user')) {
+            $searchTerm = $request->search_user;
+            $query->whereHas('user', function ($userQuery) use ($searchTerm) {
+                $userQuery->where('full_name', 'LIKE', "%{$searchTerm}%")
+                    ->orWhere('username', 'LIKE', "%{$searchTerm}%")
+                    ->orWhereHas('sellerInfo', function ($sellerQuery) use ($searchTerm) {
+                        $sellerQuery->where('store_name', 'LIKE', "%{$searchTerm}%");
+                    });
+            });
         }
 
         // Filter by status
@@ -35,10 +42,7 @@ class StoreShowcaseController extends Controller
 
         $showcases = $query->paginate(15);
 
-        // Get all users for filter dropdown
-        $users = User::select('id', 'full_name')->orderBy('full_name')->get();
-
-        return view('admin.store-showcases.index', compact('showcases', 'users'));
+        return view('admin.store-showcases.index', compact('showcases'));
     }
 
     /**

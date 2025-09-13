@@ -4,7 +4,28 @@
     <style>
         .line-clamp-2 {
             display: -webkit-box;
-            -webkit-line-clamp: 2;
+                                                  <button type="button" 
+                                                    class="w-full bg-gradient-to-r from-yellow-400 to-yellow-500 hover:from-yellow-500 hover:to-yellow-600 text-white px-4 py-2 rounded-lg font-medium transition-all duration-200 transform hover:scale-105"
+                                                    onclick="showProductDetail({{ json_encode([
+                                                        'id' => $showcase->product->id ?? 0,
+                                                        'name' => $showcase->product->name ?? 'Produk Tidak Ditemukan',
+                                                        'image' => $showcase->product->image_url ?? null,
+                                                        'category' => $showcase->product->category->name ?? 'Tanpa Kategori',
+                                                        'description' => $showcase->description ?? $showcase->product->description ?? 'Tidak ada deskripsi',
+                                                        'price' => $showcase->price,
+                                                        'original_price' => $showcase->original_price,
+                                                        'is_featured' => $showcase->is_featured,
+                                                        'stock' => $showcase->product->stock ?? 0,
+                                                        'weight' => $showcase->product->weight ?? null,
+                                                        'dimensions' => $showcase->product->dimensions ?? null,
+                                                        'created_at' => $showcase->created_at->format('d M Y')
+                                                    ]) }})">
+                                                <svg class="w-4 h-4 inline mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path>
+                                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"></path>
+                                                </svg>
+                                                Lihat Detail
+                                            </button>webkit-line-clamp: 2;
             -webkit-box-orient: vertical;
             overflow: hidden;
         }
@@ -185,24 +206,15 @@
                                                 @endif
                                             </div>
 
-                                            @if($showcase->product)
-                                                <a href="{{ route('admin.products.show', $showcase->product->id) }}" 
-                                                   target="_blank"
-                                                   class="w-full bg-gradient-to-r from-yellow-400 to-yellow-500 hover:from-yellow-500 hover:to-yellow-600 text-white px-4 py-2 rounded-lg font-medium transition-all duration-200 transform hover:scale-105 inline-flex items-center justify-center">
-                                                    <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path>
-                                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"></path>
-                                                    </svg>
-                                                    Lihat Detail Produk
-                                                    <svg class="w-3 h-3 ml-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"></path>
-                                                    </svg>
-                                                </a>
-                                            @else
-                                                <button disabled class="w-full bg-gray-400 text-white px-4 py-2 rounded-lg font-medium cursor-not-allowed">
-                                                    Produk Tidak Tersedia
-                                                </button>
-                                            @endif
+                                            <button type="button" 
+                                                    onclick="showProductDetail({{ json_encode($showcase) }})" 
+                                                    class="w-full bg-gradient-to-r from-yellow-400 to-yellow-500 hover:from-yellow-500 hover:to-yellow-600 text-white px-4 py-2 rounded-lg font-medium transition-all duration-200 transform hover:scale-105">
+                                                <svg class="w-4 h-4 inline mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path>
+                                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"></path>
+                                                </svg>
+                                                Lihat Detail
+                                            </button>
                                         </div>
                                     </div>
                                 @endforeach
@@ -237,7 +249,7 @@
                                         @else
                                             <div class="w-full h-48 bg-gray-100 flex items-center justify-center">
                                                 <svg class="w-12 h-12 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2 2v12a2 2 0 002 2z"></path>
+                                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"></path>
                                                 </svg>
                                             </div>
                                         @endif
@@ -283,26 +295,15 @@
                                                     Rp {{ number_format($showcase->original_price, 0, ',', '.') }}
                                                 </div>
                                             @endif
-                                        </div>
-
-                                        @if($showcase->product)
-                                            <a href="{{ route('admin.products.show', $showcase->product->id) }}" 
-                                               target="_blank"
-                                               class="w-full bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg font-medium transition-colors inline-flex items-center justify-center">
-                                                <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path>
-                                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"></path>
-                                                </svg>
-                                                Lihat Detail Produk
-                                                <svg class="w-3 h-3 ml-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"></path>
-                                                </svg>
-                                            </a>
-                                        @else
-                                            <button disabled class="w-full bg-gray-400 text-white px-4 py-2 rounded-lg font-medium cursor-not-allowed">
-                                                Produk Tidak Tersedia
-                                            </button>
-                                        @endif
+                                        </div>                        <button type="button" 
+                                onclick="showProductDetail({{ json_encode($showcase) }})" 
+                                class="w-full bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg font-medium transition-colors">
+                            <svg class="w-4 h-4 inline mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path>
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"></path>
+                            </svg>
+                            Lihat Detail
+                        </button>
                                     </div>
                                 </div>
                             @endforeach
@@ -325,7 +326,7 @@
             @if($user->sellerInfo)
                 <div class="mt-8">
                     <div class="bg-gray-50 rounded-lg border border-gray-200 p-6 text-center">
-                        <h3 class="text-lg font-semibold text-gray-800 mb-4 flex items-center justify-center">
+                                        <h3 class="text-lg font-semibold text-gray-800 mb-4 flex items-center">
                             <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
                             </svg>
@@ -356,4 +357,216 @@
             @endif
         </div>
     </div>
+
+    <!-- Product Detail Modal -->
+    <div id="productModal" class="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full hidden z-50">
+        <div class="relative top-8 mx-auto p-5 border w-11/12 md:w-3/4 lg:w-2/3 xl:w-1/2 shadow-lg rounded-lg bg-white">
+            <div class="flex items-center justify-between pb-3 border-b">
+                <h3 class="text-xl font-semibold text-gray-800" id="modalTitle">
+                    Detail Produk
+                </h3>
+                <button onclick="closeProductModal()" class="text-gray-400 hover:text-gray-600">
+                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+                    </svg>
+                </button>
+            </div>
+            
+            <div id="modalContent" class="mt-4">
+                <!-- Content will be populated by JavaScript -->
+                <div class="animate-pulse">
+                    <div class="h-4 bg-gray-200 rounded w-3/4 mb-2"></div>
+                    <div class="h-4 bg-gray-200 rounded w-1/2"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let currentProductData = null;
+
+        function showProductDetail(showcase) {
+            currentProductData = showcase;
+            
+            const modal = document.getElementById('productModal');
+            const modalTitle = document.getElementById('modalTitle');
+            const modalContent = document.getElementById('modalContent');
+            
+            // Set title
+            modalTitle.textContent = showcase.product ? showcase.product.name : 'Produk Tidak Ditemukan';
+            
+            // Build content
+            let content = `
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <!-- Product Image -->
+                    <div class="space-y-4">
+                        <div class="aspect-square bg-gray-100 rounded-lg overflow-hidden">
+            `;
+            
+            if (showcase.product && showcase.product.image_url) {
+                content += `
+                    <img src="${showcase.product.image_url}" 
+                         alt="${showcase.product.name}" 
+                         class="w-full h-full object-cover">
+                `;
+            } else {
+                content += `
+                    <div class="w-full h-full flex items-center justify-center">
+                        <svg class="w-16 h-16 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"></path>
+                        </svg>
+                    </div>
+                `;
+            }
+            
+            content += `
+                        </div>
+                        
+                        <!-- Badges -->
+                        <div class="flex flex-wrap gap-2">
+            `;
+            
+            if (showcase.is_featured) {
+                content += `
+                    <span class="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-yellow-100 text-yellow-800">
+                        <svg class="w-4 h-4 mr-1" fill="currentColor" viewBox="0 0 20 20">
+                            <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z"></path>
+                        </svg>
+                        Produk Unggulan
+                    </span>
+                `;
+            }
+            
+            if (showcase.is_active) {
+                content += `
+                    <span class="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-green-100 text-green-800">
+                        Aktif
+                    </span>
+                `;
+            }
+            
+            if (showcase.original_price > showcase.price) {
+                const discount = Math.round(((showcase.original_price - showcase.price) / showcase.original_price) * 100);
+                content += `
+                    <span class="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-red-100 text-red-800">
+                        ${discount}% OFF
+                    </span>
+                `;
+            }
+            
+            content += `
+                        </div>
+                    </div>
+                    
+                    <!-- Product Details -->
+                    <div class="space-y-4">
+                        <div>
+                            <h4 class="text-lg font-semibold text-gray-800 mb-2">${showcase.product ? showcase.product.name : 'Produk Tidak Ditemukan'}</h4>
+                            <p class="text-gray-600 text-sm">
+                                <svg class="w-4 h-4 inline mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A1.994 1.994 0 013 12V7a4 4 0 014-4z"></path>
+                                </svg>
+                                Kategori: ${showcase.product && showcase.product.category ? showcase.product.category.name : 'Tanpa Kategori'}
+                            </p>
+                        </div>
+                        
+                        <!-- Pricing -->
+                        <div class="bg-gray-50 rounded-lg p-4">
+                            <div class="text-2xl font-bold text-green-600 mb-1">
+                                Rp ${new Intl.NumberFormat('id-ID').format(showcase.price)}
+                            </div>
+            `;
+            
+            if (showcase.original_price > showcase.price) {
+                content += `
+                    <div class="text-lg text-gray-500 line-through">
+                        Rp ${new Intl.NumberFormat('id-ID').format(showcase.original_price)}
+                    </div>
+                    <div class="text-sm text-green-600 font-medium">
+                        Hemat Rp ${new Intl.NumberFormat('id-ID').format(showcase.original_price - showcase.price)}
+                    </div>
+                `;
+            }
+            
+            content += `
+                        </div>
+                        
+                        <!-- Description -->
+            `;
+            
+            if (showcase.description) {
+                content += `
+                    <div>
+                        <h5 class="font-medium text-gray-800 mb-2">Deskripsi Etalase:</h5>
+                        <p class="text-gray-600 leading-relaxed">${showcase.description}</p>
+                    </div>
+                `;
+            }
+            
+            content += `
+                        <!-- Meta Information -->
+                        <div class="space-y-2 text-sm text-gray-500">
+                            <div class="flex items-center">
+                                <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16V4m0 0L3 8m4-4l4 4m6 0v12m0 0l4-4m-4 4l-4-4"></path>
+                                </svg>
+                                Urutan Tampil: ${showcase.sort_order}
+                            </div>
+                            <div class="flex items-center">
+                                <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path>
+                                </svg>
+                                Ditambahkan: ${new Date(showcase.created_at).toLocaleDateString('id-ID', {
+                                    year: 'numeric',
+                                    month: 'long',
+                                    day: 'numeric',
+                                    hour: '2-digit',
+                                    minute: '2-digit'
+                                })}
+                            </div>
+            `;
+            
+            if (showcase.is_featured && showcase.featured_until) {
+                content += `
+                    <div class="flex items-center text-yellow-600">
+                        <svg class="w-4 h-4 mr-2" fill="currentColor" viewBox="0 0 20 20">
+                            <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z"></path>
+                        </svg>
+                        Unggulan sampai: ${new Date(showcase.featured_until).toLocaleDateString('id-ID', {
+                            year: 'numeric',
+                            month: 'long',
+                            day: 'numeric'
+                        })}
+                    </div>
+                `;
+            }
+            
+            content += `
+                        </div>
+                    </div>
+                </div>
+            `;
+            
+            modalContent.innerHTML = content;
+            modal.classList.remove('hidden');
+        }
+        
+        function closeProductModal() {
+            document.getElementById('productModal').classList.add('hidden');
+        }
+        
+        // Close modal on background click
+        document.getElementById('productModal').addEventListener('click', function(e) {
+            if (e.target === this) {
+                closeProductModal();
+            }
+        });
+        
+        // Close modal on Escape key
+        document.addEventListener('keydown', function(e) {
+            if (e.key === 'Escape') {
+                closeProductModal();
+            }
+        });
+    </script>
 </x-admin-layout>
