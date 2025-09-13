@@ -25,6 +25,8 @@ class User extends Authenticatable
         'password',
         'balance',
         'level',
+        'total_transaction_amount',
+        'last_level_check',
         'credit_score',
         'visitors',
         'followers',
@@ -53,6 +55,8 @@ class User extends Authenticatable
             'password' => 'hashed',
             'balance' => 'integer',
             'level' => 'integer',
+            'total_transaction_amount' => 'integer',
+            'last_level_check' => 'datetime',
             'credit_score' => 'integer',
             'visitors' => 'integer',
             'followers' => 'integer',
@@ -410,5 +414,185 @@ class User extends Authenticatable
     public function hasSufficientBalance(float $amount): bool
     {
         return $this->balance >= $amount;
+    }
+
+    /**
+     * Get level requirements configuration
+     *
+     * @return array
+     */
+    public static function getLevelRequirements(): array
+    {
+        return [
+            1 => ['transaction_amount' => 0, 'margin_percent' => null, 'badge' => 'Bintang 1'],
+            2 => ['transaction_amount' => 100_000_000, 'margin_percent' => 13, 'badge' => 'Bintang 2'],
+            3 => ['transaction_amount' => 250_000_000, 'margin_percent' => 15, 'badge' => 'Bintang 3'],
+            4 => ['transaction_amount' => 500_000_000, 'margin_percent' => 18, 'badge' => 'Bintang 4'],
+            5 => ['transaction_amount' => 1_000_000_000, 'margin_percent' => 22, 'badge' => 'Bintang 5'],
+            6 => ['transaction_amount' => 2_000_000_000, 'margin_percent' => 25, 'badge' => 'Toko dari Mulut ke Mulut'],
+        ];
+    }
+
+    /**
+     * Get current level data with safe fallback
+     *
+     * @return array
+     */
+    public function getCurrentLevelData(): array
+    {
+        $levelRequirements = static::getLevelRequirements();
+        $currentLevel = $this->level;
+        
+        // Handle levels outside our defined range (like admin level 10)
+        if (!isset($levelRequirements[$currentLevel])) {
+            return [
+                'badge' => $currentLevel == 10 ? 'Admin' : "Level {$currentLevel}",
+                'margin_percent' => 30, // Admin gets highest margin
+                'transaction_amount' => 0
+            ];
+        }
+        
+        return $levelRequirements[$currentLevel];
+    }
+
+    /**
+     * Get current level margin percentage
+     *
+     * @return int|null
+     */
+    public function getLevelMarginPercent(): ?int
+    {
+        $requirements = static::getLevelRequirements();
+        return $requirements[$this->level]['margin_percent'] ?? null;
+    }
+
+    /**
+     * Get current level badge name
+     *
+     * @return string
+     */
+    public function getLevelBadge(): string
+    {
+        $requirements = static::getLevelRequirements();
+        return $requirements[$this->level]['badge'] ?? 'Default';
+    }
+
+    /**
+     * Check if user can upgrade to a specific level
+     *
+     * @param int $targetLevel
+     * @return bool
+     */
+    public function canUpgradeToLevel(int $targetLevel): bool
+    {
+        $requirements = static::getLevelRequirements();
+        if (!isset($requirements[$targetLevel])) {
+            return false;
+        }
+
+        $required = $requirements[$targetLevel]['transaction_amount'];
+        return $this->total_transaction_amount >= $required;
+    }
+
+    /**
+     * Check and upgrade user level automatically
+     *
+     * @return bool True if level was upgraded, false otherwise
+     */
+    public function checkAndUpgradeLevel(): bool
+    {
+        $requirements = static::getLevelRequirements();
+        $currentLevel = $this->level;
+        $newLevel = $currentLevel;
+
+        // Find highest level user qualifies for
+        foreach ($requirements as $level => $requirement) {
+            if ($level <= $currentLevel) continue; // Skip current and lower levels
+            
+            if ($this->total_transaction_amount >= $requirement['transaction_amount']) {
+                $newLevel = $level;
+            } else {
+                break; // Stop at first unmet requirement
+            }
+        }
+
+        if ($newLevel > $currentLevel) {
+            $this->update([
+                'level' => $newLevel,
+                'last_level_check' => now(),
+            ]);
+
+            // Send notification to user
+            \App\Models\Notification::create([
+                'for_user_id' => $this->id,
+                'category' => 'level',
+                'title' => 'Selamat! Bintang Naik',
+                'description' => $newLevel == 6 
+                    ? "Selamat! Anda telah mencapai status tertinggi: {$requirements[$newLevel]['badge']}! Komisi margin sekarang {$requirements[$newLevel]['margin_percent']}%!"
+                    : "Selamat! Bintang Anda naik dari {$requirements[$currentLevel]['badge']} (Bintang {$currentLevel}) menjadi {$requirements[$newLevel]['badge']} (Bintang {$newLevel}). Komisi margin sekarang {$requirements[$newLevel]['margin_percent']}%!",
+            ]);
+
+            return true;
+        }
+
+        // Update last check time even if no upgrade
+        $this->update(['last_level_check' => now()]);
+        return false;
+    }
+
+    /**
+     * Add transaction amount and check for level upgrade
+     *
+     * @param int $amount
+     * @return void
+     */
+    public function addTransactionAmount(int $amount): void
+    {
+        $this->increment('total_transaction_amount', $amount);
+        $this->checkAndUpgradeLevel();
+    }
+
+    /**
+     * Get progress to next level as percentage
+     *
+     * @return float
+     */
+    public function getNextLevelProgress(): float
+    {
+        $requirements = static::getLevelRequirements();
+        $nextLevel = $this->level + 1;
+
+        if (!isset($requirements[$nextLevel])) {
+            return 100.0; // Already at max level
+        }
+
+        $currentRequired = $requirements[$this->level]['transaction_amount'];
+        $nextRequired = $requirements[$nextLevel]['transaction_amount'];
+        $current = $this->total_transaction_amount;
+
+        if ($nextRequired <= $currentRequired) {
+            return 100.0;
+        }
+
+        $progress = (($current - $currentRequired) / ($nextRequired - $currentRequired)) * 100;
+        return min(100.0, max(0.0, $progress));
+    }
+
+    /**
+     * Get amount needed for next level
+     *
+     * @return int|null
+     */
+    public function getAmountNeededForNextLevel(): ?int
+    {
+        $requirements = static::getLevelRequirements();
+        $nextLevel = $this->level + 1;
+
+        if (!isset($requirements[$nextLevel])) {
+            return null; // Already at max level
+        }
+
+        $needed = $requirements[$nextLevel]['transaction_amount'] - $this->total_transaction_amount;
+        return max(0, $needed);
     }
 }

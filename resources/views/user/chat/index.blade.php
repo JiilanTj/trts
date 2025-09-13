@@ -54,11 +54,28 @@
                                 </div>
                             @endif
                             <!-- Level Badge -->
-                            <div class="flex items-center space-x-1 px-2 py-1 rounded-md bg-blue-500/15 text-blue-400 text-xs font-medium">
-                                <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"></path>
-                                </svg>
-                                <span>Lv {{ auth()->user()->level }}</span>
+                            @php($userLevel = auth()->user()->level ?? 1)
+                            <div class="flex items-center space-x-1 px-2 py-1 rounded-md 
+                                {{ $userLevel == 6 ? 'bg-gradient-to-r from-purple-500/20 via-pink-500/20 to-yellow-500/20 text-purple-300' : 
+                                   ($userLevel == 10 ? 'bg-red-500/15 text-red-400' : 'bg-blue-500/15 text-blue-400') }}
+                                text-xs font-medium">
+                                @if($userLevel == 6)
+                                    <!-- Special icon for level 6 -->
+                                    <svg class="w-3 h-3 text-yellow-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 3l14 9-14 9V3z" />
+                                    </svg>
+                                    <span class="font-bold bg-gradient-to-r from-purple-400 via-pink-400 to-yellow-400 bg-clip-text text-transparent">Toko dari Mulut ke Mulut</span>
+                                @elseif($userLevel == 10)
+                                    <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"></path>
+                                    </svg>
+                                    <span>Admin</span>
+                                @else
+                                    <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"></path>
+                                    </svg>
+                                    <span>Bintang {{ $userLevel }}</span>
+                                @endif
                             </div>
                         </div>
                     </div>

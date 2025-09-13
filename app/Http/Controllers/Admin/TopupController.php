@@ -65,6 +65,9 @@ class TopupController extends Controller
             // Add balance to user
             $topupRequest->user->addBalance((int) $topupRequest->amount);
 
+            // Track transaction amount and check level upgrade
+            $topupRequest->user->addTransactionAmount((int) $topupRequest->amount);
+
             // Create notification for user
             Notification::create([
                 'for_user_id' => $topupRequest->user_id,
@@ -159,6 +162,9 @@ class TopupController extends Controller
         ]);
 
         $topupRequest->user->addBalance((int) $topupRequest->amount);
+
+        // Track transaction amount and check level upgrade
+        $topupRequest->user->addTransactionAmount((int) $topupRequest->amount);
 
         Notification::create([
             'for_user_id' => $topupRequest->user_id,

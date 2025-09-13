@@ -40,7 +40,33 @@
                     <h1 class="text-lg font-semibold leading-tight truncate">{{ $user->full_name }}</h1>
                     <p class="text-xs text-neutral-400">{{ $user->username }}</p>
                     <div class="mt-2 flex flex-wrap items-center gap-2 text-[11px]">
-                        <span class="px-2 py-0.5 rounded-md bg-neutral-700/40 text-neutral-300 border border-neutral-700">Lv {{ $user->level }}</span>
+                        @php
+                            $currentUser = auth()->user();
+                            $currentLevel = $currentUser->level ?? 1;
+                            
+                            // Initialize variables
+                            $levelBadgeText = '';
+                            $levelBadgeClass = '';
+                            
+                            // Special styling for level 6
+                            if ($currentLevel == 6) {
+                                $levelBadgeText = 'Toko dari Mulut ke Mulut';
+                                $levelBadgeClass = 'px-2 py-0.5 rounded-md bg-gradient-to-r from-purple-500/20 via-pink-500/20 to-yellow-500/20 text-purple-300 border border-purple-500/30 font-bold';
+                            } elseif ($currentLevel == 10) {
+                                $levelBadgeText = 'Admin';
+                                $levelBadgeClass = 'px-2 py-0.5 rounded-md bg-red-500/15 text-red-300 border border-red-600/30';
+                            } else {
+                                $levelBadgeText = "Bintang {$currentLevel}";
+                                $levelBadgeClass = 'px-2 py-0.5 rounded-md bg-neutral-700/40 text-neutral-300 border border-neutral-700';
+                            }
+                        @endphp
+                        <span class="{{ $levelBadgeClass }}">
+                            @if($currentLevel == 6)
+                                <span class="bg-gradient-to-r from-purple-400 via-pink-400 to-yellow-400 bg-clip-text text-transparent font-bold">{{ $levelBadgeText }}</span>
+                            @else
+                                {{ $levelBadgeText }}
+                            @endif
+                        </span>
                         <span class="px-2 py-0.5 rounded-md bg-neutral-700/40 text-neutral-300 border border-neutral-700">Saldo: <span class="text-neutral-100 font-medium">{{ number_format($user->balance,0,',','.') }}</span></span>
                         @if($user->isSeller())
                             <span class="px-2 py-0.5 rounded-md bg-orange-500/15 text-orange-300 border border-orange-600/30">Seller</span>

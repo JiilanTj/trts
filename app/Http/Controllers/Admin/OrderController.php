@@ -49,6 +49,9 @@ class OrderController extends Controller
             // Process seller margin payout and credit score increase
             $order->processSellerMarginPayout();
             
+            // Track transaction amount and check level upgrade
+            $order->user->addTransactionAmount($order->grand_total);
+            
             // Create notification for payment approval
             $this->createOrderNotification($order, 'payment', 'Pembayaran Disetujui', 
                 "Pembayaran untuk order #{$order->id} telah disetujui. Order akan segera dikemas.");

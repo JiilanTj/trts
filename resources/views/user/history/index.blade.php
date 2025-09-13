@@ -64,11 +64,40 @@
                                 </div>
                             @endif
                             <!-- Level Badge -->
-                            <div class="flex items-center space-x-1 px-2 py-1 rounded-md bg-blue-500/15 text-blue-400 text-xs font-medium">
-                                <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"></path>
-                                </svg>
-                                <span>Lv {{ auth()->user()->level }}</span>
+                            @php
+                                $currentUser = auth()->user();
+                                $currentLevel = $currentUser->level ?? 1;
+                                
+                                // Initialize variables
+                                $badgeClass = '';
+                                $badgeText = '';
+                                
+                                // Determine badge styling and text
+                                if ($currentLevel == 6) {
+                                    $badgeClass = 'bg-gradient-to-r from-purple-500/20 via-pink-500/20 to-yellow-500/20 text-purple-300';
+                                    $badgeText = 'Toko dari Mulut ke Mulut';
+                                } elseif ($currentLevel == 10) {
+                                    $badgeClass = 'bg-red-500/15 text-red-400';
+                                    $badgeText = 'Admin';
+                                } else {
+                                    $badgeClass = 'bg-blue-500/15 text-blue-400';
+                                    $badgeText = "Bintang {$currentLevel}";
+                                }
+                            @endphp
+                            
+                            <div class="flex items-center space-x-1 px-2 py-1 rounded-md {{ $badgeClass }} text-xs font-medium">
+                                @if($currentLevel == 6)
+                                    <!-- Special icon for level 6 -->
+                                    <svg class="w-3 h-3 text-yellow-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 3l14 9-14 9V3z" />
+                                    </svg>
+                                    <span class="font-bold bg-gradient-to-r from-purple-400 via-pink-400 to-yellow-400 bg-clip-text text-transparent">{{ $badgeText }}</span>
+                                @else
+                                    <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"></path>
+                                    </svg>
+                                    <span>{{ $badgeText }}</span>
+                                @endif
                             </div>
                         </div>
                     </div>
