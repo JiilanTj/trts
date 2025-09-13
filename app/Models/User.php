@@ -595,4 +595,34 @@ class User extends Authenticatable
         $needed = $requirements[$nextLevel]['transaction_amount'] - $this->total_transaction_amount;
         return max(0, $needed);
     }
+
+    /**
+     * Store showcases owned by this user
+     *
+     * @return \Illuminate\Database\Eloquent\Relations\HasMany
+     */
+    public function storeShowcases(): HasMany
+    {
+        return $this->hasMany(StoreShowcase::class);
+    }
+
+    /**
+     * Active store showcases
+     *
+     * @return \Illuminate\Database\Eloquent\Relations\HasMany
+     */
+    public function activeShowcases(): HasMany
+    {
+        return $this->hasMany(StoreShowcase::class)->active()->ordered();
+    }
+
+    /**
+     * Featured store showcases
+     *
+     * @return \Illuminate\Database\Eloquent\Relations\HasMany
+     */
+    public function featuredShowcases(): HasMany
+    {
+        return $this->hasMany(StoreShowcase::class)->featured()->ordered();
+    }
 }

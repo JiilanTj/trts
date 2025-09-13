@@ -141,6 +141,19 @@
                             <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2 9m5-9v9m4-9v9m4-9l2 9" /></svg>
                             Beli
                         </button>
+                        
+                        <!-- Add to Showcase Button - Only for Sellers -->
+                        @if($isSeller)
+                            <button type="button" 
+                                class="w-full py-3 rounded-xl text-sm font-medium text-gray-200 bg-gradient-to-r from-gray-700 via-gray-600 to-gray-700 hover:from-gray-600 hover:via-gray-500 hover:to-gray-600 border border-white/10 hover:border-white/20 transition flex items-center justify-center gap-2 focus:outline-none focus:ring-2 focus:ring-gray-500/60"
+                                id="add-to-showcase-btn"
+                                data-product-id="{{ $product->id }}"
+                                data-product-name="{{ $product->name }}"
+                                data-add-url="{{ route('user.showcases.create') }}">
+                                <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 6v6m0 0v6m0-6h6m-6 0H6" /></svg>
+                                Tambah ke Etalase
+                            </button>
+                        @endif
                         @if (session('success'))
                             <p class="text-[11px] text-emerald-400 font-medium">{{ session('success') }}</p>
                         @endif
@@ -215,6 +228,18 @@
                     const base = goBtn.dataset.baseUrl;
                     const pid = goBtn.dataset.productId;
                     const url = base + '?product_id=' + encodeURIComponent(pid) + '&purchase_type=' + encodeURIComponent(type);
+                    window.location.href = url;
+                });
+            }
+            
+            // Handle Add to Showcase button
+            const showcaseBtn = document.getElementById('add-to-showcase-btn');
+            if(showcaseBtn){
+                showcaseBtn.addEventListener('click',()=>{
+                    const addUrl = showcaseBtn.dataset.addUrl;
+                    const pid = showcaseBtn.dataset.productId;
+                    // Just send product_id, let controller handle the rest
+                    const url = addUrl + '?product_id=' + encodeURIComponent(pid);
                     window.location.href = url;
                 });
             }

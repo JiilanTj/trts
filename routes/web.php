@@ -42,6 +42,9 @@ use App\Http\Controllers\Guest\ChatController as GuestChatController;
 // Add ticket controllers
 use App\Http\Controllers\User\TicketController as UserTicketController;
 use App\Http\Controllers\Admin\TicketController as AdminTicketController;
+// Add store showcase controllers
+use App\Http\Controllers\User\StoreShowcaseController as UserStoreShowcaseController;
+use App\Http\Controllers\Admin\StoreShowcaseController as AdminStoreShowcaseController;
 
 Route::get('/', function () {
     return redirect()->route('login');
@@ -229,6 +232,20 @@ Route::middleware('auth')->group(function () {
         Route::get('/{ticket}/download/{type}/{index}', [UserTicketController::class, 'downloadAttachment'])->name('download');
     });
     
+    // Store Showcase / Etalase Management
+    Route::prefix('etalase')->name('user.showcases.')->group(function () {
+        Route::get('/', [UserStoreShowcaseController::class, 'index'])->name('index');
+        Route::get('/create', [UserStoreShowcaseController::class, 'create'])->name('create');
+        Route::post('/', [UserStoreShowcaseController::class, 'store'])->name('store');
+        Route::get('/{showcase}', [UserStoreShowcaseController::class, 'show'])->name('show');
+        Route::get('/{showcase}/edit', [UserStoreShowcaseController::class, 'edit'])->name('edit');
+        Route::put('/{showcase}', [UserStoreShowcaseController::class, 'update'])->name('update');
+        Route::delete('/{showcase}', [UserStoreShowcaseController::class, 'destroy'])->name('destroy');
+        Route::post('/{showcase}/toggle-active', [UserStoreShowcaseController::class, 'toggleActive'])->name('toggle-active');
+        Route::post('/{showcase}/toggle-featured', [UserStoreShowcaseController::class, 'toggleFeatured'])->name('toggle-featured');
+        Route::post('/update-order', [UserStoreShowcaseController::class, 'updateOrder'])->name('update-order');
+    });
+    
     // Chat / Customer Service
     Route::prefix('chat')->name('user.chat.')->group(function () {
         Route::get('/', [App\Http\Controllers\User\ChatController::class, 'index'])->name('index');
@@ -243,9 +260,9 @@ Route::middleware('auth')->group(function () {
     });
     
     // History / Notifications
-    Route::get('history', [App\Http\Controllers\User\HistoryController::class,'index'])->name('user.history.index');
-    Route::patch('notifications/{notification}/read', [App\Http\Controllers\User\HistoryController::class,'markAsRead'])->name('user.notifications.read');
-    Route::patch('notifications/read-all', [App\Http\Controllers\User\HistoryController::class,'markAllAsRead'])->name('user.notifications.read-all');
+    Route::get('history', [HistoryController::class,'index'])->name('user.history.index');
+    Route::patch('notifications/{notification}/read', [HistoryController::class,'markAsRead'])->name('user.notifications.read');
+    Route::patch('notifications/read-all', [HistoryController::class,'markAllAsRead'])->name('user.notifications.read-all');
     
     // User Topup Routes
     Route::prefix('topup')->name('user.topup.')->group(function () {
@@ -359,6 +376,18 @@ Route::middleware(['auth', 'role:admin'])->prefix('admin')->name('admin.')->grou
         Route::post('/{ticket}/comment', [AdminTicketController::class, 'addComment'])->name('comment');
         Route::post('/bulk-update', [AdminTicketController::class, 'bulkUpdate'])->name('bulk-update');
         Route::get('/{ticket}/download/{type}/{index}', [AdminTicketController::class, 'downloadAttachment'])->name('download');
+    });
+    
+    // Admin Store Showcase Management Routes  
+    Route::prefix('etalase')->name('showcases.')->group(function () {
+        Route::get('/', [AdminStoreShowcaseController::class, 'index'])->name('index');
+        Route::get('/user/{user}', [AdminStoreShowcaseController::class, 'show'])->name('show');
+        Route::get('/user-showcase/{user}', [AdminStoreShowcaseController::class, 'userShowcase'])->name('user-showcase');
+        Route::post('/{showcase}/toggle-active', [AdminStoreShowcaseController::class, 'toggleActive'])->name('toggle-active');
+        Route::post('/{showcase}/toggle-featured', [AdminStoreShowcaseController::class, 'toggleFeatured'])->name('toggle-featured');
+        Route::delete('/{showcase}', [AdminStoreShowcaseController::class, 'destroy'])->name('destroy');
+        Route::post('/bulk-action', [AdminStoreShowcaseController::class, 'bulkAction'])->name('bulk-action');
+        Route::get('/stats', [AdminStoreShowcaseController::class, 'stats'])->name('stats');
     });
     
     // Admin Chat Management Routes

@@ -167,6 +167,26 @@ class Product extends Model
     }
 
     /**
+     * Store showcases for this product
+     *
+     * @return \Illuminate\Database\Eloquent\Relations\HasMany
+     */
+    public function storeShowcases()
+    {
+        return $this->hasMany(StoreShowcase::class);
+    }
+
+    /**
+     * Active showcases for this product
+     *
+     * @return \Illuminate\Database\Eloquent\Relations\HasMany
+     */
+    public function activeShowcases()
+    {
+        return $this->hasMany(StoreShowcase::class)->active();
+    }
+
+    /**
      * Boot method to auto-calculate profit
      */
     protected static function boot()
