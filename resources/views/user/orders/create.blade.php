@@ -49,6 +49,38 @@
                                     </div>
                                 @endif
                             </div>
+                            
+                            @if(auth()->user()->isSeller())
+                                <div class="p-3 rounded-xl bg-[#1a1f26] border border-white/5 text-[11px] space-y-2" id="seller-info">
+                                    <div class="flex items-center gap-2">
+                                        @php 
+                                            $user = auth()->user();
+                                            $marginPercent = $user->getLevelMarginPercent();
+                                            $levelBadge = $user->getLevelBadge();
+                                        @endphp
+                                        <span class="px-2 py-1 rounded-full bg-emerald-600/20 text-emerald-300 border border-emerald-500/30 text-[10px] font-medium">{{ $levelBadge }}</span>
+                                        <span class="text-gray-400">•</span>
+                                        <span class="text-gray-300">
+                                            @if($marginPercent)
+                                                Margin {{ $marginPercent }}% dari harga jual
+                                            @else
+                                                Margin sesuai admin per produk
+                                            @endif
+                                        </span>
+                                    </div>
+                                    <p class="text-gray-500 leading-relaxed">
+                                        <span class="purchase-type-self">Pembelian untuk diri sendiri menggunakan harga biasa (sama dengan pelanggan reguler).</span>
+                                        <span class="purchase-type-external" style="display: none;">
+                                            Pembelian untuk pelanggan eksternal menggunakan harga jual dan memberikan margin seller.
+                                            @if($marginPercent)
+                                                Margin {{ $marginPercent }}% akan otomatis ditambahkan ke saldo setelah pembayaran dikonfirmasi.
+                                            @else
+                                                Margin berdasarkan selisih yang ditetapkan admin akan ditambahkan ke saldo.
+                                            @endif
+                                        </span>
+                                    </p>
+                                </div>
+                            @endif
                             <div class="grid sm:grid-cols-2 gap-4 {{ (isset($singleMode)&&$singleMode) || (isset($wholesaleMode)&&$wholesaleMode) ? 'hidden' : '' }}" id="product-list">
                                 @foreach($products as $p)
                                     <button type="button"
@@ -65,7 +97,31 @@
                                             </div>
                                             <span class="px-2 py-1 text-[10px] rounded-full font-medium {{ $p->stock>0 ? 'bg-emerald-600/20 text-emerald-400 border border-emerald-600/30' : 'bg-red-600/20 text-red-400 border border-red-600/30' }}">{{ $p->stock>0 ? 'Stok '.$p->stock : 'Habis' }}</span>
                                         </div>
-                                        <div class="text-[11px] font-semibold bg-clip-text text-transparent bg-gradient-to-r from-fuchsia-400 via-rose-400 to-cyan-400">Rp {{ number_format($p->harga_biasa,0,',','.') }}</div>
+                                        <div class="space-y-1">
+                                            <div class="text-[11px] font-semibold bg-clip-text text-transparent bg-gradient-to-r from-fuchsia-400 via-rose-400 to-cyan-400">
+                                                <span class="purchase-type-self">Rp {{ number_format($p->harga_biasa,0,',','.') }}</span>
+                                                <span class="purchase-type-external" style="display: none;">Rp {{ number_format($p->harga_jual,0,',','.') }}</span>
+                                            </div>
+                                            @if(auth()->user()->isSeller())
+                                                <div class="purchase-type-external text-[10px] text-emerald-400 font-medium" style="display: none;">
+                                                    @php 
+                                                        $user = auth()->user();
+                                                        $marginPercent = $user->getLevelMarginPercent();
+                                                        if($marginPercent) {
+                                                            $margin = round($p->harga_jual * ($marginPercent / 100));
+                                                        } else {
+                                                            $margin = max(0, $p->harga_jual - $p->harga_biasa);
+                                                        }
+                                                    @endphp
+                                                    Margin: Rp {{ number_format($margin,0,',','.') }}
+                                                    @if($marginPercent)
+                                                        ({{ $marginPercent }}%)
+                                                    @else
+                                                        (admin)
+                                                    @endif
+                                                </div>
+                                            @endif
+                                        </div>
                                     </button>
                                 @endforeach
                             </div>
@@ -172,7 +228,35 @@
                                 <div class="flex items-center justify-between"><span class="text-gray-400">Diskon</span><span id="discount_total" class="text-gray-200">Rp 0</span></div>
                                 <div class="flex items-center justify-between"><span class="text-gray-400">Grand Total</span><span id="grand_total" class="text-fuchsia-300">Rp 0</span></div>
                                 @if(auth()->user()->isSeller())
-                                <div class="flex items-center justify-between"><span class="text-gray-400">Margin Seller</span><span id="margin_total" class="text-emerald-300">Rp 0</span></div>
+                                <hr class="border-white/10" id="margin-divider" style="display: none;">
+                                <div id="margin-section" class="space-y-2" style="display: none;">
+                                    <div class="flex items-center justify-between">
+                                        <span class="text-gray-400">Margin Seller</span>
+                                        <span id="margin_total" class="text-emerald-300 font-semibold">Rp 0</span>
+                                    </div>
+                                    @php 
+                                        $user = auth()->user();
+                                        $marginPercent = $user->getLevelMarginPercent();
+                                        $levelBadge = $user->getLevelBadge();
+                                    @endphp
+                                    <div class="flex items-center gap-2 text-[11px]">
+                                        <span class="px-2 py-1 rounded-full bg-emerald-600/20 text-emerald-300 border border-emerald-500/30">{{ $levelBadge }}</span>
+                                        <span id="margin-type-label" class="text-emerald-400 font-medium">
+                                            @if($marginPercent)
+                                                {{ $marginPercent }}% dari harga jual
+                                            @else
+                                                Margin admin per produk
+                                            @endif
+                                        </span>
+                                    </div>
+                                    <p id="margin-explanation" class="text-[10px] text-gray-500 leading-relaxed">
+                                        @if($marginPercent)
+                                            Margin {{ $marginPercent }}% akan dihitung dari harga jual untuk pembelian eksternal.
+                                        @else
+                                            Margin dihitung dari selisih harga jual dan harga biasa yang ditetapkan admin.
+                                        @endif
+                                    </p>
+                                </div>
                                 @endif
                             </div>
                             <!-- Payment Method Selection -->
@@ -246,6 +330,7 @@
                     }
                     updatePriceLabels();
                     recalc();
+                    updateMarginVisibility();
                 });
             });
 
@@ -267,13 +352,54 @@
             function getRows(){ return Array.from(itemsWrapper.querySelectorAll('.item-row')); }
             function extract(row){ return JSON.parse(row.dataset.product); }
             function unitPrice(prod){ return purchaseTypeInput.value==='external' ? prod.harga_jual : prod.harga_biasa; }
-            function sellerMargin(prod){ const m = prod.harga_jual - prod.harga_biasa; return purchaseTypeInput.value==='external' && m>0 ? m : 0; }
+            function sellerMargin(prod){ 
+                if(purchaseTypeInput.value !== 'external') return 0;
+                @php 
+                    $user = auth()->user();
+                    $marginPercent = $user->getLevelMarginPercent();
+                @endphp
+                @if($marginPercent)
+                    // Level {{ auth()->user()->level }}: {{ $marginPercent }}% margin
+                    return Math.round(prod.harga_jual * ({{ $marginPercent }} / 100));
+                @else
+                    // Level 1: Use admin-set margin (difference between harga_jual and harga_biasa)
+                    const adminMargin = Math.max(0, prod.harga_jual - prod.harga_biasa);
+                    return adminMargin;
+                @endif
+            }
 
             function updatePriceLabel(row){
                 const prod = extract(row); const price = unitPrice(prod);
                 row.querySelector('[data-field="price_label"]').textContent = rupiah(price);
             }
-            function updatePriceLabels(){ getRows().forEach(updatePriceLabel); }
+            function updatePriceLabels(){ 
+                getRows().forEach(updatePriceLabel); 
+                // Update product card displays
+                const isExternal = purchaseTypeInput.value === 'external';
+                document.querySelectorAll('.purchase-type-self').forEach(el => {
+                    el.style.display = isExternal ? 'none' : 'inline';
+                });
+                document.querySelectorAll('.purchase-type-external').forEach(el => {
+                    el.style.display = isExternal ? 'inline' : 'none';
+                });
+            }
+
+            function updateMarginVisibility(){
+                const marginDivider = document.getElementById('margin-divider');
+                const marginSection = document.getElementById('margin-section');
+                const isExternal = purchaseTypeInput.value === 'external';
+                const hasMargin = currentTotals.margin > 0;
+                
+                if(marginDivider && marginSection) {
+                    if(isExternal && hasMargin) {
+                        marginDivider.style.display = 'block';
+                        marginSection.style.display = 'block';
+                    } else {
+                        marginDivider.style.display = 'none';
+                        marginSection.style.display = 'none';
+                    }
+                }
+            }
 
             function recalc(){
                 const rows = getRows();
@@ -294,6 +420,7 @@
                 grandTotalEl.textContent = rupiah(grand);
                 if(marginTotalEl) marginTotalEl.textContent = rupiah(margin);
                 updatePaymentMethodState();
+                updateMarginVisibility();
             }
 
             function updatePaymentMethodState(){
@@ -412,6 +539,7 @@
 
             initSingleMode();
             initWholesaleMode();
+            updatePriceLabels(); // Set initial display
             recalc(); // initial
         })();
     </script>

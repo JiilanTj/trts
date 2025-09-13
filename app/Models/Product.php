@@ -161,8 +161,10 @@ class Product extends Model
             return $this->harga_biasa;
         }
         if ($purchaseType === 'external') {
+            // For external purchases, sellers pay harga_jual (special seller price)
             return $this->harga_jual;
         }
+        // For self purchases by sellers, they pay harga_biasa (same as regular customers)
         return $this->harga_biasa;
     }
 
@@ -184,6 +186,26 @@ class Product extends Model
     public function activeShowcases()
     {
         return $this->hasMany(StoreShowcase::class)->active();
+    }
+
+    /**
+     * Calculate seller margin based on user level
+     */
+    public function getSellerMargin($user): int
+    {
+        if (!$user || !method_exists($user, 'isSeller') || !$user->isSeller()) {
+            return 0;
+        }
+        
+        $marginPercent = $user->getLevelMarginPercent();
+        if ($marginPercent) {
+            // Calculate margin based on user's level percentage from harga_jual (seller purchase price)
+            return round($this->harga_jual * ($marginPercent / 100));
+        }
+        
+        // Level 1 (margin null): Use old system - difference between harga_jual and harga_biasa
+        // This is the margin that admin set per product when creating/editing
+        return max(0, $this->harga_jual - $this->harga_biasa);
     }
 
     /**

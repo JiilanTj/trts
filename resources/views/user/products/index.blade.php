@@ -45,6 +45,46 @@
 
         <!-- Statistik -->
         <div class="px-4 pt-5">
+            @if(auth()->user()?->isSeller())
+                <!-- Seller Level Info -->
+                <div class="mb-6 p-4 rounded-xl bg-gradient-to-r from-emerald-900/20 to-cyan-900/20 border border-emerald-500/30">
+                    <div class="flex items-center gap-3">
+                        @php 
+                            $user = auth()->user();
+                            $marginPercent = $user->getLevelMarginPercent();
+                            $levelBadge = $user->getLevelBadge();
+                        @endphp
+                        <span class="px-3 py-1 rounded-full bg-emerald-600/20 text-emerald-300 border border-emerald-500/40 text-xs font-medium">{{ $levelBadge }}</span>
+                        <div class="flex-1">
+                            <p class="text-sm font-medium text-emerald-300">
+                                @if($marginPercent)
+                                    Margin {{ $marginPercent }}% dari harga jual untuk penjualan eksternal
+                                @else
+                                    Margin sesuai admin per produk untuk penjualan eksternal
+                                @endif
+                            </p>
+                            <p class="text-xs text-gray-400 mt-0.5">
+                                @if($marginPercent)
+                                    Setiap pembelian untuk pelanggan akan memberikan margin {{ $marginPercent }}% dari harga jual
+                                @else
+                                    Margin dihitung dari selisih harga jual dan harga biasa yang ditetapkan admin
+                                @endif
+                                @if($user->level < 6)
+                                    @php 
+                                        $nextLevel = $user->level + 1;
+                                        $levelRequirements = \App\Models\User::getLevelRequirements();
+                                        $nextLevelData = $levelRequirements[$nextLevel] ?? null;
+                                    @endphp
+                                    @if($nextLevelData)
+                                        • <span class="text-cyan-400">Upgrade ke {{ $nextLevelData['badge'] }}</span> untuk margin {{ $nextLevelData['margin_percent'] }}%
+                                    @endif
+                                @endif
+                            </p>
+                        </div>
+                    </div>
+                </div>
+            @endif
+            
             <div class="grid grid-cols-2 sm:grid-cols-5 gap-4">
                 <div class="rounded-xl p-4 bg-[#181d23] border border-white/5">
                     <p class="text-[11px] font-medium text-gray-500 uppercase tracking-wide">Produk Aktif (Total)</p>
@@ -111,9 +151,23 @@
                                             <span class="text-[10px] px-1.5 py-0.5 rounded bg-[#1b1f25] text-cyan-400 border border-cyan-500/30">Jual</span>
                                             <p class="text-xs font-medium text-cyan-400">Rp {{ number_format($product->harga_jual, 0, ',', '.') }}</p>
                                         </div>
-                                        @php $margin = $product->harga_jual - $product->harga_biasa; @endphp
+                                        @php 
+                                            $user = auth()->user();
+                                            $marginPercent = $user->getLevelMarginPercent();
+                                            if($marginPercent) {
+                                                $margin = round($product->harga_jual * ($marginPercent / 100));
+                                            } else {
+                                                $margin = max(0, $product->harga_jual - $product->harga_biasa);
+                                            }
+                                        @endphp
                                         <div class="flex items-center gap-2 ml-0.5">
-                                            <span class="text-[9px] text-emerald-400 {{ $margin<=0 ? 'opacity-0' : '' }}">+ Rp {{ number_format(max($margin,0),0,',','.') }}</span>
+                                            <span class="text-[9px] text-emerald-400 {{ $margin<=0 ? 'opacity-0' : '' }}">
+                                                @if($marginPercent)
+                                                    + {{ $marginPercent }}% (Rp {{ number_format($margin,0,',','.') }})
+                                                @else
+                                                    + Rp {{ number_format($margin,0,',','.') }} (admin)
+                                                @endif
+                                            </span>
                                         </div>
                                     @endif
                                 </div>

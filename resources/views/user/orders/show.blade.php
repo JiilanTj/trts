@@ -70,12 +70,42 @@
                         <h2 class="text-sm font-semibold text-white">Item</h2>
                         <div class="space-y-3 sm:space-y-4">
                             @foreach($order->items as $item)
-                                <div class="flex items-center gap-3 sm:gap-4 bg-[#1f252c] border border-white/5 rounded-xl p-3 sm:p-4">
-                                    <div class="flex-1 min-w-0">
-                                        <p class="text-xs font-medium text-gray-200 leading-snug">{{ $item->product->name ?? 'Produk Dihapus' }}</p>
-                                        <p class="text-[10px] text-gray-500">Qty: {{ $item->quantity }} • Harga: Rp {{ number_format($item->unit_price,0,',','.') }}</p>
+                                <div class="bg-[#1f252c] border border-white/5 rounded-xl p-3 sm:p-4 space-y-3">
+                                    <div class="flex items-center gap-3 sm:gap-4">
+                                        <div class="flex-1 min-w-0">
+                                            <p class="text-xs font-medium text-gray-200 leading-snug">{{ $item->product->name ?? 'Produk Dihapus' }}</p>
+                                            <p class="text-[10px] text-gray-500">
+                                                Qty: {{ $item->quantity }} • 
+                                                Harga: Rp {{ number_format($item->unit_price,0,',','.') }}
+                                                @if($order->purchase_type === 'external' && auth()->user()->isSeller())
+                                                    • <span class="text-cyan-400">Eksternal</span>
+                                                @endif
+                                            </p>
+                                        </div>
+                                        <div class="text-xs font-semibold text-fuchsia-300">Rp {{ number_format($item->line_total,0,',','.') }}</div>
                                     </div>
-                                    <div class="text-xs font-semibold text-fuchsia-300">Rp {{ number_format($item->line_total,0,',','.') }}</div>
+                                    
+                                    @if(auth()->user()->isSeller() && $order->purchase_type === 'external' && $item->seller_margin > 0)
+                                        <div class="border-t border-white/5 pt-2">
+                                            <div class="flex items-center justify-between text-[10px]">
+                                                <span class="text-gray-500">Margin per item:</span>
+                                                <span class="text-emerald-400 font-medium">Rp {{ number_format($item->seller_margin,0,',','.') }}</span>
+                                            </div>
+                                            @php 
+                                                $marginPercent = auth()->user()->getLevelMarginPercent();
+                                            @endphp
+                                            @if($marginPercent)
+                                                <div class="flex items-center justify-between text-[10px] mt-1">
+                                                    <span class="text-gray-500">{{ $marginPercent }}% × Rp {{ number_format($item->sell_price ?? $item->unit_price,0,',','.') }}</span>
+                                                    <span class="text-emerald-300">Total: Rp {{ number_format($item->seller_margin * $item->quantity,0,',','.') }}</span>
+                                                </div>
+                                            @else
+                                                <div class="text-[10px] text-gray-500 mt-1">
+                                                    Margin admin: Rp {{ number_format(($item->sell_price ?? $item->unit_price) - ($item->base_price ?? $item->unit_price),0,',','.') }} per item
+                                                </div>
+                                            @endif
+                                        </div>
+                                    @endif
                                 </div>
                             @endforeach
                         </div>
@@ -185,8 +215,32 @@
                             <div class="flex items-center justify-between"><span class="text-gray-400">Subtotal</span><span class="text-gray-200">Rp {{ number_format($order->subtotal,0,',','.') }}</span></div>
                             <div class="flex items-center justify-between"><span class="text-gray-400">Diskon</span><span class="text-gray-200">Rp {{ number_format($order->discount_total,0,',','.') }}</span></div>
                             <div class="flex items-center justify-between"><span class="text-gray-400">Grand Total</span><span class="text-fuchsia-300">Rp {{ number_format($order->grand_total,0,',','.') }}</span></div>
-                            @if(auth()->user()->isSeller())
-                                <div class="flex items-center justify-between"><span class="text-gray-400">Margin Seller</span><span class="text-emerald-300">Rp {{ number_format($order->seller_margin_total,0,',','.') }}</span></div>
+                            @if(auth()->user()->isSeller() && $order->seller_margin_total > 0)
+                                <hr class="border-white/10">
+                                <div class="space-y-2">
+                                    <div class="flex items-center justify-between">
+                                        <span class="text-gray-400">Margin Seller</span>
+                                        <span class="text-emerald-300 font-semibold">Rp {{ number_format($order->seller_margin_total,0,',','.') }}</span>
+                                    </div>
+                                    @php 
+                                        $user = auth()->user();
+                                        $marginPercent = $user->getLevelMarginPercent();
+                                        $levelBadge = $user->getLevelBadge();
+                                    @endphp
+                                    <div class="flex items-center gap-2 text-[11px]">
+                                        <span class="px-2 py-1 rounded-full bg-emerald-600/20 text-emerald-300 border border-emerald-500/30">{{ $levelBadge }}</span>
+                                        @if($marginPercent)
+                                            <span class="text-emerald-400 font-medium">{{ $marginPercent }}% dari harga jual</span>
+                                        @else
+                                            <span class="text-emerald-400 font-medium">Margin admin per produk</span>
+                                        @endif
+                                    </div>
+                                    @if($order->purchase_type === 'external')
+                                        <p class="text-[10px] text-gray-500 leading-relaxed">
+                                            {{ $marginPercent ? "Margin {$marginPercent}% dihitung dari harga jual untuk pembelian eksternal." : "Margin dihitung berdasarkan selisih harga jual dan harga biasa yang ditetapkan admin." }}
+                                        </p>
+                                    @endif
+                                </div>
                             @endif
                         </div>
                         <p class="text-[10px] text-gray-500 leading-relaxed">@if($order->isBalancePayment()) Order sedang diproses tanpa kebutuhan konfirmasi manual. @else Admin akan memproses order setelah bukti pembayaran valid. @endif</p>

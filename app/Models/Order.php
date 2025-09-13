@@ -5,6 +5,7 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use App\Models\Notification;
 
 class Order extends Model
 {
@@ -90,6 +91,27 @@ class Order extends Model
             
             // Add 5 points to credit score
             $this->user->addCreditScore(5);
+            
+            // Create detailed notification
+            $levelBadge = $this->user->getLevelBadge();
+            $marginPercent = $this->user->getLevelMarginPercent();
+            
+            $description = "Margin sebesar Rp" . number_format($this->seller_margin_total, 0, ',', '.') . " dari Order #{$this->id} telah ditambahkan ke saldo Anda.";
+            
+            if ($marginPercent) {
+                $description .= " (Margin {$marginPercent}% karena Anda {$levelBadge})";
+            } else {
+                $description .= " (Margin sesuai harga jual karena Anda {$levelBadge})";
+            }
+            
+            $description .= " Credit score +5 poin!";
+            
+            Notification::create([
+                'for_user_id' => $this->user_id,
+                'category' => 'payment',
+                'title' => 'Margin Seller Diterima',
+                'description' => $description,
+            ]);
         }
     }
 }

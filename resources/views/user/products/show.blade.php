@@ -44,14 +44,61 @@
 
             <!-- Detail -->
             <div class="space-y-6">
+                @php $isSeller = auth()->user()?->isSeller(); @endphp
+                
                 <div>
                     <h2 class="text-xl font-semibold text-white mb-1 leading-snug">{{ $product->name }}</h2>
                     <p class="text-xs text-gray-500">SKU: {{ $product->sku }} • Kategori: {{ $product->category->name }}</p>
                 </div>
 
+                @if($isSeller)
+                    <!-- Seller Level Info -->
+                    <div class="p-4 rounded-xl bg-gradient-to-r from-emerald-900/20 to-cyan-900/20 border border-emerald-500/30">
+                        <div class="flex items-start gap-3">
+                            @php 
+                                $user = auth()->user();
+                                $marginPercent = $user->getLevelMarginPercent();
+                                $levelBadge = $user->getLevelBadge();
+                                
+                                if($marginPercent) {
+                                    $sellerMargin = round($product->harga_jual * ($marginPercent / 100));
+                                } else {
+                                    $sellerMargin = max(0, $product->harga_jual - $product->harga_biasa);
+                                }
+                            @endphp
+                            <span class="px-3 py-1 rounded-full bg-emerald-600/20 text-emerald-300 border border-emerald-500/40 text-xs font-medium flex-shrink-0">{{ $levelBadge }}</span>
+                            <div class="flex-1 min-w-0">
+                                <p class="text-sm font-medium text-emerald-300">
+                                    @if($marginPercent)
+                                        Margin {{ $marginPercent }}% = Rp {{ number_format($sellerMargin, 0, ',', '.') }} per item
+                                    @else
+                                        Margin admin = Rp {{ number_format($sellerMargin, 0, ',', '.') }} per item
+                                    @endif
+                                </p>
+                                <p class="text-xs text-gray-400 mt-1 leading-relaxed">
+                                    @if($marginPercent)
+                                        Setiap penjualan eksternal produk ini akan memberikan margin {{ $marginPercent }}% dari harga jual (Rp {{ number_format($product->harga_jual, 0, ',', '.') }}) ke saldo Anda.
+                                    @else
+                                        Margin dihitung dari selisih harga jual dan harga biasa yang ditetapkan admin per produk.
+                                    @endif
+                                    @if($user->level < 6)
+                                        @php 
+                                            $nextLevel = $user->level + 1;
+                                            $levelRequirements = \App\Models\User::getLevelRequirements();
+                                            $nextLevelData = $levelRequirements[$nextLevel] ?? null;
+                                        @endphp
+                                        @if($nextLevelData)
+                                            <br><span class="text-cyan-400">Upgrade ke {{ $nextLevelData['badge'] }}</span> untuk margin {{ $nextLevelData['margin_percent'] }}% (+ Rp {{ number_format(round($product->harga_jual * ($nextLevelData['margin_percent'] / 100)) - $sellerMargin, 0, ',', '.') }} per item).
+                                        @endif
+                                    @endif
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+                @endif
+
                 <!-- Pricing Block -->
                 <div class="space-y-3">
-                    @php $isSeller = auth()->user()?->isSeller(); @endphp
                     <div class="flex flex-wrap items-end gap-6">
                         <div>
                             <p class="text-[11px] font-medium uppercase tracking-wide text-gray-500">Harga Biasa</p>
@@ -68,9 +115,30 @@
                                 <p class="text-xl font-semibold text-cyan-400">Rp {{ number_format($product->harga_jual, 0, ',', '.') }}</p>
                             </div>
                             <div class="hidden md:block">
-                                @php $potensi = $product->harga_jual - $product->harga_biasa; @endphp
+                                @php 
+                                    $user = auth()->user();
+                                    $marginPercent = $user->getLevelMarginPercent();
+                                    if($marginPercent) {
+                                        $potensiMargin = round($product->harga_jual * ($marginPercent / 100));
+                                    } else {
+                                        $potensiMargin = max(0, $product->harga_jual - $product->harga_biasa);
+                                    }
+                                @endphp
                                 <p class="text-[11px] font-medium uppercase tracking-wide text-gray-500">Margin Potensial</p>
-                                <p class="text-sm font-semibold {{ $potensi>0 ? 'text-emerald-400' : 'text-gray-400' }}">{{ $potensi>0 ? 'Rp '.number_format($potensi,0,',','.') : '-' }}</p>
+                                <div class="space-y-1">
+                                    <p class="text-sm font-semibold {{ $potensiMargin>0 ? 'text-emerald-400' : 'text-gray-400' }}">
+                                        {{ $potensiMargin>0 ? 'Rp '.number_format($potensiMargin,0,',','.') : '-' }}
+                                    </p>
+                                    @if($potensiMargin > 0)
+                                        <p class="text-[10px] text-emerald-300">
+                                            @if($marginPercent)
+                                                {{ $marginPercent }}% dari harga jual
+                                            @else
+                                                Margin admin
+                                            @endif
+                                        </p>
+                                    @endif
+                                </div>
                             </div>
                         @endif
                         <div>
@@ -120,15 +188,32 @@
                     <form method="POST" action="{{ route('browse.products.buy',$product) }}" class="space-y-4" id="buy-form" data-harga-biasa="{{ $product->harga_biasa }}" data-harga-jual="{{ $product->harga_jual }}">
                         @csrf
                         @if($isSeller)
-                            <div class="flex items-center gap-4">
-                                <label class="flex items-center gap-2 text-xs text-gray-300">
-                                    <input type="radio" name="purchase_type" value="self" class="purchase-type text-fuchsia-500 focus:ring-fuchsia-500/60 bg-[#1b1f25] border-white/10" checked>
-                                    <span>Beli Untuk Diri (Harga Biasa)</span>
-                                </label>
-                                <label class="flex items-center gap-2 text-xs text-gray-300">
-                                    <input type="radio" name="purchase_type" value="external" class="purchase-type text-cyan-500 focus:ring-cyan-500/60 bg-[#1b1f25] border-white/10">
-                                    <span>Jual ke Pelanggan (Harga Jual)</span>
-                                </label>
+                            <div class="space-y-3">
+                                <div class="flex items-center gap-4">
+                                    <label class="flex items-center gap-2 text-xs text-gray-300">
+                                        <input type="radio" name="purchase_type" value="self" class="purchase-type text-fuchsia-500 focus:ring-fuchsia-500/60 bg-[#1b1f25] border-white/10" checked>
+                                        <span>Beli Untuk Diri (Harga Biasa)</span>
+                                    </label>
+                                    <label class="flex items-center gap-2 text-xs text-gray-300">
+                                        <input type="radio" name="purchase_type" value="external" class="purchase-type text-cyan-500 focus:ring-cyan-500/60 bg-[#1b1f25] border-white/10">
+                                        <span>Jual ke Pelanggan (Harga Jual)</span>
+                                    </label>
+                                </div>
+                                <div id="margin-indicator" class="p-3 rounded-lg bg-emerald-900/20 border border-emerald-500/30 hidden">
+                                    <div class="flex items-center justify-between">
+                                        <span class="text-xs text-emerald-300">Margin yang akan diterima:</span>
+                                        <span class="text-sm font-semibold text-emerald-400" id="margin-amount">
+                                            @if($marginPercent)
+                                                Rp {{ number_format($sellerMargin, 0, ',', '.') }} ({{ $marginPercent }}%)
+                                            @else
+                                                Rp {{ number_format($sellerMargin, 0, ',', '.') }} (admin)
+                                            @endif
+                                        </span>
+                                    </div>
+                                    <p class="text-[10px] text-gray-400 mt-1">
+                                        Margin akan otomatis ditambahkan ke saldo setelah pembayaran dikonfirmasi.
+                                    </p>
+                                </div>
                             </div>
                         @else
                             <input type="hidden" name="purchase_type" value="self">
@@ -208,6 +293,7 @@
             if(!form) return;
             const radios = form.querySelectorAll('.purchase-type');
             const chosen = document.getElementById('chosen-price');
+            const marginIndicator = document.getElementById('margin-indicator');
             const hargaBiasa = parseInt(form.dataset.hargaBiasa,10);
             const hargaJual = parseInt(form.dataset.hargaJual,10);
             const rupiah = n => 'Rp ' + (n||0).toLocaleString('id-ID');
@@ -218,6 +304,18 @@
                     chosen.querySelector('[data-label]').textContent = type==='external' ? 'Harga Jual' : 'Harga Biasa';
                     chosen.querySelector('[data-price]').textContent = rupiah(price);
                     chosen.classList.add('animate-pulse');
+                    
+                    // Show/hide margin indicator
+                    if(marginIndicator) {
+                        if(type === 'external') {
+                            marginIndicator.classList.remove('hidden');
+                            marginIndicator.classList.add('animate-pulse');
+                            setTimeout(()=>marginIndicator.classList.remove('animate-pulse'), 500);
+                        } else {
+                            marginIndicator.classList.add('hidden');
+                        }
+                    }
+                    
                     setTimeout(()=>chosen.classList.remove('animate-pulse'),500);
                 });
             });

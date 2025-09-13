@@ -175,8 +175,10 @@ class OrderController extends Controller
                 $unitPrice = $product->getApplicablePrice($user, $purchaseType);
                 $discount = 0;
                 $sellerMargin = 0;
+                
+                // Calculate seller margin based on user level for external purchases
                 if ($user->isSeller() && $purchaseType === 'external') {
-                    $sellerMargin = max(0, $sellPrice - $basePrice);
+                    $sellerMargin = $product->getSellerMargin($user);
                 }
                 $lineTotal = ($unitPrice - $discount) * $qty;
 
@@ -221,7 +223,12 @@ class OrderController extends Controller
                     'payment_confirmed_at' => now(),
                     'payment_confirmed_by' => $user->id, // self auto-confirm context
                 ]);
+                
+                // Process seller margin payout and credit score increase
                 $order->processSellerMarginPayout();
+                
+                // Track transaction amount and check level upgrade
+                $user->addTransactionAmount($grandTotal);
             } else {
                 $order->update([
                     'payment_status' => 'unpaid',
@@ -250,11 +257,25 @@ class OrderController extends Controller
 
         // Add margin payout notification for balance-paid external orders
         if ($order->payment_method === 'balance' && $order->purchase_type === 'external' && $order->seller_margin_total > 0) {
+            $userLevel = $user->level;
+            $levelBadge = $user->getLevelBadge();
+            $marginPercent = $user->getLevelMarginPercent();
+            
+            $description = "Margin sebesar Rp" . number_format($order->seller_margin_total, 0, ',', '.') . " telah ditambahkan ke saldo Anda.";
+            
+            if ($marginPercent) {
+                $description .= " (Margin {$marginPercent}% karena Anda {$levelBadge})";
+            } else {
+                $description .= " (Margin sesuai harga jual karena Anda {$levelBadge})";
+            }
+            
+            $description .= " Credit score +5 poin!";
+            
             Notification::create([
                 'for_user_id' => $user->id,
                 'category' => 'payment',
                 'title' => 'Margin Seller Diterima',
-                'description' => "Margin sebesar Rp" . number_format($order->seller_margin_total, 0, ',', '.') . " telah ditambahkan ke saldo Anda. Credit score +5 poin!",
+                'description' => $description,
             ]);
         }
 
