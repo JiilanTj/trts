@@ -15,7 +15,9 @@ class Order extends Model
         'subtotal','discount_total','grand_total','seller_margin_total',
         'payment_method','payment_status','payment_proof_path','payment_confirmed_at','payment_confirmed_by',
         'payment_refunded_at','payment_refunded_by',
-        'status','admin_notes','user_notes'
+        'status','admin_notes','user_notes',
+        // Etalase fields
+        'seller_id', 'from_etalase', 'etalase_margin'
     ];
 
     protected $casts = [
@@ -25,6 +27,7 @@ class Order extends Model
 
     // Relationships
     public function user(): BelongsTo { return $this->belongsTo(User::class); }
+    public function seller(): BelongsTo { return $this->belongsTo(User::class, 'seller_id'); }
     public function confirmer(): BelongsTo { return $this->belongsTo(User::class,'payment_confirmed_by'); }
     public function refunder(): BelongsTo { return $this->belongsTo(User::class,'payment_refunded_by'); }
     public function items(): HasMany { return $this->hasMany(OrderItem::class); }

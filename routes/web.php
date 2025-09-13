@@ -50,10 +50,13 @@ Route::get('/', function () {
     return redirect()->route('login');
 });
 
-// Public shared etalase (requires authentication)
+// Public shared etalase
 Route::get('/etalase/shared/{token}', [UserStoreShowcaseController::class, 'showShared'])
-    ->name('etalase.shared')
-    ->middleware('auth');
+    ->name('etalase.shared');
+
+// Buy product from shared etalase
+Route::post('/etalase/buy/{product}', [UserStoreShowcaseController::class, 'buyFromEtalase'])
+    ->name('etalase.buy-product');
 
 Route::get('/dashboard', function () {
     $user = auth()->user();

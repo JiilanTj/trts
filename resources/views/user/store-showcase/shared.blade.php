@@ -40,6 +40,22 @@
                     </svg>
                     <span>{{ $showcases->count() }} Produk</span>
                 </div>
+                
+                @auth
+                <div class="flex items-center gap-1 text-green-400">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7" />
+                    </svg>
+                    <span>{{ auth()->user()->full_name }}</span>
+                </div>
+                @else
+                <div class="flex items-center gap-1 text-orange-400">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
+                    </svg>
+                    <span>Guest (Login untuk beli)</span>
+                </div>
+                @endauth
             </div>
         </div>
 
@@ -123,13 +139,47 @@
                             
                             <!-- Featured Badge -->
                             @if($item->is_featured_active)
-                            <div class="mt-3">
+                            <div class="mt-3 mb-3">
                                 <span class="inline-flex items-center gap-1 px-2 py-1 rounded-full bg-yellow-500/20 border border-yellow-500/30">
                                     <svg class="w-3 h-3 text-yellow-400" fill="currentColor" viewBox="0 0 20 20">
                                         <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
                                     </svg>
                                     <span class="text-xs font-medium text-yellow-400">Featured</span>
                                 </span>
+                            </div>
+                            @endif
+                            
+                            <!-- Buy Button -->
+                            @if($item->product->stock > 0)
+                            <div class="mt-3 space-y-2">
+                                @auth
+                                <!-- Authenticated user - show buy button -->
+                                <form action="{{ route('etalase.buy-product', $item->product->id) }}" method="POST">
+                                    @csrf
+                                    <input type="hidden" name="seller_id" value="{{ $seller->id }}">
+                                    <input type="hidden" name="from_etalase" value="true">
+                                    <button type="submit" class="w-full py-2 px-4 bg-gradient-to-r from-[#FE2C55] to-[#25F4EE] text-white text-sm font-medium rounded-lg hover:opacity-90 transition focus:outline-none focus:ring-2 focus:ring-[#FE2C55]/50">
+                                        <svg class="w-4 h-4 inline mr-1" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" d="M3 3h2l.4 2M7 13h10l4-8H5.4m0 0L7 13m0 0l-2.5-5M7 13l-2.5 5M17 13v6a2 2 0 01-2 2H9a2 2 0 01-2-2v-6" />
+                                        </svg>
+                                        Beli Sekarang
+                                    </button>
+                                </form>
+                                @else
+                                <!-- Guest user - show login button -->
+                                <a href="{{ route('login') }}" class="block w-full py-2 px-4 bg-gradient-to-r from-[#FE2C55] to-[#25F4EE] text-white text-sm font-medium rounded-lg hover:opacity-90 transition focus:outline-none focus:ring-2 focus:ring-[#FE2C55]/50 text-center">
+                                    <svg class="w-4 h-4 inline mr-1" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" d="M11 16l-4-4m0 0l4-4m-4 4h14m-5 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h7a3 3 0 013 3v1" />
+                                    </svg>
+                                    Login untuk Beli
+                                </a>
+                                @endauth
+                            </div>
+                            @else
+                            <div class="mt-3">
+                                <button disabled class="w-full py-2 px-4 bg-gray-600/50 text-gray-400 text-sm font-medium rounded-lg cursor-not-allowed">
+                                    Stok Habis
+                                </button>
                             </div>
                             @endif
                         </div>
@@ -160,4 +210,21 @@
             </div>
         </div>
     </div>
+    
+    <!-- JavaScript for Buy Button -->
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const buyForms = document.querySelectorAll('form[action*="buy"]');
+            
+            buyForms.forEach(function(form) {
+                form.addEventListener('submit', function(e) {
+                    console.log('Form submission:', {
+                        action: this.action,
+                        seller_id: this.querySelector('input[name="seller_id"]')?.value,
+                        from_etalase: this.querySelector('input[name="from_etalase"]')?.value
+                    });
+                });
+            });
+        });
+    </script>
 </x-app-layout>
