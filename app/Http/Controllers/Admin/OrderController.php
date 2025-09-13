@@ -49,12 +49,66 @@ class OrderController extends Controller
             // Process seller margin payout and credit score increase
             $order->processSellerMarginPayout();
             
-            // Track transaction amount and check level upgrade
+            // Handle etalase orders
+            if ($order->from_etalase && $order->seller && $order->etalase_margin > 0) {
+                // Calculate proper margin based on etalase owner's level
+                $etalaseOwner = $order->seller;
+                $marginPercent = $etalaseOwner->getLevelMarginPercent();
+                
+                $actualMargin = 0;
+                // Calculate margin for each item based on etalase owner's level
+                foreach ($order->items as $item) {
+                    if ($marginPercent) {
+                        // Use percentage margin based on etalase owner's level
+                        $itemMargin = round($item->sell_price * ($marginPercent / 100)) * $item->quantity;
+                    } else {
+                        // Level 1: Use admin-set margin (difference between sell_price and base_price)
+                        $itemMargin = max(0, ($item->sell_price - $item->base_price)) * $item->quantity;
+                    }
+                    $actualMargin += $itemMargin;
+                }
+                
+                // 1. Etalase owner gets level progression from total sales amount
+                $order->seller->addTransactionAmount($order->grand_total);
+                
+                // 2. Add proper margin to etalase owner's balance
+                $order->seller->increment('balance', $actualMargin);
+                
+                // 3. Update the order with actual margin used
+                $order->update(['etalase_margin' => $actualMargin]);
+                
+                // 4. Notification for etalase owner
+                $sellerName = $order->seller->sellerInfo->store_name ?? $order->seller->full_name;
+                $levelBadge = $etalaseOwner->getLevelBadge();
+                
+                $marginDescription = "Margin sebesar Rp" . number_format($actualMargin, 0, ',', '.') . " dari penjualan etalase telah ditambahkan ke saldo Anda. Order #{$order->id} dari {$order->user->full_name}.";
+                
+                if ($marginPercent) {
+                    $marginDescription .= " (Margin {$marginPercent}% karena Anda {$levelBadge})";
+                } else {
+                    $marginDescription .= " (Margin sesuai selisih harga karena Anda {$levelBadge})";
+                }
+                
+                \App\Models\Notification::create([
+                    'for_user_id' => $order->seller_id,
+                    'category' => 'payment',
+                    'title' => 'Margin Etalase Diterima',
+                    'description' => $marginDescription,
+                ]);
+            }
+            
+            // Track transaction amount and check level upgrade for buyer
             $order->user->addTransactionAmount($order->grand_total);
             
             // Create notification for payment approval
-            $this->createOrderNotification($order, 'payment', 'Pembayaran Disetujui', 
-                "Pembayaran untuk order #{$order->id} telah disetujui. Order akan segera dikemas.");
+            if ($order->from_etalase && $order->seller) {
+                $sellerName = $order->seller->sellerInfo->store_name ?? $order->seller->full_name;
+                $this->createOrderNotification($order, 'payment', 'Pembayaran Etalase Disetujui', 
+                    "Pembayaran untuk order #{$order->id} dari etalase {$sellerName} telah disetujui. Order akan segera dikemas.");
+            } else {
+                $this->createOrderNotification($order, 'payment', 'Pembayaran Disetujui', 
+                    "Pembayaran untuk order #{$order->id} telah disetujui. Order akan segera dikemas.");
+            }
                 
             // Create additional notification if margin was paid out
             if ($order->purchase_type === 'external' && $order->seller_margin_total > 0) {

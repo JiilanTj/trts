@@ -153,11 +153,14 @@ class OrderController extends Controller
             'items.*.quantity' => 'required|integer|min:1',
             'user_notes' => 'nullable|string',
             'payment_method' => 'required|in:manual_transfer,balance',
+            'from_etalase' => 'nullable|boolean',
+            'seller_id' => 'nullable|integer|exists:users,id',
+            'etalase_margin' => 'nullable|numeric',
         ]);
 
-        // Check for etalase purchase from session
-        $fromEtalase = session('from_etalase', false);
-        $etalaseSellerId = session('etalase_seller_id');
+        // Check for etalase purchase from request data first, then session
+        $fromEtalase = $data['from_etalase'] ?? session('from_etalase', false);
+        $etalaseSellerId = $data['seller_id'] ?? session('etalase_seller_id');
         $etalaseProductId = session('etalase_product_id');
         
         $etalaseSeller = null;
@@ -167,9 +170,13 @@ class OrderController extends Controller
                 return back()->withErrors('Seller etalase tidak valid.')->withInput();
             }
             
-            // Verify the order contains only the etalase product
-            if (count($data['items']) !== 1 || $data['items'][0]['product_id'] != $etalaseProductId) {
-                return back()->withErrors('Order etalase hanya boleh berisi produk dari etalase yang dipilih.')->withInput();
+            // For etalase purchases from shared link, skip product validation
+            // since user might order different quantities or products
+            if ($etalaseProductId) {
+                // Verify the order contains only the etalase product (session-based)
+                if (count($data['items']) !== 1 || $data['items'][0]['product_id'] != $etalaseProductId) {
+                    return back()->withErrors('Order etalase hanya boleh berisi produk dari etalase yang dipilih.')->withInput();
+                }
             }
         }
 
@@ -195,8 +202,9 @@ class OrderController extends Controller
         $itemsInput = $data['items'];
         $paymentMethod = $data['payment_method'];
         $etalaseMarginTotal = 0; // Initialize variable
+        $finalEtalaseSeller = null; // Store final etalase seller for notifications
 
-        $order = DB::transaction(function () use ($user, $data, $itemsInput, $purchaseType, $paymentMethod, $fromEtalase, $etalaseSeller, &$etalaseMarginTotal) {
+        $order = DB::transaction(function () use ($user, $data, $itemsInput, $purchaseType, $paymentMethod, $fromEtalase, $etalaseSeller, &$etalaseMarginTotal, &$finalEtalaseSeller) {
             $subtotal = 0; $discountTotal = 0; $marginTotal = 0; $grandTotal = 0;
             $etalaseMarginTotal = 0;
 
@@ -217,15 +225,20 @@ class OrderController extends Controller
             ];
             
             // Add etalase fields if from etalase
-            if ($fromEtalase && $etalaseSeller) {
-                $orderData['seller_id'] = $etalaseSeller->id;
+            if ($fromEtalase) {
+                if ($etalaseSeller) {
+                    $orderData['seller_id'] = $etalaseSeller->id;
+                    $finalEtalaseSeller = $etalaseSeller; // Store for notifications
+                }
                 $orderData['from_etalase'] = true;
                 $orderData['etalase_margin'] = 0; // Will be calculated below
                 
                 // Update user notes to include etalase info
-                $sellerName = $etalaseSeller->sellerInfo->store_name ?? $etalaseSeller->full_name;
-                $orderData['user_notes'] = ($data['user_notes'] ?? '') . "\n\nDibeli dari etalase: " . $sellerName;
-                $orderData['user_notes'] = trim($orderData['user_notes']);
+                if ($etalaseSeller) {
+                    $sellerName = $etalaseSeller->sellerInfo->store_name ?? $etalaseSeller->full_name;
+                    $orderData['user_notes'] = ($data['user_notes'] ?? '') . "\n\nDibeli dari etalase: " . $sellerName;
+                    $orderData['user_notes'] = trim($orderData['user_notes']);
+                }
             }
 
             $order = Order::create($orderData);
@@ -240,7 +253,7 @@ class OrderController extends Controller
                 $sellPrice = $product->harga_jual;
                 
                 // For etalase purchases, use sell price as unit price
-                if ($fromEtalase && $etalaseSeller) {
+                if ($fromEtalase) {
                     $unitPrice = $sellPrice; // Use harga_jual for etalase
                 } else {
                     $unitPrice = $product->getApplicablePrice($user, $purchaseType);
@@ -256,7 +269,14 @@ class OrderController extends Controller
                 
                 // Calculate etalase margin if from etalase
                 if ($fromEtalase && $etalaseSeller) {
-                    $etalaseMargin = $sellPrice - $basePrice; // Margin per unit
+                    $marginPercent = $etalaseSeller->getLevelMarginPercent();
+                    if ($marginPercent) {
+                        // Use percentage margin based on etalase owner's level
+                        $etalaseMargin = round($sellPrice * ($marginPercent / 100));
+                    } else {
+                        // Level 1: Use admin-set margin (difference between sell price and base price)
+                        $etalaseMargin = max(0, $sellPrice - $basePrice);
+                    }
                     $etalaseMarginTotal += $etalaseMargin * $qty; // Total margin for this product
                 }
                 
@@ -317,16 +337,18 @@ class OrderController extends Controller
                 $order->processSellerMarginPayout();
                 
                 // Track transaction amount and check level upgrade
-                if ($fromEtalase && $etalaseSeller) {
+                if ($fromEtalase) {
                     // For etalase purchases:
                     // 1. Buyer gets level progression from their total purchase (what they actually paid)
                     $user->addTransactionAmount($grandTotal);
                     
                     // 2. Etalase owner gets level progression from total sales amount (grand total)
-                    $etalaseSeller->addTransactionAmount($grandTotal);
-                    
-                    // 3. Add margin to etalase owner's balance
-                    $etalaseSeller->increment('balance', $etalaseMarginTotal);
+                    if ($etalaseSeller) {
+                        $etalaseSeller->addTransactionAmount($grandTotal);
+                        
+                        // 3. Add margin to etalase owner's balance
+                        $etalaseSeller->increment('balance', $etalaseMarginTotal);
+                    }
                     
                     // 4. Update product stock (only for balance payments that are immediately processed)
                     foreach ($itemsInput as $row) {
@@ -351,8 +373,8 @@ class OrderController extends Controller
         });
 
         if ($order->payment_method === 'balance') {
-            if ($fromEtalase && $etalaseSeller) {
-                $sellerName = $etalaseSeller->sellerInfo->store_name ?? $etalaseSeller->full_name;
+            if ($fromEtalase && $finalEtalaseSeller) {
+                $sellerName = $finalEtalaseSeller->sellerInfo->store_name ?? $finalEtalaseSeller->full_name;
                 
                 // Notification for buyer
                 Notification::create([
@@ -364,11 +386,22 @@ class OrderController extends Controller
                 
                 // Notification for etalase owner
                 if ($etalaseMarginTotal > 0) {
+                    $levelBadge = $finalEtalaseSeller->getLevelBadge();
+                    $marginPercent = $finalEtalaseSeller->getLevelMarginPercent();
+                    
+                    $marginDescription = "Margin sebesar Rp" . number_format($etalaseMarginTotal, 0, ',', '.') . " dari penjualan etalase telah ditambahkan ke saldo Anda. Order #{$order->id} dari {$user->full_name}.";
+                    
+                    if ($marginPercent) {
+                        $marginDescription .= " (Margin {$marginPercent}% karena Anda {$levelBadge})";
+                    } else {
+                        $marginDescription .= " (Margin sesuai selisih harga karena Anda {$levelBadge})";
+                    }
+                    
                     Notification::create([
-                        'for_user_id' => $etalaseSeller->id,
+                        'for_user_id' => $finalEtalaseSeller->id,
                         'category' => 'payment',
                         'title' => 'Margin Etalase Diterima',
-                        'description' => "Margin sebesar Rp" . number_format($etalaseMarginTotal, 0, ',', '.') . " dari penjualan etalase telah ditambahkan ke saldo Anda. Order #{$order->id} dari {$user->full_name}.",
+                        'description' => $marginDescription,
                     ]);
                 }
             } else {
@@ -380,8 +413,8 @@ class OrderController extends Controller
                 ]);
             }
         } else {
-            if ($fromEtalase && $etalaseSeller) {
-                $sellerName = $etalaseSeller->sellerInfo->store_name ?? $etalaseSeller->full_name;
+            if ($fromEtalase && $finalEtalaseSeller) {
+                $sellerName = $finalEtalaseSeller->sellerInfo->store_name ?? $finalEtalaseSeller->full_name;
                 Notification::create([
                     'for_user_id' => $user->id,
                     'category' => 'order',
@@ -430,8 +463,8 @@ class OrderController extends Controller
         }
 
         $successMessage = $order->payment_method === 'balance' ? 'Order berhasil dibuat & dibayar dengan saldo.' : 'Order berhasil dibuat.';
-        if ($fromEtalase && $etalaseSeller) {
-            $sellerName = $etalaseSeller->sellerInfo->store_name ?? $etalaseSeller->full_name;
+        if ($fromEtalase && $finalEtalaseSeller) {
+            $sellerName = $finalEtalaseSeller->sellerInfo->store_name ?? $finalEtalaseSeller->full_name;
             $successMessage = $order->payment_method === 'balance' 
                 ? "Order dari etalase {$sellerName} berhasil dibuat & dibayar dengan saldo."
                 : "Order dari etalase {$sellerName} berhasil dibuat.";
