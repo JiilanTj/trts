@@ -58,6 +58,12 @@ Route::get('/etalase/shared/{token}', [UserStoreShowcaseController::class, 'show
 Route::post('/etalase/buy/{product}', [UserStoreShowcaseController::class, 'buyFromEtalase'])
     ->name('etalase.buy-product');
 
+// Follow/Unfollow seller (public routes)
+Route::post('/seller/follow', [UserStoreShowcaseController::class, 'followSeller'])
+    ->name('seller.follow');
+Route::post('/seller/unfollow', [UserStoreShowcaseController::class, 'unfollowSeller'])
+    ->name('seller.unfollow');
+
 Route::get('/dashboard', function () {
     $user = auth()->user();
     

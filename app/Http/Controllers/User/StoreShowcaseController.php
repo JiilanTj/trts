@@ -6,6 +6,10 @@ use App\Http\Controllers\Controller;
 use App\Models\StoreShowcase;
 use App\Models\Product;
 use App\Models\OrderItem;
+use App\Models\EtalaseView;
+use App\Models\Order;
+use App\Models\User;
+use App\Models\UserFollow;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 
@@ -31,20 +35,77 @@ class StoreShowcaseController extends Controller
     {
         $this->checkSellerAccess();
         
-        $showcases = Auth::user()->storeShowcases()
+        $user = Auth::user();
+        
+        $showcases = $user->storeShowcases()
             ->withProduct()
             ->ordered()
             ->paginate(12);
 
-        $totalShowcases = Auth::user()->storeShowcases()->count();
-        $activeShowcases = Auth::user()->activeShowcases()->count();
-        $featuredShowcases = Auth::user()->featuredShowcases()->count();
+        $totalShowcases = $user->storeShowcases()->count();
+        $activeShowcases = $user->activeShowcases()->count();
+        $featuredShowcases = $user->featuredShowcases()->count();
+
+        // Get etalase analytics
+        $analytics = EtalaseView::getAnalytics($user->id);
+        
+        // Add order-based analytics
+        $orderAnalytics = [
+            'total_orders' => Order::where('from_etalase', true)
+                ->where('seller_id', $user->id)->count(),
+            'total_revenue' => Order::where('from_etalase', true)
+                ->where('seller_id', $user->id)
+                ->where('payment_status', 'paid')
+                ->sum('grand_total'),
+            'total_margin' => Order::where('from_etalase', true)
+                ->where('seller_id', $user->id)
+                ->where('payment_status', 'paid')
+                ->sum('etalase_margin'),
+        ];
+        
+        // Merge analytics
+        $analytics = array_merge($analytics, $orderAnalytics);
+
+        // Get product-level analytics
+        $productViewAnalytics = EtalaseView::getProductViewAnalytics($user->id);
+        
+        // Get product sales analytics from etalase
+        $productSalesAnalytics = OrderItem::whereHas('order', function($q) use ($user) {
+                $q->where('from_etalase', true)
+                  ->where('seller_id', $user->id)
+                  ->where('payment_status', 'paid');
+            })
+            ->groupBy('product_id')
+            ->selectRaw('product_id, SUM(quantity) as total_sold, SUM(line_total) as total_revenue, COUNT(DISTINCT order_id) as order_count')
+            ->with('product')
+            ->get()
+            ->keyBy('product_id');
+
+        // Get user's showcased products with combined analytics
+        $showcasedProductIds = $user->storeShowcases()->pluck('product_id');
+        $productAnalytics = Product::whereIn('id', $showcasedProductIds)
+            ->get()
+            ->map(function($product) use ($productViewAnalytics, $productSalesAnalytics) {
+                $views = $productViewAnalytics->get($product->id);
+                $sales = $productSalesAnalytics->get($product->id);
+                
+                return [
+                    'product' => $product,
+                    'view_count' => $views ? $views->view_count : 0,
+                    'unique_viewers' => $views ? $views->unique_viewers : 0,
+                    'total_sold' => $sales ? $sales->total_sold : 0,
+                    'total_revenue' => $sales ? $sales->total_revenue : 0,
+                    'order_count' => $sales ? $sales->order_count : 0,
+                ];
+            });
 
         return view('user.store-showcase.index', compact(
             'showcases', 
             'totalShowcases', 
             'activeShowcases', 
-            'featuredShowcases'
+            'featuredShowcases',
+            'analytics',
+            'productAnalytics'
         ));
     }
 
@@ -360,6 +421,9 @@ class StoreShowcaseController extends Controller
             abort(404, 'Etalase tidak tersedia.');
         }
 
+        // Record etalase view (general etalase view without specific product)
+        EtalaseView::recordView($user->id);
+
         // Get all active showcases for this user
         $showcases = $user->activeShowcases()
             ->withProduct()
@@ -368,10 +432,17 @@ class StoreShowcaseController extends Controller
         $seller = $user;
         $sellerInfo = $seller->sellerInfo;
 
+        // Check follow status (if user is logged in)
+        $isFollowing = false;
+        if (auth()->check()) {
+            $isFollowing = UserFollow::isFollowing(auth()->id(), $seller->id);
+        }
+
         return view('user.store-showcase.shared', compact(
             'showcases', 
             'seller', 
-            'sellerInfo'
+            'sellerInfo',
+            'isFollowing'
         ));
     }
 
@@ -453,6 +524,9 @@ class StoreShowcaseController extends Controller
             return back()->withErrors('Produk tidak tersedia di etalase seller ini.');
         }
         
+        // Record product-specific view
+        EtalaseView::recordView($sellerId, $product->id);
+        
         \Log::info('buyFromEtalase - setting session variables', [
             'etalase_product_id' => $product->id,
             'etalase_seller_id' => $sellerId,
@@ -464,5 +538,105 @@ class StoreShowcaseController extends Controller
             ->with('etalase_product_id', $product->id)
             ->with('etalase_seller_id', $sellerId)
             ->with('from_etalase', true);
+    }
+
+    /**
+     * Follow a seller
+     */
+    public function followSeller(Request $request)
+    {
+        // Check authentication
+        if (!auth()->check()) {
+            if ($request->ajax()) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Silakan login terlebih dahulu untuk follow seller.'
+                ], 401);
+            }
+            return redirect()->route('login')->with('warning', 'Silakan login terlebih dahulu.');
+        }
+
+        $request->validate([
+            'seller_id' => 'required|exists:users,id',
+        ]);
+
+        $sellerId = $request->seller_id;
+        $followerId = auth()->id();
+
+        $follow = UserFollow::followUser($followerId, $sellerId);
+
+        if ($follow) {
+            $seller = User::find($sellerId);
+            
+            if ($request->ajax()) {
+                return response()->json([
+                    'success' => true,
+                    'message' => "Berhasil follow {$seller->full_name}!",
+                    'is_following' => true,
+                    'followers_count' => $seller->fresh()->followers
+                ]);
+            }
+
+            return back()->with('success', "Berhasil follow {$seller->full_name}!");
+        } else {
+            if ($request->ajax()) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Gagal follow seller. Mungkin Anda sudah follow atau seller tidak valid.'
+                ]);
+            }
+
+            return back()->withErrors('Gagal follow seller.');
+        }
+    }
+
+    /**
+     * Unfollow a seller
+     */
+    public function unfollowSeller(Request $request)
+    {
+        // Check authentication
+        if (!auth()->check()) {
+            if ($request->ajax()) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Silakan login terlebih dahulu.'
+                ], 401);
+            }
+            return redirect()->route('login');
+        }
+
+        $request->validate([
+            'seller_id' => 'required|exists:users,id',
+        ]);
+
+        $sellerId = $request->seller_id;
+        $followerId = auth()->id();
+
+        $success = UserFollow::unfollowUser($followerId, $sellerId);
+
+        if ($success) {
+            $seller = User::find($sellerId);
+            
+            if ($request->ajax()) {
+                return response()->json([
+                    'success' => true,
+                    'message' => "Berhasil unfollow {$seller->full_name}.",
+                    'is_following' => false,
+                    'followers_count' => $seller->fresh()->followers
+                ]);
+            }
+
+            return back()->with('success', "Berhasil unfollow {$seller->full_name}.");
+        } else {
+            if ($request->ajax()) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Gagal unfollow seller.'
+                ]);
+            }
+
+            return back()->withErrors('Gagal unfollow seller.');
+        }
     }
 }

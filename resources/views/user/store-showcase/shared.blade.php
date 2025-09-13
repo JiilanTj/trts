@@ -74,22 +74,76 @@
                         <p class="text-sm text-gray-300 mt-2">{{ $sellerInfo->store_description }}</p>
                         @endif
                         
-                        <div class="flex items-center gap-4 mt-3">
-                            <div class="flex items-center gap-1 text-xs text-gray-400">
-                                <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
-                                    <path stroke-linecap="round" stroke-linejoin="round" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
-                                </svg>
-                                <span>Bergabung {{ $seller->created_at->format('M Y') }}</span>
+                        <div class="flex items-center justify-between gap-4 mt-3">
+                            <div class="flex items-center gap-4">
+                                <div class="flex items-center gap-1 text-xs text-gray-400">
+                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                                    </svg>
+                                    <span>Bergabung {{ $seller->created_at->format('M Y') }}</span>
+                                </div>
+                                
+                                <div class="flex items-center gap-1 text-xs text-gray-400">
+                                    <svg class="w-4 h-4 text-blue-400" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
+                                    </svg>
+                                    <span id="followers-count">{{ number_format($seller->followers) }} Followers</span>
+                                </div>
+                                
+                                <div class="flex items-center gap-1 text-xs text-gray-400">
+                                    <svg class="w-4 h-4 text-green-400" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                                        <path stroke-linecap="round" stroke-linejoin="round" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+                                    </svg>
+                                    <span>{{ number_format($seller->visitors) }} Visitors</span>
+                                </div>
+                                
+                                @if($seller->level > 1)
+                                <div class="inline-flex items-center gap-1 px-2 py-1 rounded-full bg-gradient-to-r from-yellow-500/20 to-orange-500/20 border border-yellow-500/30">
+                                    <svg class="w-3 h-3 text-yellow-400" fill="currentColor" viewBox="0 0 20 20">
+                                        <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
+                                    </svg>
+                                    <span class="text-xs font-medium text-yellow-400">Level {{ $seller->level }}</span>
+                                </div>
+                                @endif
                             </div>
                             
-                            @if($seller->level > 1)
-                            <div class="inline-flex items-center gap-1 px-2 py-1 rounded-full bg-gradient-to-r from-yellow-500/20 to-orange-500/20 border border-yellow-500/30">
-                                <svg class="w-3 h-3 text-yellow-400" fill="currentColor" viewBox="0 0 20 20">
-                                    <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
-                                </svg>
-                                <span class="text-xs font-medium text-yellow-400">Level {{ $seller->level }}</span>
-                            </div>
-                            @endif
+                            <!-- Follow/Unfollow Button -->
+                            @auth
+                                @if(auth()->id() !== $seller->id)
+                                    <div id="follow-button-container">
+                                        @if($isFollowing)
+                                            <button id="unfollow-btn" 
+                                                    class="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-gradient-to-r from-red-500/20 to-pink-500/20 border border-red-500/30 text-red-400 hover:from-red-500/30 hover:to-pink-500/30 hover:border-red-400/50 transition-all duration-300"
+                                                    onclick="toggleFollow({{ $seller->id }}, 'unfollow')">
+                                                <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                                                    <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12" />
+                                                </svg>
+                                                <span>Unfollow</span>
+                                            </button>
+                                        @else
+                                            <button id="follow-btn" 
+                                                    class="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-gradient-to-r from-blue-500/20 to-indigo-500/20 border border-blue-500/30 text-blue-400 hover:from-blue-500/30 hover:to-indigo-500/30 hover:border-blue-400/50 transition-all duration-300"
+                                                    onclick="toggleFollow({{ $seller->id }}, 'follow')">
+                                                <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                                                    <path stroke-linecap="round" stroke-linejoin="round" d="M12 4v16m8-8H4" />
+                                                </svg>
+                                                <span>Follow</span>
+                                            </button>
+                                        @endif
+                                    </div>
+                                @endif
+                            @else
+                                <div>
+                                    <a href="{{ route('login') }}" 
+                                       class="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-gradient-to-r from-blue-500/20 to-indigo-500/20 border border-blue-500/30 text-blue-400 hover:from-blue-500/30 hover:to-indigo-500/30 hover:border-blue-400/50 transition-all duration-300">
+                                        <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" d="M11 16l-4-4m0 0l4-4m-4 4h14m-5 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h7a3 3 0 013 3v1" />
+                                        </svg>
+                                        <span>Login to Follow</span>
+                                    </a>
+                                </div>
+                            @endauth
                         </div>
                     </div>
                 </div>
@@ -211,7 +265,7 @@
         </div>
     </div>
     
-    <!-- JavaScript for Buy Button -->
+    <!-- JavaScript for Buy Button & Follow System -->
     <script>
         document.addEventListener('DOMContentLoaded', function() {
             const buyForms = document.querySelectorAll('form[action*="buy"]');
@@ -226,5 +280,126 @@
                 });
             });
         });
+
+        // Follow/Unfollow System
+        function toggleFollow(sellerId, action) {
+            const button = document.getElementById(action === 'follow' ? 'follow-btn' : 'unfollow-btn');
+            const container = document.getElementById('follow-button-container');
+            const followersCountElement = document.getElementById('followers-count');
+            
+            // Disable button during request
+            button.disabled = true;
+            button.style.opacity = '0.5';
+            
+            const url = action === 'follow' ? '{{ route("seller.follow") }}' : '{{ route("seller.unfollow") }}';
+            
+            fetch(url, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Accept': 'application/json',
+                    'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content'),
+                    'X-Requested-With': 'XMLHttpRequest'
+                },
+                body: JSON.stringify({
+                    seller_id: sellerId
+                })
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    // Show success message
+                    showNotification(data.message, 'success');
+                    
+                    // Update followers count
+                    followersCountElement.textContent = `${formatNumber(data.followers_count)} Followers`;
+                    
+                    // Switch button
+                    if (action === 'follow') {
+                        container.innerHTML = `
+                            <button id="unfollow-btn" 
+                                    class="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-gradient-to-r from-red-500/20 to-pink-500/20 border border-red-500/30 text-red-400 hover:from-red-500/30 hover:to-pink-500/30 hover:border-red-400/50 transition-all duration-300"
+                                    onclick="toggleFollow(${sellerId}, 'unfollow')">
+                                <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12" />
+                                </svg>
+                                <span>Unfollow</span>
+                            </button>
+                        `;
+                    } else {
+                        container.innerHTML = `
+                            <button id="follow-btn" 
+                                    class="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-gradient-to-r from-blue-500/20 to-indigo-500/20 border border-blue-500/30 text-blue-400 hover:from-blue-500/30 hover:to-indigo-500/30 hover:border-blue-400/50 transition-all duration-300"
+                                    onclick="toggleFollow(${sellerId}, 'follow')">
+                                <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" d="M12 4v16m8-8H4" />
+                                </svg>
+                                <span>Follow</span>
+                            </button>
+                        `;
+                    }
+                } else {
+                    showNotification(data.message, 'error');
+                    
+                    // Re-enable button
+                    button.disabled = false;
+                    button.style.opacity = '1';
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                showNotification('Terjadi kesalahan. Silakan coba lagi.', 'error');
+                
+                // Re-enable button
+                button.disabled = false;
+                button.style.opacity = '1';
+            });
+        }
+
+        // Notification system
+        function showNotification(message, type = 'success') {
+            const notification = document.createElement('div');
+            notification.className = `fixed top-4 right-4 z-50 px-6 py-4 rounded-lg border transition-all duration-300 transform translate-x-full ${
+                type === 'success' 
+                    ? 'bg-green-500/20 border-green-500/30 text-green-400' 
+                    : 'bg-red-500/20 border-red-500/30 text-red-400'
+            }`;
+            notification.innerHTML = `
+                <div class="flex items-center gap-3">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                        ${type === 'success' 
+                            ? '<path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7" />'
+                            : '<path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12" />'
+                        }
+                    </svg>
+                    <span>${message}</span>
+                </div>
+            `;
+            
+            document.body.appendChild(notification);
+            
+            // Animate in
+            setTimeout(() => {
+                notification.style.transform = 'translateX(0)';
+            }, 100);
+            
+            // Animate out and remove
+            setTimeout(() => {
+                notification.style.transform = 'translateX(100%)';
+                setTimeout(() => {
+                    document.body.removeChild(notification);
+                }, 300);
+            }, 3000);
+        }
+
+        // Number formatting
+        function formatNumber(num) {
+            if (num >= 1000000) {
+                return (num / 1000000).toFixed(1) + 'M';
+            } else if (num >= 1000) {
+                return (num / 1000).toFixed(1) + 'K';
+            }
+            return num.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ',');
+        }
     </script>
 </x-app-layout>
