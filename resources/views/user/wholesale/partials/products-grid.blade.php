@@ -33,13 +33,35 @@
         <p class="text-xs text-neutral-400 mb-2">Wholesale: <span class="text-[#25F4EE]">Rp {{ number_format($product->sell_price * 0.85, 0, ',', '.') }}</span></p>
         @endif
         
+        <!-- Seller Margin Info -->
+        @if(auth()->user()->isSeller())
+        @php
+            $currentUser = auth()->user();
+            $sellerMargin = $product->getSellerMargin($currentUser);
+            $marginPercent = $currentUser->getLevelMarginPercent();
+        @endphp
+        <div class="mb-2 flex items-center gap-1">
+            <span class="text-xs text-[#25F4EE] font-medium">Margin:</span>
+            <span class="text-xs text-white font-semibold">Rp {{ number_format($sellerMargin, 0, ',', '.') }}</span>
+            @if($marginPercent)
+            <span class="text-xs px-1.5 py-0.5 bg-[#25F4EE]/20 text-[#25F4EE] rounded font-medium">{{ $marginPercent }}%</span>
+            @endif
+        </div>
+        @endif
+        
         <!-- Stock Info -->
         <p class="text-xs text-neutral-400 mb-3">Stok: {{ $product->stock }}</p>
         
-        <!-- Distribute Button -->
-        <button class="w-full py-2 text-xs font-medium bg-[#FE2C55] text-white rounded-lg hover:bg-[#FE2C55]/90 transition">
-            Distribusi
-        </button>
+        <!-- Action Buttons -->
+        <div class="grid grid-cols-2 gap-2">
+            <button class="py-2 text-xs font-medium bg-[#FE2C55] text-white rounded-lg hover:bg-[#FE2C55]/90 transition">
+                Distribusi
+            </button>
+            <button onclick="addToEtalase({{ $product->id }}, '{{ addslashes($product->name) }}')" 
+                    class="py-2 text-xs font-medium bg-[#25F4EE] text-white rounded-lg hover:bg-[#25F4EE]/90 transition">
+                + Etalase
+            </button>
+        </div>
     </div>
 </div>
 @endif

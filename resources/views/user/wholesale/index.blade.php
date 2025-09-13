@@ -36,6 +36,16 @@
                                         <span class="text-sm font-semibold">Pusat Wholesale</span>
                                         <p class="text-[10px] uppercase tracking-wide text-neutral-400 mt-0.5">Distribusi & Grosir</p>
                                     </div>
+                                    @if(auth()->user()->isSeller())
+                                    <!-- Seller Level Info -->
+                                    <div class="text-left">
+                                        <div class="flex items-center gap-1">
+                                            <span class="text-xs text-neutral-400">Bintang </span>
+                                            <span class="text-xs px-2 py-0.5 bg-gradient-to-r from-[#FE2C55]/20 to-[#25F4EE]/20 text-[#25F4EE] rounded font-semibold">{{ auth()->user()->level ?? 1 }}</span>
+                                        </div>
+                                        <p class="text-[10px] uppercase tracking-wide text-neutral-500 mt-0.5">Tingkat Seller</p>
+                                    </div>
+                                    @endif
                                 </div>
                             </div>
                         </div>
@@ -264,9 +274,14 @@
             <!-- Bottom Actions - Fixed Button -->
             <div class="fixed bottom-16 left-0 right-0 z-40 bg-[#1a1d21]/95 backdrop-blur-sm border-t border-neutral-800/70 p-4 shadow-lg">
                 <div class="max-w-sm mx-auto px-2">
-                    <button id="confirmButton" class="w-full py-3 bg-gradient-to-r from-[#FE2C55] to-[#25F4EE] text-white font-bold rounded-xl shadow-lg hover:shadow-xl transform hover:scale-[1.02] transition-all duration-200 active:scale-[0.98] text-center">
-                        Konfirmasi (0 Produk)
-                    </button>
+                    <div class="grid grid-cols-2 gap-2">
+                        <button id="confirmButton" class="py-3 bg-gradient-to-r from-[#FE2C55] to-[#25F4EE] text-white font-bold rounded-xl shadow-lg hover:shadow-xl transform hover:scale-[1.02] transition-all duration-200 active:scale-[0.98] text-center text-sm">
+                            Konfirmasi (0 Produk)
+                        </button>
+                        <button id="addToEtalaseButton" class="py-3 bg-gradient-to-r from-[#25F4EE] to-[#FE2C55] text-white font-bold rounded-xl shadow-lg hover:shadow-xl transform hover:scale-[1.02] transition-all duration-200 active:scale-[0.98] text-center text-sm">
+                            Tambah ke Etalase
+                        </button>
+                    </div>
                 </div>
             </div>
             
@@ -387,6 +402,154 @@
                 if (selectedCount) {
                     selectedCount.textContent = selectedProducts;
                 }
+            }
+            
+            // Function to add single product to etalase
+            window.addToEtalase = function(productId, productName) {
+                if (!productId) {
+                    alert('ID produk tidak valid');
+                    return;
+                }
+                
+                // Create form and submit to add product to etalase
+                const form = document.createElement('form');
+                form.method = 'POST';
+                form.action = '{{ route("user.showcases.store") }}';
+                form.style.display = 'none';
+                
+                // Add CSRF token
+                const csrfInput = document.createElement('input');
+                csrfInput.type = 'hidden';
+                csrfInput.name = '_token';
+                csrfInput.value = '{{ csrf_token() }}';
+                form.appendChild(csrfInput);
+                
+                // Add product ID
+                const productIdInput = document.createElement('input');
+                productIdInput.type = 'hidden';
+                productIdInput.name = 'product_id';
+                productIdInput.value = productId;
+                form.appendChild(productIdInput);
+                
+                // Submit form
+                document.body.appendChild(form);
+                form.submit();
+            };
+            
+            // Function to add selected products to etalase (bulk)
+            function addSelectedToEtalase() {
+                const checkedBoxes = document.querySelectorAll('#productsContainer input[type="checkbox"]:checked');
+                
+                if (checkedBoxes.length === 0) {
+                    alert('Pilih minimal 1 produk untuk ditambahkan ke etalase.');
+                    return;
+                }
+                
+                // Get all selected product IDs
+                const selectedProductIds = [];
+                checkedBoxes.forEach(checkbox => {
+                    const productCard = checkbox.closest('[data-product-id]');
+                    if (productCard && productCard.dataset.productId) {
+                        selectedProductIds.push(productCard.dataset.productId);
+                    }
+                });
+                
+                if (selectedProductIds.length === 0) {
+                    alert('Tidak dapat mengidentifikasi produk yang dipilih. Silakan coba lagi.');
+                    return;
+                }
+                
+                // Show loading/progress feedback
+                const button = document.getElementById('addToEtalaseButton');
+                const originalText = button.textContent;
+                button.textContent = 'Menambahkan...';
+                button.disabled = true;
+                
+                // Add all products to etalase one by one
+                let completed = 0;
+                let errors = 0;
+                
+                const addNextProduct = (index) => {
+                    if (index >= selectedProductIds.length) {
+                        // All products processed
+                        button.textContent = originalText;
+                        button.disabled = false;
+                        
+                        if (errors === 0) {
+                            alert(`Berhasil menambahkan ${completed} produk ke etalase!`);
+                            // Optionally redirect to etalase page
+                            window.location.href = '{{ route("user.showcases.index") }}';
+                        } else {
+                            alert(`${completed} produk berhasil ditambahkan, ${errors} produk gagal ditambahkan ke etalase.`);
+                        }
+                        return;
+                    }
+                    
+                    // Update button text with progress
+                    button.textContent = `Menambahkan ${index + 1}/${selectedProductIds.length}...`;
+                    
+                    // Create form for current product
+                    const form = document.createElement('form');
+                    form.method = 'POST';
+                    form.action = '{{ route("user.showcases.store") }}';
+                    form.style.display = 'none';
+                    
+                    // Add CSRF token
+                    const csrfInput = document.createElement('input');
+                    csrfInput.type = 'hidden';
+                    csrfInput.name = '_token';
+                    csrfInput.value = '{{ csrf_token() }}';
+                    form.appendChild(csrfInput);
+                    
+                    // Add product ID
+                    const productIdInput = document.createElement('input');
+                    productIdInput.type = 'hidden';
+                    productIdInput.name = 'product_id';
+                    productIdInput.value = selectedProductIds[index];
+                    form.appendChild(productIdInput);
+                    
+                    // Add ajax flag to prevent redirect on each submission
+                    const ajaxInput = document.createElement('input');
+                    ajaxInput.type = 'hidden';
+                    ajaxInput.name = 'ajax';
+                    ajaxInput.value = '1';
+                    form.appendChild(ajaxInput);
+                    
+                    document.body.appendChild(form);
+                    
+                    // Submit via fetch to handle the response
+                    const formData = new FormData(form);
+                    
+                    fetch(form.action, {
+                        method: 'POST',
+                        body: formData,
+                        headers: {
+                            'X-Requested-With': 'XMLHttpRequest',
+                        }
+                    })
+                    .then(response => {
+                        if (response.ok || response.status === 302) {
+                            completed++;
+                        } else {
+                            errors++;
+                        }
+                    })
+                    .catch(error => {
+                        console.error('Error adding product to etalase:', error);
+                        errors++;
+                    })
+                    .finally(() => {
+                        document.body.removeChild(form);
+                        
+                        // Add delay between requests to avoid overwhelming the server
+                        setTimeout(() => {
+                            addNextProduct(index + 1);
+                        }, 500);
+                    });
+                };
+                
+                // Start adding products
+                addNextProduct(0);
             }
             
             // Function to set button to active state (PINK!)
@@ -660,6 +823,14 @@
                     // Submit form
                     document.body.appendChild(form);
                     form.submit();
+                });
+            }
+            
+            // Add to Etalase button functionality - Submit bulk add to etalase
+            const addToEtalaseButton = document.getElementById('addToEtalaseButton');
+            if (addToEtalaseButton) {
+                addToEtalaseButton.addEventListener('click', function() {
+                    addSelectedToEtalase();
                 });
             }
             

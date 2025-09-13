@@ -50,6 +50,11 @@ Route::get('/', function () {
     return redirect()->route('login');
 });
 
+// Public shared etalase (requires authentication)
+Route::get('/etalase/shared/{token}', [UserStoreShowcaseController::class, 'showShared'])
+    ->name('etalase.shared')
+    ->middleware('auth');
+
 Route::get('/dashboard', function () {
     $user = auth()->user();
     
@@ -244,6 +249,7 @@ Route::middleware('auth')->group(function () {
         Route::post('/{showcase}/toggle-active', [UserStoreShowcaseController::class, 'toggleActive'])->name('toggle-active');
         Route::post('/{showcase}/toggle-featured', [UserStoreShowcaseController::class, 'toggleFeatured'])->name('toggle-featured');
         Route::post('/update-order', [UserStoreShowcaseController::class, 'updateOrder'])->name('update-order');
+        Route::post('/generate-etalase-share-token', [UserStoreShowcaseController::class, 'generateEtalaseShareToken'])->name('generate-etalase-share-token');
     });
     
     // Chat / Customer Service

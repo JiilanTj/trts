@@ -44,6 +44,19 @@
                 </div>
                 <span class="text-[11px] font-medium tracking-wide text-neutral-400 group-hover:text-white">Toko Saya</span>
             </a>
+            <!-- Etalase Saya -->
+            <a href="{{ route('user.showcases.index') }}" class="group relative flex flex-col items-center gap-1.5 p-3 rounded-xl bg-neutral-800/60 border border-neutral-700 hover:border-amber-500/70 transition shadow-sm">
+                <div class="relative">
+                    <div class="absolute -inset-1 rounded-full opacity-0 group-hover:opacity-100 transition blur-sm bg-gradient-to-r from-amber-400/60 to-yellow-500/60"></div>
+                    <div class="w-10 h-10 rounded-full flex items-center justify-center relative bg-neutral-900 text-neutral-200 group-hover:text-white">
+                        <div class="absolute inset-0 rounded-full ring-1 ring-neutral-700/80 group-hover:ring-transparent"></div>
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24" aria-hidden="true">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M13.5 16.875h3.375m0 0h3.375m-3.375 0V13.5m0 3.375v3.375M6 10.5h2.25a2.25 2.25 0 002.25-2.25V6a2.25 2.25 0 00-2.25-2.25H6A2.25 2.25 0 003.75 6v2.25A2.25 2.25 0 006 10.5zm0 9.75h2.25A2.25 2.25 0 0010.5 18v-2.25a2.25 2.25 0 00-2.25-2.25H6a2.25 2.25 0 00-2.25 2.25V18A2.25 2.25 0 006 20.25zm9.75-9.75H18a2.25 2.25 0 002.25-2.25V6A2.25 2.25 0 0018 3.75h-2.25A2.25 2.25 0 0013.5 6v2.25a2.25 2.25 0 002.25 2.25z" />
+                        </svg>
+                    </div>
+                </div>
+                <span class="text-[11px] font-medium tracking-wide text-neutral-400 group-hover:text-white">Etalase Saya</span>
+            </a>
         @else
             <!-- Jadi Seller -->
             <a href="{{ route('seller-requests.index') }}" class="group relative flex flex-col items-center gap-1.5 p-3 rounded-xl bg-neutral-800/60 border border-neutral-700 hover:border-green-500/70 transition shadow-sm">

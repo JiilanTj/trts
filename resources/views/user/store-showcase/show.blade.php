@@ -108,10 +108,31 @@
                                 </span>
                             </div>
                             <div class="flex items-center justify-between py-2 border-b border-white/5">
-                                <span class="text-sm text-gray-400">Keuntungan</span>
-                                <span class="text-sm font-medium text-emerald-400">
-                                    Rp {{ number_format($showcase->product->harga_jual - $showcase->product->harga_beli, 0, ',', '.') }}
-                                </span>
+                                <span class="text-sm text-gray-400">Margin Seller</span>
+                                @php 
+                                    $user = auth()->user();
+                                    $marginPercent = $user->getLevelMarginPercent();
+                                    $levelBadge = $user->getLevelBadge();
+                                    
+                                    if($marginPercent) {
+                                        $sellerMargin = round($showcase->product->harga_jual * ($marginPercent / 100));
+                                    } else {
+                                        $sellerMargin = max(0, $showcase->product->harga_jual - $showcase->product->harga_biasa);
+                                    }
+                                @endphp
+                                <div class="text-right">
+                                    <span class="text-sm font-medium text-emerald-400">
+                                        Rp {{ number_format($sellerMargin, 0, ',', '.') }}
+                                    </span>
+                                    <div class="flex items-center gap-2 justify-end mt-1">
+                                        <span class="px-2 py-0.5 rounded-full bg-emerald-600/20 text-emerald-300 border border-emerald-500/30 text-[10px] font-medium">{{ $levelBadge }}</span>
+                                        @if($marginPercent)
+                                            <span class="text-[10px] text-emerald-400">{{ $marginPercent }}% dari harga jual</span>
+                                        @else
+                                            <span class="text-[10px] text-emerald-400">Margin admin</span>
+                                        @endif
+                                    </div>
+                                </div>
                             </div>
                             <div class="flex items-center justify-between py-2">
                                 <span class="text-sm text-gray-400">Stok Tersedia</span>

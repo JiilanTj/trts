@@ -5,6 +5,7 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Support\Str;
 
 class StoreShowcase extends Model
 {
@@ -17,6 +18,7 @@ class StoreShowcase extends Model
         'is_featured',
         'is_active',
         'featured_until',
+        'share_token',
     ];
 
     protected $casts = [
@@ -123,5 +125,63 @@ class StoreShowcase extends Model
     public function scopeWithProduct($query)
     {
         return $query->with('product');
+    }
+
+    /**
+     * Boot method to generate share token automatically
+     */
+    protected static function booted()
+    {
+        static::creating(function ($showcase) {
+            if (!$showcase->share_token) {
+                $showcase->share_token = static::generateUniqueShareToken();
+            }
+        });
+    }
+
+    /**
+     * Generate unique share token
+     */
+    public static function generateUniqueShareToken()
+    {
+        do {
+            $token = Str::random(32);
+        } while (static::where('share_token', $token)->exists());
+
+        return $token;
+    }
+
+    /**
+     * Generate new share token for existing showcase
+     */
+    public function regenerateShareToken()
+    {
+        $this->update([
+            'share_token' => static::generateUniqueShareToken()
+        ]);
+        
+        return $this->share_token;
+    }
+
+    /**
+     * Get the public share URL
+     */
+    public function getShareUrlAttribute()
+    {
+        if (!$this->share_token) {
+            return null;
+        }
+        
+        return route('etalase.shared', ['token' => $this->share_token]);
+    }
+
+    /**
+     * Find showcase by share token
+     */
+    public static function findByShareToken($token)
+    {
+        return static::where('share_token', $token)
+            ->with(['user.sellerInfo', 'product'])
+            ->first();
     }
 }

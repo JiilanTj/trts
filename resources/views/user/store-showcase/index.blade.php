@@ -13,10 +13,19 @@
                 <h1 class="text-base font-semibold text-white leading-tight line-clamp-1">Etalase Saya</h1>
                 <p class="text-[11px] text-gray-500 mt-0.5 line-clamp-1">Kelola produk di etalase toko Anda.</p>
             </div>
-            <a href="{{ route('user.showcases.create') }}" class="hidden sm:inline-flex items-center gap-2 px-3 py-2 rounded-lg text-xs font-medium bg-gradient-to-r from-fuchsia-500 via-rose-500 to-cyan-500 text-white hover:from-fuchsia-500/90 hover:via-rose-500/90 hover:to-cyan-500/90 shadow-sm shadow-fuchsia-500/30 transition focus:outline-none focus:ring-2 focus:ring-fuchsia-500/60">
-                <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 6v6m0 0v6m0-6h6m-6 0H6" /></svg>
-                Tambah Produk
-            </a>
+            <div class="flex items-center gap-2">
+                <!-- Share Etalase Button -->
+                <button id="shareEtalaseBtn" class="inline-flex items-center gap-2 px-3 py-2 rounded-lg text-xs font-medium bg-gradient-to-r from-[#FE2C55] to-[#25F4EE] text-white hover:opacity-90 transition focus:outline-none focus:ring-2 focus:ring-fuchsia-500/60">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M8.684 13.342C8.886 12.938 9 12.482 9 12c0-.482-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.632 3.316m-6.632-6l6.632-3.316m0 0a3 3 0 105.367-2.684 3 3 0 00-5.367 2.684zm0 9.316a3 3 0 105.367 2.684 3 3 0 00-5.367-2.684z" /></svg>
+                    Share Etalase
+                </button>
+                
+                <!-- Tambah Produk Button -->
+                <a href="{{ route('user.showcases.create') }}" class="hidden sm:inline-flex items-center gap-2 px-3 py-2 rounded-lg text-xs font-medium bg-gradient-to-r from-fuchsia-500 via-rose-500 to-cyan-500 text-white hover:from-fuchsia-500/90 hover:via-rose-500/90 hover:to-cyan-500/90 shadow-sm shadow-fuchsia-500/30 transition focus:outline-none focus:ring-2 focus:ring-fuchsia-500/60">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 6v6m0 0v6m0-6h6m-6 0H6" /></svg>
+                    Tambah Produk
+                </a>
+            </div>
         </div>
 
         <!-- Stats Cards -->
@@ -219,5 +228,182 @@
                 alert('Terjadi kesalahan');
             });
         }
+
+        // Share Etalase functionality
+        let shareModal = null;
+        let currentShareUrl = @json(Auth::user()->etalase_share_url ?? null);
+        
+        function openShareModal() {
+            // Create modal if not exists
+            if (!shareModal) {
+                shareModal = document.createElement('div');
+                shareModal.className = 'fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4';
+                shareModal.innerHTML = `
+                    <div class="bg-[#1a1d21] border border-white/10 rounded-2xl p-6 max-w-md w-full mx-4">
+                        <div class="flex items-center justify-between mb-4">
+                            <h3 class="text-lg font-semibold text-white">Share Etalase Saya</h3>
+                            <button onclick="closeShareModal()" class="w-8 h-8 rounded-lg bg-white/10 hover:bg-white/20 flex items-center justify-center text-gray-400 hover:text-white">
+                                <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12" />
+                                </svg>
+                            </button>
+                        </div>
+                        
+                        <div class="space-y-4">
+                            <p class="text-sm text-gray-400">Bagikan seluruh etalase Anda dengan link khusus. User lain yang sudah login bisa melihat semua produk di etalase Anda.</p>
+                            
+                            <div class="space-y-2">
+                                <label class="text-xs font-medium text-gray-300">Link Sharing Etalase</label>
+                                <div class="flex gap-2">
+                                    <input type="text" id="shareUrlInput" class="flex-1 px-3 py-2 bg-white/5 border border-white/10 rounded-lg text-sm text-white focus:outline-none focus:ring-2 focus:ring-fuchsia-500/60" readonly>
+                                    <button onclick="copyShareUrl()" class="px-4 py-2 bg-gradient-to-r from-[#FE2C55] to-[#25F4EE] text-white text-sm font-medium rounded-lg hover:opacity-90 transition">
+                                        <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" />
+                                        </svg>
+                                    </button>
+                                </div>
+                            </div>
+                            
+                            <div class="flex gap-2 pt-2">
+                                <button onclick="generateNewShareUrl()" class="flex-1 py-2 bg-white/10 hover:bg-white/20 text-white text-sm font-medium rounded-lg transition">
+                                    Generate Ulang
+                                </button>
+                                <button onclick="closeShareModal()" class="flex-1 py-2 bg-gray-600/20 hover:bg-gray-600/30 text-gray-300 text-sm font-medium rounded-lg transition">
+                                    Tutup
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                `;
+                
+                // Add click outside to close
+                shareModal.addEventListener('click', function(e) {
+                    if (e.target === shareModal) {
+                        closeShareModal();
+                    }
+                });
+                
+                document.body.appendChild(shareModal);
+            }
+            
+            // Update share URL in input
+            const shareUrlInput = shareModal.querySelector('#shareUrlInput');
+            if (currentShareUrl) {
+                shareUrlInput.value = currentShareUrl;
+            } else {
+                shareUrlInput.value = 'Generating...';
+                generateNewShareUrl();
+            }
+            
+            shareModal.style.display = 'flex';
+        }
+        
+        function closeShareModal() {
+            if (shareModal) {
+                shareModal.style.display = 'none';
+            }
+        }
+        
+        function generateNewShareUrl() {
+            const shareUrlInput = document.querySelector('#shareUrlInput');
+            shareUrlInput.value = 'Generating...';
+            
+            fetch(`{{ route('user.showcases.generate-etalase-share-token') }}`, {
+                method: 'POST',
+                headers: {
+                    'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content,
+                    'Content-Type': 'application/json',
+                    'Accept': 'application/json'
+                }
+            })
+            .then(response => {
+                console.log('Response status:', response.status);
+                console.log('Response headers:', response.headers);
+                
+                // Check if response is OK
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+                
+                // Check if response is JSON
+                const contentType = response.headers.get('content-type');
+                if (!contentType || !contentType.includes('application/json')) {
+                    throw new Error(`Expected JSON, got: ${contentType}`);
+                }
+                
+                return response.json();
+            })
+            .then(data => {
+                console.log('Response data:', data);
+                
+                if (data.success) {
+                    currentShareUrl = data.share_url;
+                    shareUrlInput.value = currentShareUrl;
+                    // Show success notification
+                    showNotification('Link sharing etalase berhasil diperbarui!', 'success');
+                } else {
+                    shareUrlInput.value = 'Error generating URL';
+                    showNotification(data.message || 'Gagal generate link sharing etalase', 'error');
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                shareUrlInput.value = 'Error generating URL';
+                showNotification('Terjadi kesalahan saat generate link: ' + error.message, 'error');
+            });
+        }
+        
+        function copyShareUrl() {
+            const shareUrlInput = document.querySelector('#shareUrlInput');
+            if (shareUrlInput.value && shareUrlInput.value !== 'Generating...' && shareUrlInput.value !== 'Error generating URL') {
+                shareUrlInput.select();
+                shareUrlInput.setSelectionRange(0, 99999); // For mobile devices
+                
+                try {
+                    document.execCommand('copy');
+                    showNotification('Link berhasil disalin!', 'success');
+                } catch (err) {
+                    // Fallback for modern browsers
+                    navigator.clipboard.writeText(shareUrlInput.value).then(function() {
+                        showNotification('Link berhasil disalin!', 'success');
+                    }, function(err) {
+                        showNotification('Gagal menyalin link', 'error');
+                    });
+                }
+            }
+        }
+        
+        function showNotification(message, type = 'success') {
+            // Create notification
+            const notification = document.createElement('div');
+            notification.className = `fixed top-4 right-4 z-[60] px-4 py-3 rounded-lg font-medium text-sm transform transition-all duration-300 ${
+                type === 'success' 
+                    ? 'bg-emerald-500/10 border border-emerald-500/20 text-emerald-400' 
+                    : 'bg-red-500/10 border border-red-500/20 text-red-400'
+            }`;
+            notification.textContent = message;
+            
+            document.body.appendChild(notification);
+            
+            // Animate in
+            setTimeout(() => {
+                notification.style.transform = 'translateX(0)';
+                notification.style.opacity = '1';
+            }, 100);
+            
+            // Remove after 3 seconds
+            setTimeout(() => {
+                notification.style.transform = 'translateX(100%)';
+                notification.style.opacity = '0';
+                setTimeout(() => {
+                    if (notification.parentNode) {
+                        notification.parentNode.removeChild(notification);
+                    }
+                }, 300);
+            }, 3000);
+        }
+        
+        // Bind share button click
+        document.getElementById('shareEtalaseBtn').addEventListener('click', openShareModal);
     </script>
 </x-app-layout>

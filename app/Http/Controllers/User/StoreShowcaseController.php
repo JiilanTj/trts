@@ -283,4 +283,73 @@ class StoreShowcaseController extends Controller
             'message' => 'Urutan showcase berhasil diperbarui.'
         ]);
     }
+
+    /**
+     * Generate or regenerate etalase share token for current user
+     */
+    public function generateEtalaseShareToken()
+    {
+        try {
+            $this->checkSellerAccess();
+            
+            $user = Auth::user();
+            $shareToken = $user->regenerateEtalaseShareToken();
+            $shareUrl = $user->getEtalaseShareUrlAttribute();
+            
+            if (request()->ajax()) {
+                return response()->json([
+                    'success' => true,
+                    'share_token' => $shareToken,
+                    'share_url' => $shareUrl,
+                    'message' => 'Link sharing etalase berhasil diperbarui!'
+                ]);
+            }
+
+            return back()->with('success', 'Link sharing etalase berhasil diperbarui!')
+                        ->with('share_url', $shareUrl);
+        } catch (\Exception $e) {
+            \Log::error('Error generating etalase share token: ' . $e->getMessage());
+            
+            if (request()->ajax()) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Gagal generate link sharing: ' . $e->getMessage()
+                ], 500);
+            }
+
+            return back()->withErrors('Gagal generate link sharing: ' . $e->getMessage());
+        }
+    }
+
+    /**
+     * Display shared etalase (public view) - show all products from user's etalase
+     */
+    public function showShared($token)
+    {
+        // Find user by etalase share token
+        $user = \App\Models\User::findByEtalaseShareToken($token);
+        
+        if (!$user) {
+            abort(404, 'Etalase tidak ditemukan atau link sharing tidak valid.');
+        }
+
+        // Check if user is seller
+        if (!$user->isSeller()) {
+            abort(404, 'Etalase tidak tersedia.');
+        }
+
+        // Get all active showcases for this user
+        $showcases = $user->activeShowcases()
+            ->withProduct()
+            ->get();
+
+        $seller = $user;
+        $sellerInfo = $seller->sellerInfo;
+
+        return view('user.store-showcase.shared', compact(
+            'showcases', 
+            'seller', 
+            'sellerInfo'
+        ));
+    }
 }

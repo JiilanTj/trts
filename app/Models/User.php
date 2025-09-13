@@ -32,6 +32,7 @@ class User extends Authenticatable
         'followers',
         'role',
         'is_seller',
+        'etalase_share_token',
     ];
 
     /**
@@ -624,5 +625,67 @@ class User extends Authenticatable
     public function featuredShowcases(): HasMany
     {
         return $this->hasMany(StoreShowcase::class)->featured()->ordered();
+    }
+
+    /**
+     * Generate unique etalase share token
+     */
+    public static function generateUniqueEtalaseShareToken()
+    {
+        do {
+            $token = \Illuminate\Support\Str::random(32);
+        } while (static::where('etalase_share_token', $token)->exists());
+
+        return $token;
+    }
+
+    /**
+     * Generate or regenerate etalase share token for this user
+     */
+    public function regenerateEtalaseShareToken()
+    {
+        $shareToken = static::generateUniqueEtalaseShareToken();
+        $this->update([
+            'etalase_share_token' => $shareToken
+        ]);
+        
+        // Refresh the model to get the updated token
+        $this->refresh();
+        
+        return $shareToken;
+    }
+
+    /**
+     * Get the public etalase share URL
+     */
+    public function getEtalaseShareUrlAttribute()
+    {
+        if (!$this->etalase_share_token) {
+            return null;
+        }
+        
+        return route('etalase.shared', ['token' => $this->etalase_share_token]);
+    }
+
+    /**
+     * Find user by etalase share token
+     */
+    public static function findByEtalaseShareToken($token)
+    {
+        return static::where('etalase_share_token', $token)
+            ->with(['sellerInfo', 'activeShowcases.product'])
+            ->first();
+    }
+
+    /**
+     * Ensure user has etalase share token (generate if not exists)
+     */
+    public function ensureEtalaseShareToken()
+    {
+        if (!$this->etalase_share_token) {
+            $this->regenerateEtalaseShareToken();
+        }
+        
+        return $this->etalase_share_token;
     }
 }
