@@ -102,45 +102,16 @@
                         <div class="p-4">
                             <h4 class="font-medium text-white text-sm mb-2 line-clamp-2 leading-tight">{{ $item->product->name }}</h4>
                             
-                            <!-- Price Section with Margin Info -->
+                            <!-- Price Section -->
                             <div class="space-y-2">
-                                <!-- Seller Price (Harga Jual) -->
-                                <div class="flex items-center justify-between">
+                                <!-- Price -->
+                                <div class="mb-3">
                                     <span class="text-lg font-bold text-[#25F4EE]">
                                         Rp {{ number_format($item->product->harga_jual, 0, ',', '.') }}
                                     </span>
-                                    
-                                    @php
-                                        $margin = $item->product->getSellerMargin($seller);
-                                        $marginPercent = $item->product->harga_biasa > 0 ? round(($margin / $item->product->harga_biasa) * 100, 1) : 0;
-                                    @endphp
-                                    
-                                    @if($margin > 0)
-                                    <div class="flex items-center gap-1">
-                                        <span class="inline-flex items-center gap-1 px-2 py-1 rounded-full bg-emerald-500/20 border border-emerald-500/30">
-                                            <svg class="w-3 h-3 text-emerald-400" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
-                                                <path stroke-linecap="round" stroke-linejoin="round" d="M7 11l5-5m0 0l5 5m-5-5v12" />
-                                            </svg>
-                                            <span class="text-xs font-medium text-emerald-400">{{ $marginPercent }}%</span>
-                                        </span>
-                                    </div>
-                                    @endif
                                 </div>
                                 
-                                <!-- Original Price (Harga Biasa) -->
-                                <div class="flex items-center justify-between text-xs">
-                                    <span class="text-gray-500">
-                                        Harga Asli: <span class="line-through">Rp {{ number_format($item->product->harga_biasa, 0, ',', '.') }}</span>
-                                    </span>
-                                    
-                                    @if($margin > 0)
-                                    <span class="text-emerald-400 font-medium">
-                                        +Rp {{ number_format($margin, 0, ',', '.') }}
-                                    </span>
-                                    @endif
-                                </div>
-                                
-                                <!-- Stock Info -->
+                                <!-- Stock and Category Info -->
                                 <div class="flex items-center justify-between text-xs">
                                     <span class="text-gray-400">Stok: {{ $item->product->stock }}</span>
                                     

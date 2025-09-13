@@ -16,6 +16,9 @@ class StoreShowcaseController extends Controller
     private function checkSellerAccess()
     {
         if (!Auth::user() || !Auth::user()->isSeller()) {
+            if (request()->ajax()) {
+                throw new \Exception('Hanya seller yang bisa menggunakan fitur etalase.');
+            }
             abort(403, 'Hanya seller yang bisa menggunakan fitur etalase.');
         }
     }
@@ -290,13 +293,28 @@ class StoreShowcaseController extends Controller
     public function generateEtalaseShareToken()
     {
         try {
+            \Log::info('generateEtalaseShareToken called');
+            \Log::info('Request method: ' . request()->method());
+            \Log::info('Is AJAX: ' . (request()->ajax() ? 'true' : 'false'));
+            \Log::info('Accept header: ' . request()->header('Accept'));
+            \Log::info('Content-Type header: ' . request()->header('Content-Type'));
+            
             $this->checkSellerAccess();
             
-            $user = Auth::user();
-            $shareToken = $user->regenerateEtalaseShareToken();
-            $shareUrl = $user->getEtalaseShareUrlAttribute();
+            \Log::info('Seller access check passed');
             
-            if (request()->ajax()) {
+            $user = Auth::user();
+            \Log::info('User: ' . $user->id . ' - ' . $user->full_name);
+            
+            $shareToken = $user->regenerateEtalaseShareToken();
+            \Log::info('Share token generated: ' . $shareToken);
+            
+            $shareUrl = $user->getEtalaseShareUrlAttribute();
+            \Log::info('Share URL: ' . $shareUrl);
+            
+            // Always return JSON for AJAX requests
+            if (request()->ajax() || request()->wantsJson()) {
+                \Log::info('Returning JSON response');
                 return response()->json([
                     'success' => true,
                     'share_token' => $shareToken,
@@ -309,8 +327,11 @@ class StoreShowcaseController extends Controller
                         ->with('share_url', $shareUrl);
         } catch (\Exception $e) {
             \Log::error('Error generating etalase share token: ' . $e->getMessage());
+            \Log::error('Stack trace: ' . $e->getTraceAsString());
             
-            if (request()->ajax()) {
+            // Always return JSON for AJAX requests
+            if (request()->ajax() || request()->wantsJson()) {
+                \Log::info('Returning JSON error response');
                 return response()->json([
                     'success' => false,
                     'message' => 'Gagal generate link sharing: ' . $e->getMessage()
@@ -351,5 +372,47 @@ class StoreShowcaseController extends Controller
             'seller', 
             'sellerInfo'
         ));
+    }
+
+    /**
+     * Debug method to test AJAX requests
+     */
+    public function debugAjax()
+    {
+        try {
+            \Log::info('Debug AJAX called');
+            \Log::info('Request method: ' . request()->method());
+            \Log::info('Is AJAX: ' . (request()->ajax() ? 'true' : 'false'));
+            \Log::info('wantsJson: ' . (request()->wantsJson() ? 'true' : 'false'));
+            \Log::info('Accept header: ' . request()->header('Accept'));
+            \Log::info('Content-Type header: ' . request()->header('Content-Type'));
+            \Log::info('User authenticated: ' . (auth()->check() ? 'true' : 'false'));
+            
+            if (auth()->check()) {
+                $user = auth()->user();
+                \Log::info('User ID: ' . $user->id);
+                \Log::info('User is seller: ' . ($user->isSeller() ? 'true' : 'false'));
+            }
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Debug test successful',
+                'request_info' => [
+                    'method' => request()->method(),
+                    'is_ajax' => request()->ajax(),
+                    'wants_json' => request()->wantsJson(),
+                    'accept' => request()->header('Accept'),
+                    'content_type' => request()->header('Content-Type'),
+                    'authenticated' => auth()->check(),
+                    'is_seller' => auth()->check() ? auth()->user()->isSeller() : false
+                ]
+            ]);
+        } catch (\Exception $e) {
+            \Log::error('Debug AJAX error: ' . $e->getMessage());
+            return response()->json([
+                'success' => false,
+                'message' => 'Debug test failed: ' . $e->getMessage()
+            ], 500);
+        }
     }
 }

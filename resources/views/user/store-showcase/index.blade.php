@@ -320,18 +320,22 @@
                 console.log('Response status:', response.status);
                 console.log('Response headers:', response.headers);
                 
-                // Check if response is OK
-                if (!response.ok) {
-                    throw new Error(`HTTP error! status: ${response.status}`);
-                }
-                
-                // Check if response is JSON
-                const contentType = response.headers.get('content-type');
-                if (!contentType || !contentType.includes('application/json')) {
-                    throw new Error(`Expected JSON, got: ${contentType}`);
-                }
-                
-                return response.json();
+                // Get response text first for debugging
+                return response.text().then(text => {
+                    console.log('Response text:', text);
+                    
+                    // Check if response is OK
+                    if (!response.ok) {
+                        throw new Error(`HTTP error! status: ${response.status}. Response: ${text}`);
+                    }
+                    
+                    // Try to parse as JSON
+                    try {
+                        return JSON.parse(text);
+                    } catch (e) {
+                        throw new Error(`Failed to parse JSON. Response: ${text}`);
+                    }
+                });
             })
             .then(data => {
                 console.log('Response data:', data);

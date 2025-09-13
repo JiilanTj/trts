@@ -250,6 +250,7 @@ Route::middleware('auth')->group(function () {
         Route::post('/{showcase}/toggle-featured', [UserStoreShowcaseController::class, 'toggleFeatured'])->name('toggle-featured');
         Route::post('/update-order', [UserStoreShowcaseController::class, 'updateOrder'])->name('update-order');
         Route::post('/generate-etalase-share-token', [UserStoreShowcaseController::class, 'generateEtalaseShareToken'])->name('generate-etalase-share-token');
+        Route::post('/debug-ajax', [UserStoreShowcaseController::class, 'debugAjax'])->name('debug-ajax');
     });
     
     // Chat / Customer Service
