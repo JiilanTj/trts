@@ -153,10 +153,10 @@
                                             @elseif($withdrawal->status === 'rejected') bg-red-500/20 text-red-300
                                             @else bg-gray-500/20 text-gray-300
                                             @endif">
-                                            {{ $withdrawal->getStatusLabel() }}
+                                            {{ $withdrawal->status_label }}
                                         </span>
                                     </div>
-                                    <p class="text-gray-400 text-xs">{{ $withdrawal->account_name }} • {{ $withdrawal->account_number }}</p>
+                                    <p class="text-gray-400 text-xs">{{ $withdrawal->account_holder_name }} • {{ $withdrawal->account_number }}</p>
                                     <p class="text-gray-500 text-[10px] mt-1">{{ $withdrawal->created_at->format('d M Y, H:i') }}</p>
                                 </div>
                                 <div class="text-right shrink-0">

@@ -5,6 +5,7 @@ namespace App\Http\Controllers\User;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\StoreWithdrawalRequest;
 use App\Models\WithdrawalRequest;
+use App\Models\Notification;
 use Illuminate\Http\Request;
 use Illuminate\View\View;
 use Illuminate\Http\RedirectResponse;
@@ -74,6 +75,14 @@ class WithdrawalController extends Controller
         // Deduct balance immediately (hold the funds)
         $user->deductBalance($totalDeducted);
 
+        // Create notification for user
+        Notification::create([
+            'for_user_id' => $user->id,
+            'category' => 'withdrawal',
+            'title' => 'Permintaan Penarikan Diterima',
+            'description' => "Permintaan penarikan sebesar Rp" . number_format($request->amount, 0, ',', '.') . " ke rekening {$request->bank_name} telah diterima dan menunggu diproses admin.",
+        ]);
+
         return redirect()->route('user.withdrawals.show', $withdrawal)
             ->with('success', 'Permintaan penarikan berhasil dibuat. Dana telah ditahan dan akan diproses dalam 1-2 hari kerja.');
     }
@@ -125,10 +134,18 @@ class WithdrawalController extends Controller
         }
 
         // Refund the balance
-        auth()->user()->addBalance($withdrawal->total_deducted);
+        auth()->user()->addBalance((int) $withdrawal->total_deducted);
         
         // Update status
         $withdrawal->update(['status' => WithdrawalRequest::STATUS_CANCELLED]);
+
+        // Create notification for user
+        Notification::create([
+            'for_user_id' => auth()->id(),
+            'category' => 'withdrawal',
+            'title' => 'Penarikan Dibatalkan',
+            'description' => "Permintaan penarikan sebesar Rp" . number_format((float) $withdrawal->amount, 0, ',', '.') . " telah dibatalkan. Saldo telah dikembalikan ke akun Anda.",
+        ]);
 
         return redirect()->route('user.withdrawals.index')
             ->with('success', 'Permintaan penarikan dibatalkan dan saldo dikembalikan.');

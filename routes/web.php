@@ -330,8 +330,13 @@ Route::middleware(['auth', 'role:admin'])->prefix('admin')->name('admin.')->grou
         Route::post('/{withdrawal}/process', [AdminWithdrawalController::class, 'process'])->name('process');
         Route::post('/{withdrawal}/complete', [AdminWithdrawalController::class, 'complete'])->name('complete');
         Route::post('/{withdrawal}/reject', [AdminWithdrawalController::class, 'reject'])->name('reject');
-        Route::post('/bulk-action', [AdminWithdrawalController::class, 'bulkAction'])->name('bulk-action');
+        Route::post('/bulk', [AdminWithdrawalController::class, 'bulkAction'])->name('bulk');
         Route::get('/stats/overview', [AdminWithdrawalController::class, 'stats'])->name('stats');
+    });
+    
+    // API Routes for real-time counts
+    Route::prefix('api')->group(function () {
+        Route::get('/withdrawals/count', [AdminWithdrawalController::class, 'getPendingCount']);
     });
     
     // Admin Loan Request Routes

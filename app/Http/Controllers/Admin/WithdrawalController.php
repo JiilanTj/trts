@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Admin;
 use App\Http\Controllers\Controller;
 use App\Models\WithdrawalRequest;
 use App\Models\User;
+use App\Models\Notification;
 use Illuminate\Http\Request;
 use Illuminate\View\View;
 use Illuminate\Http\RedirectResponse;
@@ -20,6 +21,15 @@ class WithdrawalController extends Controller
             ->when($request->status, function ($query, $status) {
                 return $query->where('status', $status);
             })
+            ->when($request->bank, function ($query, $bank) {
+                return $query->where('bank_name', 'like', "%{$bank}%");
+            })
+            ->when($request->date_from, function ($query, $dateFrom) {
+                return $query->whereDate('created_at', '>=', $dateFrom);
+            })
+            ->when($request->date_to, function ($query, $dateTo) {
+                return $query->whereDate('created_at', '<=', $dateTo);
+            })
             ->when($request->search, function ($query, $search) {
                 return $query->whereHas('user', function ($q) use ($search) {
                     $q->where('username', 'like', "%{$search}%")
@@ -29,16 +39,17 @@ class WithdrawalController extends Controller
             ->latest()
             ->paginate(15);
 
-        $statusCounts = [
-            'all' => WithdrawalRequest::count(),
+        // Stats for dashboard cards
+        $stats = [
             'pending' => WithdrawalRequest::where('status', WithdrawalRequest::STATUS_PENDING)->count(),
             'processing' => WithdrawalRequest::where('status', WithdrawalRequest::STATUS_PROCESSING)->count(),
             'completed' => WithdrawalRequest::where('status', WithdrawalRequest::STATUS_COMPLETED)->count(),
             'rejected' => WithdrawalRequest::where('status', WithdrawalRequest::STATUS_REJECTED)->count(),
-            'cancelled' => WithdrawalRequest::where('status', WithdrawalRequest::STATUS_CANCELLED)->count(),
         ];
 
-        return view('admin.withdrawals.index', compact('withdrawals', 'statusCounts'));
+        $totalAmount = WithdrawalRequest::where('status', WithdrawalRequest::STATUS_COMPLETED)->sum('amount');
+
+        return view('admin.withdrawals.index', compact('withdrawals', 'stats', 'totalAmount'));
     }
 
     /**
@@ -48,14 +59,29 @@ class WithdrawalController extends Controller
     {
         $withdrawal->load(['user', 'processedBy']);
         
-        return view('admin.withdrawals.show', compact('withdrawal'));
+        // User stats for sidebar
+        $userStats = [
+            'total_withdrawals' => WithdrawalRequest::where('user_id', $withdrawal->user_id)->count(),
+            'completed_withdrawals' => WithdrawalRequest::where('user_id', $withdrawal->user_id)
+                ->where('status', WithdrawalRequest::STATUS_COMPLETED)->count(),
+            'total_amount' => WithdrawalRequest::where('user_id', $withdrawal->user_id)
+                ->where('status', WithdrawalRequest::STATUS_COMPLETED)->sum('amount'),
+        ];
+        
+        return view('admin.withdrawals.show', compact('withdrawal', 'userStats'));
     }
 
     /**
      * Process a withdrawal request (mark as processing).
      */
-    public function process(WithdrawalRequest $withdrawal): RedirectResponse
+    public function process(Request $request, WithdrawalRequest $withdrawal): RedirectResponse
     {
+        $request->validate([
+            'admin_notes' => 'nullable|string|max:1000',
+        ], [
+            'admin_notes.max' => 'Catatan admin maksimal 1000 karakter.',
+        ]);
+
         if (!$withdrawal->isPending()) {
             return back()->with('error', 'Hanya permintaan dengan status "Menunggu" yang dapat diproses.');
         }
@@ -64,7 +90,12 @@ class WithdrawalController extends Controller
             'status' => WithdrawalRequest::STATUS_PROCESSING,
             'processed_at' => now(),
             'processed_by' => auth()->id(),
+            'admin_notes' => $request->admin_notes,
         ]);
+
+        // Create notification for user
+        $this->createWithdrawalNotification($withdrawal, 'withdrawal', 'Penarikan Sedang Diproses', 
+            "Permintaan penarikan Anda sebesar Rp" . number_format((float) $withdrawal->amount, 0, ',', '.') . " sedang diproses oleh tim finance.");
 
         return back()->with('success', 'Permintaan penarikan berhasil diproses. Status berubah menjadi "Diproses".');
     }
@@ -75,11 +106,8 @@ class WithdrawalController extends Controller
     public function complete(Request $request, WithdrawalRequest $withdrawal): RedirectResponse
     {
         $request->validate([
-            'transaction_reference' => 'required|string|max:255',
             'admin_notes' => 'nullable|string|max:1000',
         ], [
-            'transaction_reference.required' => 'Referensi transaksi harus diisi.',
-            'transaction_reference.max' => 'Referensi transaksi maksimal 255 karakter.',
             'admin_notes.max' => 'Catatan admin maksimal 1000 karakter.',
         ]);
 
@@ -92,11 +120,12 @@ class WithdrawalController extends Controller
             'completed_at' => now(),
             'processed_at' => $withdrawal->processed_at ?? now(),
             'processed_by' => auth()->id(),
-            'transaction_reference' => $request->transaction_reference,
             'admin_notes' => $request->admin_notes,
         ]);
 
-        // TODO: Send notification to user about completion
+        // Create notification for user
+        $this->createWithdrawalNotification($withdrawal, 'withdrawal', 'Penarikan Berhasil Diselesaikan', 
+            "Penarikan Anda sebesar Rp" . number_format((float) $withdrawal->amount, 0, ',', '.') . " ke rekening {$withdrawal->bank_name} telah berhasil ditransfer.");
 
         return back()->with('success', 'Permintaan penarikan berhasil diselesaikan.');
     }
@@ -118,7 +147,7 @@ class WithdrawalController extends Controller
         }
 
         // Refund the balance to user
-        $withdrawal->user->addBalance($withdrawal->total_deducted);
+        $withdrawal->user->addBalance((int) $withdrawal->total_deducted);
 
         $withdrawal->update([
             'status' => WithdrawalRequest::STATUS_REJECTED,
@@ -127,7 +156,9 @@ class WithdrawalController extends Controller
             'admin_notes' => $request->admin_notes,
         ]);
 
-        // TODO: Send notification to user about rejection
+        // Create notification for user
+        $this->createWithdrawalNotification($withdrawal, 'withdrawal', 'Penarikan Ditolak', 
+            "Permintaan penarikan Anda sebesar Rp" . number_format((float) $withdrawal->amount, 0, ',', '.') . " ditolak. Alasan: {$request->admin_notes}. Saldo telah dikembalikan.");
 
         return back()->with('success', 'Permintaan penarikan ditolak dan saldo dikembalikan ke user.');
     }
@@ -165,18 +196,18 @@ class WithdrawalController extends Controller
     public function bulkAction(Request $request): RedirectResponse
     {
         $request->validate([
-            'action' => 'required|in:process,reject',
+            'action' => 'required|in:process,complete,reject',
             'withdrawal_ids' => 'required|array',
             'withdrawal_ids.*' => 'exists:withdrawal_requests,id',
-            'bulk_admin_notes' => 'nullable|string|max:1000',
+            'admin_notes' => 'nullable|string|max:1000',
         ]);
 
         $withdrawalIds = $request->withdrawal_ids;
         $action = $request->action;
-        $adminNotes = $request->bulk_admin_notes;
+        $adminNotes = $request->admin_notes;
 
         $withdrawals = WithdrawalRequest::whereIn('id', $withdrawalIds)
-            ->where('status', WithdrawalRequest::STATUS_PENDING)
+            ->whereIn('status', [WithdrawalRequest::STATUS_PENDING, WithdrawalRequest::STATUS_PROCESSING])
             ->get();
 
         if ($withdrawals->isEmpty()) {
@@ -186,17 +217,36 @@ class WithdrawalController extends Controller
         $processedCount = 0;
 
         foreach ($withdrawals as $withdrawal) {
-            if ($action === 'process') {
+            if ($action === 'process' && $withdrawal->isPending()) {
                 $withdrawal->update([
                     'status' => WithdrawalRequest::STATUS_PROCESSING,
                     'processed_at' => now(),
                     'processed_by' => auth()->id(),
                     'admin_notes' => $adminNotes,
                 ]);
+                
+                // Create notification
+                $this->createWithdrawalNotification($withdrawal, 'withdrawal', 'Penarikan Sedang Diproses', 
+                    "Permintaan penarikan Anda sebesar Rp" . number_format((float) $withdrawal->amount, 0, ',', '.') . " sedang diproses oleh tim finance.");
+                
                 $processedCount++;
-            } elseif ($action === 'reject') {
+            } elseif ($action === 'complete' && ($withdrawal->isProcessing() || $withdrawal->isPending())) {
+                $withdrawal->update([
+                    'status' => WithdrawalRequest::STATUS_COMPLETED,
+                    'completed_at' => now(),
+                    'processed_at' => $withdrawal->processed_at ?? now(),
+                    'processed_by' => auth()->id(),
+                    'admin_notes' => $adminNotes,
+                ]);
+                
+                // Create notification
+                $this->createWithdrawalNotification($withdrawal, 'withdrawal', 'Penarikan Berhasil Diselesaikan', 
+                    "Penarikan Anda sebesar Rp" . number_format((float) $withdrawal->amount, 0, ',', '.') . " ke rekening {$withdrawal->bank_name} telah berhasil ditransfer.");
+                
+                $processedCount++;
+            } elseif ($action === 'reject' && ($withdrawal->isPending() || $withdrawal->isProcessing())) {
                 // Refund balance
-                $withdrawal->user->addBalance($withdrawal->total_deducted);
+                $withdrawal->user->addBalance((int) $withdrawal->total_deducted);
                 
                 $withdrawal->update([
                     'status' => WithdrawalRequest::STATUS_REJECTED,
@@ -204,11 +254,39 @@ class WithdrawalController extends Controller
                     'processed_by' => auth()->id(),
                     'admin_notes' => $adminNotes ?: 'Ditolak secara massal',
                 ]);
+                
+                // Create notification
+                $this->createWithdrawalNotification($withdrawal, 'withdrawal', 'Penarikan Ditolak', 
+                    "Permintaan penarikan Anda sebesar Rp" . number_format((float) $withdrawal->amount, 0, ',', '.') . " ditolak. Alasan: " . ($adminNotes ?: 'Ditolak secara massal') . ". Saldo telah dikembalikan.");
+                
                 $processedCount++;
             }
         }
 
-        $actionText = $action === 'process' ? 'diproses' : 'ditolak';
+        $actionText = $action === 'process' ? 'diproses' : ($action === 'complete' ? 'diselesaikan' : 'ditolak');
         return back()->with('success', "{$processedCount} permintaan penarikan berhasil {$actionText}.");
+    }
+
+    /**
+     * API endpoint to get pending withdrawal count for sidebar badge.
+     */
+    public function getPendingCount()
+    {
+        $count = WithdrawalRequest::where('status', WithdrawalRequest::STATUS_PENDING)->count();
+        
+        return response()->json(['count' => $count]);
+    }
+
+    /**
+     * Create notification for withdrawal-related actions
+     */
+    private function createWithdrawalNotification(WithdrawalRequest $withdrawal, string $category, string $title, string $description): void
+    {
+        Notification::create([
+            'for_user_id' => $withdrawal->user_id,
+            'category' => $category,
+            'title' => $title,
+            'description' => $description,
+        ]);
     }
 }
