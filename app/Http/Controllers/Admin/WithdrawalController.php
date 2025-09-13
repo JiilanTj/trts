@@ -289,4 +289,67 @@ class WithdrawalController extends Controller
             'description' => $description,
         ]);
     }
+
+    /**
+     * Update withdrawal status directly to any valid status
+     */
+    public function updateStatus(Request $request, WithdrawalRequest $withdrawal): RedirectResponse
+    {
+        $request->validate([
+            'status' => 'required|in:pending,processing,completed,rejected,cancelled',
+            'admin_notes' => 'nullable|string|max:1000',
+        ]);
+
+        $oldStatus = $withdrawal->status;
+        $newStatus = $request->status;
+
+        // Prevent certain impossible transitions
+        if ($oldStatus === WithdrawalRequest::STATUS_COMPLETED && $newStatus !== WithdrawalRequest::STATUS_COMPLETED) {
+            return back()->withErrors(['status' => 'Penarikan yang sudah selesai tidak dapat diubah statusnya.']);
+        }
+
+        // Handle balance refund when changing to rejected/cancelled
+        if (in_array($newStatus, [WithdrawalRequest::STATUS_REJECTED, WithdrawalRequest::STATUS_CANCELLED]) && 
+            !in_array($oldStatus, [WithdrawalRequest::STATUS_REJECTED, WithdrawalRequest::STATUS_CANCELLED])) {
+            // Refund balance if changing to rejected/cancelled from other status
+            $withdrawal->user->addBalance((int) $withdrawal->total_deducted);
+        } elseif (!in_array($newStatus, [WithdrawalRequest::STATUS_REJECTED, WithdrawalRequest::STATUS_CANCELLED]) && 
+                  in_array($oldStatus, [WithdrawalRequest::STATUS_REJECTED, WithdrawalRequest::STATUS_CANCELLED])) {
+            // Deduct balance if changing from rejected/cancelled to other status
+            if (!$withdrawal->user->hasSufficientBalance($withdrawal->total_deducted)) {
+                return back()->withErrors(['status' => 'Saldo user tidak mencukupi untuk mengaktifkan kembali penarikan ini.']);
+            }
+            $withdrawal->user->deductBalance($withdrawal->total_deducted);
+        }
+
+        // Update withdrawal
+        $withdrawal->update([
+            'status' => $newStatus,
+            'processed_at' => in_array($newStatus, [WithdrawalRequest::STATUS_PROCESSING, WithdrawalRequest::STATUS_COMPLETED, WithdrawalRequest::STATUS_REJECTED]) ? now() : $withdrawal->processed_at,
+            'completed_at' => $newStatus === WithdrawalRequest::STATUS_COMPLETED ? now() : null,
+            'processed_by' => auth()->id(),
+            'admin_notes' => $request->admin_notes,
+        ]);
+
+        // Create notification
+        $statusLabels = WithdrawalRequest::getStatuses();
+        $statusLabel = $statusLabels[$newStatus] ?? ucfirst($newStatus);
+        
+        $descriptions = [
+            WithdrawalRequest::STATUS_PENDING => "Permintaan penarikan Anda sebesar Rp" . number_format((float) $withdrawal->amount, 0, ',', '.') . " dikembalikan ke status pending.",
+            WithdrawalRequest::STATUS_PROCESSING => "Permintaan penarikan Anda sebesar Rp" . number_format((float) $withdrawal->amount, 0, ',', '.') . " sedang diproses oleh tim finance.",
+            WithdrawalRequest::STATUS_COMPLETED => "Penarikan Anda sebesar Rp" . number_format((float) $withdrawal->amount, 0, ',', '.') . " ke rekening {$withdrawal->bank_name} telah berhasil ditransfer.",
+            WithdrawalRequest::STATUS_REJECTED => "Permintaan penarikan Anda sebesar Rp" . number_format((float) $withdrawal->amount, 0, ',', '.') . " ditolak. Saldo telah dikembalikan.",
+            WithdrawalRequest::STATUS_CANCELLED => "Permintaan penarikan Anda sebesar Rp" . number_format((float) $withdrawal->amount, 0, ',', '.') . " dibatalkan. Saldo telah dikembalikan.",
+        ];
+
+        $description = $descriptions[$newStatus] ?? "Status penarikan Anda berubah menjadi {$statusLabel}.";
+        if ($request->admin_notes && in_array($newStatus, [WithdrawalRequest::STATUS_REJECTED, WithdrawalRequest::STATUS_CANCELLED])) {
+            $description .= " Alasan: {$request->admin_notes}";
+        }
+
+        $this->createWithdrawalNotification($withdrawal, 'withdrawal', "Penarikan {$statusLabel}", $description);
+
+        return back()->with('success', "Status penarikan berhasil diubah dari {$statusLabels[$oldStatus]} menjadi {$statusLabel}.");
+    }
 }

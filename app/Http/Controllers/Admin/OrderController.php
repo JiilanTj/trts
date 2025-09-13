@@ -163,6 +163,52 @@ class OrderController extends Controller
         return back()->with('success', 'Refund berhasil.');
     }
 
+    /** Update order status directly to any valid status */
+    public function updateStatus(Request $request, Order $order)
+    {
+        $request->validate([
+            'status' => 'required|in:pending,awaiting_confirmation,packaging,shipped,delivered,completed,cancelled',
+            'admin_notes' => 'nullable|string|max:1000',
+        ]);
+
+        $oldStatus = $order->status;
+        $newStatus = $request->status;
+
+        // Prevent certain impossible transitions
+        if ($oldStatus === 'completed' && $newStatus !== 'completed') {
+            return back()->withErrors(['status' => 'Order yang sudah selesai tidak dapat diubah statusnya.']);
+        }
+
+        if ($oldStatus === 'cancelled' && $newStatus !== 'cancelled') {
+            return back()->withErrors(['status' => 'Order yang sudah dibatalkan tidak dapat diubah statusnya.']);
+        }
+
+        // Update status
+        $order->update([
+            'status' => $newStatus,
+            'admin_notes' => $request->admin_notes
+        ]);
+
+        // Create notification for status change
+        $statusLabels = Order::statusOptions();
+        $statusLabel = $statusLabels[$newStatus] ?? ucfirst($newStatus);
+        
+        $descriptions = [
+            'pending' => "Order #{$order->id} dikembalikan ke status pending.",
+            'awaiting_confirmation' => "Order #{$order->id} menunggu konfirmasi pembayaran.",
+            'packaging' => "Order #{$order->id} sedang dalam tahap pengemasan.",
+            'shipped' => "Order #{$order->id} telah dikirim dan sedang dalam perjalanan ke alamat tujuan.",
+            'delivered' => "Order #{$order->id} telah sampai di alamat tujuan. Silakan konfirmasi penerimaan barang.",
+            'completed' => "Order #{$order->id} telah selesai. Terima kasih telah berbelanja!",
+            'cancelled' => "Order #{$order->id} telah dibatalkan oleh admin.",
+        ];
+
+        $this->createOrderNotification($order, 'order', "Order {$statusLabel}", 
+            $descriptions[$newStatus] ?? "Status order #{$order->id} berubah menjadi {$statusLabel}.");
+
+        return back()->with('success', "Status order berhasil diubah dari {$statusLabels[$oldStatus]} menjadi {$statusLabel}.");
+    }
+
     /**
      * Create notification for order-related actions
      */

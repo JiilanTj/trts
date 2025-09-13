@@ -45,13 +45,17 @@
                             @csrf
                             <button type="submit" class="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-lg text-sm font-medium transition-colors">Approve Pembayaran</button>
                         </form>
-                        <button type="button" onclick="document.getElementById('rejectModal').classList.remove('hidden')" class="bg-yellow-600 hover:bg-yellow-700 text-white px-4 py-2 rounded-lg text-sm font-medium transition-colors">Reject</button>
+                        <button type="button" onclick="showRejectModal()" class="bg-yellow-600 hover:bg-yellow-700 text-white px-4 py-2 rounded-lg text-sm font-medium transition-colors">Reject</button>
                     @endif
                     @if(in_array($order->status,['packaging','shipped','delivered']))
                         <form method="POST" action="{{ route('admin.orders.advance-status', $order) }}" class="inline">
                             @csrf
                             <button type="submit" class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg text-sm font-medium transition-colors">Next Status</button>
                         </form>
+                    @endif
+                    <!-- Flexible Status Update -->
+                    @if(!in_array($order->status, ['completed', 'cancelled']))
+                        <button type="button" onclick="showStatusModal()" class="bg-purple-600 hover:bg-purple-700 text-white px-4 py-2 rounded-lg text-sm font-medium transition-colors">Ubah Status</button>
                     @endif
                     @if($order->isBalancePayment() && $order->payment_status==='paid' && !in_array($order->status,['shipped','delivered','completed']))
                         <form method="POST" action="{{ route('admin.orders.refund', $order) }}" onsubmit="return confirm('Refund order saldo ini? Saldo user akan dikembalikan.');" class="inline">
@@ -257,10 +261,70 @@
                     <textarea name="admin_notes" rows="4" class="w-full rounded-md border border-gray-300 text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500" placeholder="Alasan ditolak / instruksi ulang..."></textarea>
                 </div>
                 <div class="flex justify-end gap-2">
-                    <button type="button" onclick="document.getElementById('rejectModal').classList.add('hidden')" class="px-4 py-2 text-sm rounded-md border bg-white hover:bg-gray-50">Batal</button>
+                    <button type="button" onclick="hideRejectModal()" class="px-4 py-2 text-sm rounded-md border bg-white hover:bg-gray-50">Batal</button>
                     <button type="submit" class="px-4 py-2 text-sm rounded-md bg-yellow-600 text-white font-medium hover:bg-yellow-700">Kirim</button>
                 </div>
             </form>
         </div>
     </div>
+
+    <!-- Status Update Modal -->
+    <div id="statusModal" class="hidden fixed inset-0 z-50 items-center justify-center bg-black/40">
+        <div class="bg-white w-full max-w-md rounded-lg shadow-lg border border-gray-200 p-6">
+            <h2 class="text-lg font-semibold text-gray-800 mb-4">Ubah Status Order</h2>
+            <form method="POST" action="{{ route('admin.orders.update-status', $order) }}" class="space-y-4">
+                @csrf
+                <div>
+                    <label class="block text-xs font-medium text-gray-600 mb-1">Status Baru</label>
+                    <select name="status" class="w-full rounded-md border border-gray-300 text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
+                        @foreach(App\Models\Order::statusOptions() as $statusKey => $statusLabel)
+                            <option value="{{ $statusKey }}" {{ $order->status === $statusKey ? 'selected' : '' }}>
+                                {{ $statusLabel }}
+                            </option>
+                        @endforeach
+                    </select>
+                </div>
+                <div>
+                    <label class="block text-xs font-medium text-gray-600 mb-1">Catatan Admin (opsional)</label>
+                    <textarea name="admin_notes" rows="3" class="w-full rounded-md border border-gray-300 text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500" placeholder="Catatan untuk perubahan status...">{{ $order->admin_notes }}</textarea>
+                </div>
+                <div class="flex justify-end gap-2">
+                    <button type="button" onclick="hideStatusModal()" class="px-4 py-2 text-sm rounded-md border bg-white hover:bg-gray-50">Batal</button>
+                    <button type="submit" class="px-4 py-2 text-sm rounded-md bg-purple-600 text-white font-medium hover:bg-purple-700">Update Status</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <script>
+        // Fix modal display
+        document.addEventListener('DOMContentLoaded', function() {
+            const statusModal = document.getElementById('statusModal');
+            const rejectModal = document.getElementById('rejectModal');
+            
+            // Show status modal
+            window.showStatusModal = function() {
+                statusModal.classList.remove('hidden');
+                statusModal.classList.add('flex');
+            }
+            
+            // Hide status modal
+            window.hideStatusModal = function() {
+                statusModal.classList.add('hidden');
+                statusModal.classList.remove('flex');
+            }
+            
+            // Show reject modal
+            window.showRejectModal = function() {
+                rejectModal.classList.remove('hidden');
+                rejectModal.classList.add('flex');
+            }
+            
+            // Hide reject modal
+            window.hideRejectModal = function() {
+                rejectModal.classList.add('hidden');
+                rejectModal.classList.remove('flex');
+            }
+        });
+    </script>
 </x-admin-layout>
