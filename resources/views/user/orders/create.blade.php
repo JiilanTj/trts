@@ -31,12 +31,17 @@
                 @csrf
                 <input type="hidden" name="purchase_type" id="purchase_type_input" value="{{ $purchaseType }}">
                 <input type="hidden" id="single_mode" value="{{ isset($singleMode)&&$singleMode?1:0 }}">
+                @if(isset($etalaseInfo))
+                    <input type="hidden" name="from_etalase" value="1">
+                    <input type="hidden" name="seller_id" value="{{ $etalaseInfo['seller_id'] }}">
+                    <input type="hidden" name="etalase_margin" value="{{ $etalaseInfo['margin'] }}">
+                @endif
                 <div class="grid md:grid-cols-3 gap-8">
                     <div class="md:col-span-2 space-y-8">
                         <div class="bg-[#181d23] border border-white/10 rounded-2xl p-6 space-y-6" id="product-select-block">
                             <div class="flex items-center justify-between">
                                 <h2 class="text-sm font-semibold text-white">Pilih Produk</h2>
-                                @if(auth()->user()->isSeller())
+                                @if(auth()->user()->isSeller() && !isset($etalaseInfo))
                                     <div class="flex items-center gap-4 text-[11px] font-medium" id="purchase-type-toggle">
                                         <label class="flex items-center gap-1 cursor-pointer">
                                             <input type="radio" name="purchase_type_switch" value="self" class="purchase-type-switch text-fuchsia-500 focus:ring-fuchsia-500/60 bg-[#1b1f25] border-white/10" @checked($purchaseType==='self')>
@@ -50,7 +55,7 @@
                                 @endif
                             </div>
                             
-                            @if(auth()->user()->isSeller())
+                            @if(auth()->user()->isSeller() && !isset($etalaseInfo))
                                 <div class="p-3 rounded-xl bg-[#1a1f26] border border-white/5 text-[11px] space-y-2" id="seller-info">
                                     <div class="flex items-center gap-2">
                                         @php 
@@ -154,6 +159,20 @@
                             @endif
                             @if(isset($singleMode)&&$singleMode && $prefill)
                                 <div id="single-product-summary" class="space-y-4">
+                                    @if(isset($etalaseInfo))
+                                        <!-- Etalase Product Summary -->
+                                        <div class="mb-4 p-3 rounded-xl bg-gradient-to-r from-fuchsia-500/10 via-rose-500/10 to-cyan-500/10 border border-fuchsia-500/30">
+                                            <div class="flex items-center gap-2 mb-2">
+                                                <svg class="w-4 h-4 text-fuchsia-400" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                                                    <path stroke-linecap="round" stroke-linejoin="round" d="M8.684 13.342C8.886 12.938 9 12.482 9 12c0-.482-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.632 3.316m-6.632-6l6.632-3.316m0 0a3 3 0 105.367-2.684 3 3 0 00-5.367 2.684zm0 9.316a3 3 0 105.367 2.684 3 3 0 00-5.367-2.684z" />
+                                                </svg>
+                                                <span class="text-xs font-medium text-fuchsia-300">Dari Etalase</span>
+                                            </div>
+                                            <p class="text-xs text-gray-300">{{ $etalaseInfo['seller_name'] }}</p>
+                                            <p class="text-[10px] text-gray-500">Margin untuk seller: Rp {{ number_format($etalaseInfo['margin'], 0, ',', '.') }}</p>
+                                        </div>
+                                    @endif
+                                    
                                     <div class="flex items-start justify-between gap-4 rounded-xl border border-fuchsia-500/50 bg-[#1f1115] p-4">
                                         <div class="flex-1 min-w-0">
                                             <p class="text-[11px] text-gray-500 mb-0.5">#{{ $prefill->id }}</p>
@@ -161,7 +180,35 @@
                                             <p class="text-[10px] text-gray-500 mt-1">Stok: {{ $prefill->stock }}</p>
                                         </div>
                                         <div class="text-right space-y-2">
-                                            <p class="text-[11px] font-semibold bg-clip-text text-transparent bg-gradient-to-r from-fuchsia-400 via-rose-400 to-cyan-400">Rp {{ number_format($prefill->harga_biasa,0,',','.') }}</p>
+                                            <p class="text-[11px] font-semibold bg-clip-text text-transparent bg-gradient-to-r from-fuchsia-400 via-rose-400 to-cyan-400">
+                                                @if(isset($etalaseInfo))
+                                                    Rp {{ number_format($prefill->harga_jual,0,',','.') }}
+                                                @else
+                                                    <span class="purchase-type-self">Rp {{ number_format($prefill->harga_biasa,0,',','.') }}</span>
+                                                    <span class="purchase-type-external" style="display: none;">Rp {{ number_format($prefill->harga_jual,0,',','.') }}</span>
+                                                @endif
+                                            </p>
+                                            @if(isset($etalaseInfo))
+                                                <p class="text-[10px] text-gray-500">Harga Etalase</p>
+                                            @elseif(auth()->user()->isSeller())
+                                                <div class="purchase-type-external text-[10px] text-emerald-400 font-medium" style="display: none;">
+                                                    @php 
+                                                        $user = auth()->user();
+                                                        $marginPercent = $user->getLevelMarginPercent();
+                                                        if($marginPercent) {
+                                                            $margin = round($prefill->harga_jual * ($marginPercent / 100));
+                                                        } else {
+                                                            $margin = max(0, $prefill->harga_jual - $prefill->harga_biasa);
+                                                        }
+                                                    @endphp
+                                                    Margin: Rp {{ number_format($margin,0,',','.') }}
+                                                    @if($marginPercent)
+                                                        ({{ $marginPercent }}%)
+                                                    @else
+                                                        (admin)
+                                                    @endif
+                                                </div>
+                                            @endif
                                             <div class="flex items-center gap-2 justify-end">
                                                 <button type="button" id="qty-minus" class="w-7 h-7 inline-flex items-center justify-center rounded-lg bg-[#242b33] text-gray-400 hover:text-white hover:bg-fuchsia-600/20 border border-white/10">-</button>
                                                 <input type="number" min="1" value="1" id="single-qty" class="w-14 text-xs bg-[#242b33] border border-white/10 rounded-lg px-2 py-1 text-center focus:outline-none focus:ring-2 focus:ring-fuchsia-500/50 text-gray-200">
@@ -169,7 +216,13 @@
                                             </div>
                                         </div>
                                     </div>
-                                    <p class="text-[10px] text-gray-500">Mode checkout cepat untuk 1 produk. Ubah jumlah lalu buat order.</p>
+                                    <p class="text-[10px] text-gray-500">
+                                        @if(isset($etalaseInfo))
+                                            Produk dari etalase {{ $etalaseInfo['seller_name'] }}. Ubah jumlah lalu buat order.
+                                        @else
+                                            Mode checkout cepat untuk 1 produk. Ubah jumlah lalu buat order.
+                                        @endif
+                                    </p>
                                 </div>
                             @endif
                         </div>
@@ -302,6 +355,7 @@
             const prefillId = {{ $prefill?->id ?? 'null' }};
             const singleMode = document.getElementById('single_mode').value === '1';
             const wholesaleMode = {{ isset($wholesaleMode) && $wholesaleMode ? 'true' : 'false' }};
+            const isEtalaseMode = {{ isset($etalaseInfo) ? 'true' : 'false' }};
             const wholesaleProducts = @json($prefilledProducts ?? []);
             const singleQtyInput = document.getElementById('single-qty');
             const qtyMinus = document.getElementById('qty-minus');
@@ -322,6 +376,7 @@
 
             switches.forEach(sw=>{
                 sw.addEventListener('change',()=>{
+                    if(isEtalaseMode) return; // Don't allow changes in etalase mode
                     purchaseTypeInput.value = document.querySelector('.purchase-type-switch:checked')?.value;
                     if(purchaseTypeInput.value==='self'){
                         if(!nameField.value.trim()){ nameField.value = selfData.name || ''; }
@@ -351,20 +406,32 @@
 
             function getRows(){ return Array.from(itemsWrapper.querySelectorAll('.item-row')); }
             function extract(row){ return JSON.parse(row.dataset.product); }
-            function unitPrice(prod){ return purchaseTypeInput.value==='external' ? prod.harga_jual : prod.harga_biasa; }
-            function sellerMargin(prod){ 
-                if(purchaseTypeInput.value !== 'external') return 0;
-                @php 
-                    $user = auth()->user();
-                    $marginPercent = $user->getLevelMarginPercent();
-                @endphp
-                @if($marginPercent)
-                    // Level {{ auth()->user()->level }}: {{ $marginPercent }}% margin
-                    return Math.round(prod.harga_jual * ({{ $marginPercent }} / 100));
+            function unitPrice(prod){ 
+                // If this is from etalase, always use harga_jual
+                @if(isset($etalaseInfo))
+                    return prod.harga_jual;
                 @else
-                    // Level 1: Use admin-set margin (difference between harga_jual and harga_biasa)
-                    const adminMargin = Math.max(0, prod.harga_jual - prod.harga_biasa);
-                    return adminMargin;
+                    return purchaseTypeInput.value==='external' ? prod.harga_jual : prod.harga_biasa;
+                @endif
+            }
+            function sellerMargin(prod){ 
+                @if(isset($etalaseInfo))
+                    // For etalase purchases, margin is predefined
+                    return {{ $etalaseInfo['margin'] ?? 0 }};
+                @else
+                    if(purchaseTypeInput.value !== 'external') return 0;
+                    @php 
+                        $user = auth()->user();
+                        $marginPercent = $user->getLevelMarginPercent();
+                    @endphp
+                    @if($marginPercent)
+                        // Level {{ auth()->user()->level }}: {{ $marginPercent }}% margin
+                        return Math.round(prod.harga_jual * ({{ $marginPercent }} / 100));
+                    @else
+                        // Level 1: Use admin-set margin (difference between harga_jual and harga_biasa)
+                        const adminMargin = Math.max(0, prod.harga_jual - prod.harga_biasa);
+                        return adminMargin;
+                    @endif
                 @endif
             }
 
@@ -374,14 +441,16 @@
             }
             function updatePriceLabels(){ 
                 getRows().forEach(updatePriceLabel); 
-                // Update product card displays
-                const isExternal = purchaseTypeInput.value === 'external';
-                document.querySelectorAll('.purchase-type-self').forEach(el => {
-                    el.style.display = isExternal ? 'none' : 'inline';
-                });
-                document.querySelectorAll('.purchase-type-external').forEach(el => {
-                    el.style.display = isExternal ? 'inline' : 'none';
-                });
+                // Update product card displays (skip for etalase mode)
+                if(!isEtalaseMode) {
+                    const isExternal = purchaseTypeInput.value === 'external';
+                    document.querySelectorAll('.purchase-type-self').forEach(el => {
+                        el.style.display = isExternal ? 'none' : 'inline';
+                    });
+                    document.querySelectorAll('.purchase-type-external').forEach(el => {
+                        el.style.display = isExternal ? 'inline' : 'none';
+                    });
+                }
             }
 
             function updateMarginVisibility(){
@@ -391,7 +460,7 @@
                 const hasMargin = currentTotals.margin > 0;
                 
                 if(marginDivider && marginSection) {
-                    if(isExternal && hasMargin) {
+                    if((isExternal && hasMargin) || (isEtalaseMode && hasMargin)) {
                         marginDivider.style.display = 'block';
                         marginSection.style.display = 'block';
                     } else {

@@ -418,147 +418,51 @@ class StoreShowcaseController extends Controller
     }
 
     /**
-     * Buy product from shared etalase
-     * Logic: margin goes to etalase owner, total spend counts for both parties (buyer and seller)
+     * Redirect to order form for etalase purchase
      */
     public function buyFromEtalase(Request $request, Product $product)
     {
-        \Log::info('=== buyFromEtalase START ===');
-        \Log::info('buyFromEtalase called', [
+        \Log::info('buyFromEtalase called - redirecting to order form', [
             'product_id' => $product->id,
-            'product_name' => $product->name,
-            'user_id' => auth()->id(),
+            'product_name' => $product->nama,
+            'product_base_price' => $product->harga_biasa,
+            'product_sell_price' => $product->harga_jual,
             'request_data' => $request->all(),
-            'is_authenticated' => auth()->check()
+            'user_id' => auth()->id(),
         ]);
         
         // Check if user is authenticated
         if (!auth()->check()) {
-            \Log::info('User not authenticated, redirecting to login');
             return redirect()->route('login')->with('warning', 'Silakan login terlebih dahulu untuk membeli produk.');
         }
         
-        try {
-            \Log::info('Starting validation');
+        // Validate seller_id
+        $request->validate([
+            'seller_id' => 'required|exists:users,id',
+        ]);
+        
+        $sellerId = $request->input('seller_id');
+        $seller = \App\Models\User::findOrFail($sellerId);
+        
+        // Verify seller has this product in their active showcase
+        $showcase = $seller->activeShowcases()
+            ->where('product_id', $product->id)
+            ->first();
             
-            // Validate request
-            $request->validate([
-                'seller_id' => 'required|exists:users,id',
-                'from_etalase' => 'required',
-                'quantity' => 'integer|min:1|max:' . $product->stock,
-            ]);
-
-            \Log::info('Validation passed');
-
-            $quantity = $request->input('quantity', 1);
-            $sellerId = $request->input('seller_id');
-            $buyer = auth()->user();
-            
-            \Log::info('Request data extracted', [
-                'quantity' => $quantity,
-                'seller_id' => $sellerId,
-                'buyer_id' => $buyer->id
-            ]);
-            
-            // Find the seller (etalase owner)
-            $seller = \App\Models\User::findOrFail($sellerId);
-            
-            // Make sure seller is actually a seller and has this product in their etalase
-            if (!$seller->isSeller()) {
-                return back()->withErrors('Seller tidak valid.');
-            }
-            
-            // Check if product is in seller's active showcase
-            $showcase = $seller->activeShowcases()
-                ->where('product_id', $product->id)
-                ->first();
-                
-            if (!$showcase) {
-                return back()->withErrors('Produk tidak tersedia di etalase seller ini.');
-            }
-            
-            // Check stock
-            if ($product->stock < $quantity) {
-                return back()->withErrors('Stok tidak mencukupi.');
-            }
-            
-            // Calculate prices and margin
-            $hargaBiasa = $product->harga_biasa;
-            $hargaJual = $product->harga_jual;
-            $margin = $hargaJual - $hargaBiasa;
-            $totalHarga = $hargaJual * $quantity;
-            $totalMargin = $margin * $quantity;
-            
-            \DB::beginTransaction();
-            
-            try {
-                // Create order
-                $order = \App\Models\Order::create([
-                    'user_id' => $buyer->id,
-                    'purchase_type' => 'self',
-                    'subtotal' => $totalHarga,
-                    'grand_total' => $totalHarga,
-                    'payment_method' => 'manual_transfer',
-                    'payment_status' => 'unpaid',
-                    'status' => 'pending',
-                    'user_notes' => 'Dibeli dari etalase ' . ($seller->sellerInfo->store_name ?? $seller->full_name),
-                    // Add seller info for etalase purchases
-                    'seller_id' => $seller->id,
-                    'from_etalase' => true,
-                    'etalase_margin' => $totalMargin
-                ]);
-                
-                // Create order item
-                \App\Models\OrderItem::create([
-                    'order_id' => $order->id,
-                    'product_id' => $product->id,
-                    'quantity' => $quantity,
-                    'price_per_item' => $hargaJual,
-                    'total_price' => $totalHarga
-                ]);
-                
-                // Update product stock
-                $product->decrement('stock', $quantity);
-                
-                // Update spending and levels for BOTH buyer and seller
-                // 1. Buyer gets normal level progression from their purchase
-                $buyer->addTransactionAmount($totalHarga);
-                
-                // 2. Seller gets level progression from the margin they earned
-                $seller->addTransactionAmount($totalMargin);
-                
-                \DB::commit();
-                
-                \Log::info('Transaction committed successfully');
-                
-                $sellerName = $seller->sellerInfo->store_name ?? $seller->full_name;
-                $successMessage = "Berhasil membeli {$quantity} {$product->name} dari etalase {$sellerName}!";
-                
-                \Log::info('Redirecting to order show', [
-                    'order_id' => $order->id,
-                    'message' => $successMessage
-                ]);
-                
-                return redirect()->route('user.orders.show', $order)
-                    ->with('success', $successMessage);
-                    
-            } catch (\Exception $e) {
-                \Log::error('Transaction failed', [
-                    'error' => $e->getMessage(),
-                    'trace' => $e->getTraceAsString()
-                ]);
-                \DB::rollback();
-                throw $e;
-            }
-            
-        } catch (\Exception $e) {
-            \Log::error('Error buying from etalase', [
-                'error' => $e->getMessage(),
-                'trace' => $e->getTraceAsString()
-            ]);
-            return back()->withErrors('Terjadi kesalahan saat memproses pembelian: ' . $e->getMessage());
-        } finally {
-            \Log::info('=== buyFromEtalase END ===');
+        if (!$showcase) {
+            return back()->withErrors('Produk tidak tersedia di etalase seller ini.');
         }
+        
+        \Log::info('buyFromEtalase - setting session variables', [
+            'etalase_product_id' => $product->id,
+            'etalase_seller_id' => $sellerId,
+            'from_etalase' => true,
+        ]);
+        
+        // Redirect to order create form with etalase parameters
+        return redirect()->route('user.orders.create')
+            ->with('etalase_product_id', $product->id)
+            ->with('etalase_seller_id', $sellerId)
+            ->with('from_etalase', true);
     }
 }

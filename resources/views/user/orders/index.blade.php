@@ -116,7 +116,11 @@
                                             <p class="text-xs font-medium text-white truncate max-w-24">{{ $item->product->name }}</p>
                                             <div class="flex items-center gap-2 mt-0.5">
                                                 <span class="text-[10px] text-gray-500">{{ $item->quantity }}x</span>
-                                                <span class="text-[10px] text-gray-400">Rp{{ number_format($item->unit_price, 0, ',', '.') }}</span>
+                                                @if($order->from_etalase)
+                                                    <span class="text-[10px] text-gray-400">Rp{{ number_format($item->sell_price ?? $item->unit_price, 0, ',', '.') }}</span>
+                                                @else
+                                                    <span class="text-[10px] text-gray-400">Rp{{ number_format($item->unit_price, 0, ',', '.') }}</span>
+                                                @endif
                                             </div>
                                         </div>
                                     </div>
@@ -138,6 +142,9 @@
                                         <span class="px-3 py-1 rounded-md text-xs font-medium bg-emerald-500/20 text-emerald-300 border border-emerald-500/30">Konfirmasi</span>
                                     @else
                                         <span class="px-3 py-1 rounded-md text-xs font-medium bg-amber-500/20 text-amber-300 border border-amber-500/30">{{ $order->paymentStatusLabel() }}</span>
+                                    @endif
+                                    @if($order->from_etalase && $order->seller)
+                                        <span class="px-2 py-0.5 rounded-md text-xs font-medium bg-pink-500/20 text-pink-300 border border-pink-500/30">Etalase</span>
                                     @endif
                                 </div>
                                 

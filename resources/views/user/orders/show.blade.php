@@ -37,6 +37,9 @@
                             <span class="px-2.5 py-1 rounded-full bg-[#1f252c] border border-white/5 text-gray-300">Pembayaran: {{ $order->payment_status }}</span>
                             <span class="px-2.5 py-1 rounded-full bg-[#1f252c] border border-white/5 text-gray-300">Status: {{ $order->status }}</span>
                             <span class="px-2.5 py-1 rounded-full bg-[#1f252c] border border-white/5 text-gray-300">Tipe: {{ $order->purchase_type==='external' ? 'Eksternal':'Pribadi' }}</span>
+                            @if($order->from_etalase)
+                            <span class="px-2.5 py-1 rounded-full bg-pink-600/20 text-pink-300 border border-pink-500/30">Etalase</span>
+                            @endif
                             <span class="px-2.5 py-1 rounded-full bg-[#1f252c] border border-white/5 text-gray-300">Total Item: {{ $order->items->sum('quantity') }}</span>
                             <span class="px-2.5 py-1 rounded-full {{ $order->isBalancePayment() ? 'bg-cyan-600/20 text-cyan-300 border border-cyan-500/30':'bg-fuchsia-600/20 text-fuchsia-300 border border-fuchsia-500/30' }}">Metode: {{ $order->isBalancePayment() ? 'Saldo':'Transfer' }}</span>
                         </div>
@@ -44,6 +47,17 @@
                             <div class="p-4 rounded-xl bg-[#1f252c] border border-white/5">
                                 <p class="text-[11px] font-semibold text-gray-400 mb-1">Catatan Pengguna:</p>
                                 <p class="text-sm text-gray-300 leading-relaxed">{{ $order->user_notes }}</p>
+                            </div>
+                        @endif
+                        @if($order->from_etalase && $order->seller)
+                            <div class="p-4 rounded-xl bg-pink-600/10 border border-pink-500/30">
+                                <p class="text-[11px] font-semibold text-pink-300 mb-1">Info Etalase</p>
+                                <p class="text-[12px] leading-relaxed text-pink-200">
+                                    Dibeli dari etalase: <span class="font-medium">{{ $order->seller->sellerInfo->store_name ?? $order->seller->full_name }}</span>
+                                    @if($order->etalase_margin > 0)
+                                        <br>Margin untuk pemilik etalase: Rp {{ number_format($order->etalase_margin, 0, ',', '.') }}
+                                    @endif
+                                </p>
                             </div>
                         @endif
                         @if($order->admin_notes)
@@ -76,9 +90,16 @@
                                             <p class="text-xs font-medium text-gray-200 leading-snug">{{ $item->product->name ?? 'Produk Dihapus' }}</p>
                                             <p class="text-[10px] text-gray-500">
                                                 Qty: {{ $item->quantity }} • 
-                                                Harga: Rp {{ number_format($item->unit_price,0,',','.') }}
+                                                @if($order->from_etalase)
+                                                    Harga: Rp {{ number_format($item->sell_price ?? $item->unit_price, 0, ',', '.') }}
+                                                @else
+                                                    Harga: Rp {{ number_format($item->unit_price, 0, ',', '.') }}
+                                                @endif
                                                 @if($order->purchase_type === 'external' && auth()->user()->isSeller())
                                                     • <span class="text-cyan-400">Eksternal</span>
+                                                @endif
+                                                @if($order->from_etalase)
+                                                    • <span class="text-pink-400">Etalase</span>
                                                 @endif
                                             </p>
                                         </div>
