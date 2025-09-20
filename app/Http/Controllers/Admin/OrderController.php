@@ -5,10 +5,13 @@ namespace App\Http\Controllers\Admin;
 use App\Http\Controllers\Controller;
 use App\Models\Order;
 use App\Models\Notification;
+use App\Models\Product;
+use App\Models\OrderItem; // added
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Validator;
 
 class OrderController extends Controller
 {
@@ -21,6 +24,201 @@ class OrderController extends Controller
         if ($uid = $request->get('user_id')) { $query->where('user_id', $uid); }
         $orders = $query->paginate(30);
         return view('admin.orders.index', compact('orders'));
+    }
+
+    /** Show create form for admin to create an order */
+    public function create(Request $request)
+    {
+        $users = \App\Models\User::users()->orderBy('full_name')->get(['id','full_name']);
+        $sellers = \App\Models\User::sellers()->orderBy('full_name')->get(['id','full_name']);
+        $products = Product::active()->orderBy('name')->get(['id','name','sell_price','promo_price','purchase_price']);
+        return view('admin.orders.create', compact('users','sellers','products'));
+    }
+
+    /** Store order created by admin, with optional auto-paid bypass */
+    public function store(Request $request)
+    {
+        $data = $request->validate([
+            'buyer_id' => 'required|exists:users,id',
+            'purchase_type' => 'required|in:self,external',
+            'external_customer_name' => 'nullable|string|max:120',
+            'external_customer_phone' => 'nullable|string|max:40',
+            'address' => 'required|string|max:255',
+            'items' => 'required|array|min:1',
+            'items.*.product_id' => 'required|exists:products,id',
+            'items.*.quantity' => 'required|integer|min:1',
+            'from_etalase' => 'nullable|boolean',
+            'seller_id' => 'nullable|integer|exists:users,id',
+            'auto_paid' => 'nullable|boolean',
+            'user_notes' => 'nullable|string',
+        ]);
+
+        $buyer = \App\Models\User::findOrFail($data['buyer_id']);
+        $fromEtalase = (bool)($data['from_etalase'] ?? false);
+        $etalaseSeller = null;
+        if ($fromEtalase) {
+            if (empty($data['seller_id'])) {
+                return back()->withErrors('Seller etalase wajib diisi.')->withInput();
+            }
+            $etalaseSeller = \App\Models\User::find($data['seller_id']);
+            if (!$etalaseSeller || !$etalaseSeller->isSeller()) {
+                return back()->withErrors('Seller etalase tidak valid.')->withInput();
+            }
+        }
+
+        $order = DB::transaction(function () use ($request, $data, $buyer, $fromEtalase, $etalaseSeller) {
+            $subtotal = 0; $discountTotal = 0; $sellerMarginTotal = 0; $grandTotal = 0; $etalaseMarginTotal = 0;
+
+            $orderData = [
+                'user_id' => $buyer->id,
+                'purchase_type' => $data['purchase_type'],
+                'external_customer_name' => $data['external_customer_name'] ?? null,
+                'external_customer_phone' => $data['external_customer_phone'] ?? null,
+                'address' => $data['address'],
+                'subtotal' => 0,
+                'discount_total' => 0,
+                'grand_total' => 0,
+                'seller_margin_total' => 0,
+                'payment_method' => 'manual_transfer',
+                'payment_status' => 'unpaid',
+                'status' => 'pending',
+                'user_notes' => $data['user_notes'] ?? null,
+            ];
+
+            if ($fromEtalase) {
+                $orderData['from_etalase'] = true;
+                $orderData['seller_id'] = $etalaseSeller->id;
+                $orderData['etalase_margin'] = 0;
+                $sellerName = $etalaseSeller->sellerInfo->store_name ?? $etalaseSeller->full_name;
+                $orderData['user_notes'] = trim(($orderData['user_notes'] ? $orderData['user_notes'] . "\n\n" : '') . 'Dibuat admin via etalase: ' . $sellerName);
+            }
+
+            $order = Order::create($orderData);
+
+            foreach ($data['items'] as $row) {
+                $product = Product::find($row['product_id']);
+                if (!$product || !$product->isActive()) {
+                    abort(422, 'Produk tidak tersedia.');
+                }
+                $qty = (int)$row['quantity'];
+                $basePrice = $product->harga_biasa;
+                $sellPrice = $product->harga_jual;
+
+                // Unit price selection
+                if ($fromEtalase) {
+                    $unitPrice = $sellPrice; // etalase uses sell price
+                } else {
+                    $unitPrice = $product->getApplicablePrice($buyer, $data['purchase_type']);
+                }
+
+                $discount = 0;
+                $sellerMargin = 0;
+
+                if ($buyer->isSeller() && $data['purchase_type'] === 'external') {
+                    $sellerMargin = $product->getSellerMargin($buyer);
+                }
+
+                if ($fromEtalase && $etalaseSeller) {
+                    $marginPercent = $etalaseSeller->getLevelMarginPercent();
+                    if ($marginPercent) {
+                        $etalaseMargin = round($sellPrice * ($marginPercent / 100));
+                    } else {
+                        $etalaseMargin = max(0, $sellPrice - $basePrice);
+                    }
+                    $etalaseMarginTotal += $etalaseMargin * $qty;
+                }
+
+                $lineTotal = ($unitPrice - $discount) * $qty;
+
+                OrderItem::create([
+                    'order_id' => $order->id,
+                    'product_id' => $product->id,
+                    'quantity' => $qty,
+                    'unit_price' => $unitPrice,
+                    'base_price' => $basePrice,
+                    'sell_price' => $sellPrice,
+                    'discount' => $discount,
+                    'seller_margin' => $sellerMargin,
+                    'line_total' => $lineTotal,
+                ]);
+
+                $subtotal += $unitPrice * $qty;
+                $discountTotal += $discount * $qty;
+                $sellerMarginTotal += $sellerMargin * $qty;
+                $grandTotal += $lineTotal;
+            }
+
+            $order->update([
+                'subtotal' => $subtotal,
+                'discount_total' => $discountTotal,
+                'seller_margin_total' => $sellerMarginTotal,
+                'grand_total' => $grandTotal,
+                'etalase_margin' => $fromEtalase ? $etalaseMarginTotal : 0,
+            ]);
+
+            // Handle auto-paid
+            if ($request->boolean('auto_paid')) {
+                $order->update([
+                    'payment_status' => 'paid',
+                    'status' => 'packaging',
+                    'payment_confirmed_at' => now(),
+                    'payment_confirmed_by' => $request->user()->id,
+                ]);
+
+                // Process external seller margin (buyer is seller doing external purchase)
+                $order->processSellerMarginPayout();
+
+                // Handle etalase settlements and stock
+                if ($fromEtalase && $etalaseSeller) {
+                    // level progression
+                    $buyer->addTransactionAmount($grandTotal);
+                    $etalaseSeller->addTransactionAmount($grandTotal);
+                    // pay margin to etalase owner
+                    if ($order->etalase_margin > 0) {
+                        $etalaseSeller->increment('balance', $order->etalase_margin);
+                    }
+                    // reduce stock now
+                    foreach ($order->items as $it) {
+                        $p = Product::find($it->product_id);
+                        if ($p) { $p->decrement('stock', $it->quantity); }
+                    }
+
+                    // Notifications
+                    $sellerName = $etalaseSeller->sellerInfo->store_name ?? $etalaseSeller->full_name;
+                    Notification::create([
+                        'for_user_id' => $buyer->id,
+                        'category' => 'payment',
+                        'title' => 'Pembayaran Etalase Disetujui',
+                        'description' => "Order #{$order->id} dari etalase {$sellerName} telah dibayar oleh admin. Order masuk tahap dikemas.",
+                    ]);
+
+                    if ($order->etalase_margin > 0) {
+                        $levelBadge = $etalaseSeller->getLevelBadge();
+                        $marginPercent = $etalaseSeller->getLevelMarginPercent();
+                        $desc = "Margin sebesar Rp" . number_format($order->etalase_margin, 0, ',', '.') . " dari penjualan etalase telah ditambahkan ke saldo Anda. Order #{$order->id} dari {$buyer->full_name}.";
+                        $desc .= $marginPercent ? " (Margin {$marginPercent}% karena Anda {$levelBadge})" : " (Margin sesuai selisih harga karena Anda {$levelBadge})";
+                        Notification::create([
+                            'for_user_id' => $etalaseSeller->id,
+                            'category' => 'payment',
+                            'title' => 'Margin Etalase Diterima',
+                            'description' => $desc,
+                        ]);
+                    }
+                } else {
+                    // Normal order notifications
+                    Notification::create([
+                        'for_user_id' => $buyer->id,
+                        'category' => 'payment',
+                        'title' => 'Pembayaran Disetujui',
+                        'description' => "Pembayaran untuk order #{$order->id} telah disetujui admin. Order akan segera dikemas.",
+                    ]);
+                }
+            }
+
+            return $order->fresh(['items.product','user','seller']);
+        });
+
+        return redirect()->route('admin.orders.show', $order)->with('success', $request->boolean('auto_paid') ? 'Order dibuat & ditandai lunas.' : 'Order berhasil dibuat.');
     }
 
     /** Show single order */

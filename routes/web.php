@@ -325,6 +325,9 @@ Route::middleware(['auth', 'role:admin'])->prefix('admin')->name('admin.')->grou
     // +++ Admin Order Routes
     Route::prefix('orders')->name('orders.')->group(function () {
         Route::get('/', [AdminOrderController::class,'index'])->name('index');
+        // New: create & store admin order
+        Route::get('/create', [AdminOrderController::class,'create'])->name('create');
+        Route::post('/', [AdminOrderController::class,'store'])->name('store');
         Route::get('/{order}', [AdminOrderController::class,'show'])->name('show');
         Route::post('/{order}/approve-payment', [AdminOrderController::class,'approvePayment'])->name('approve-payment');
         Route::post('/{order}/reject-payment', [AdminOrderController::class,'rejectPayment'])->name('reject-payment');
