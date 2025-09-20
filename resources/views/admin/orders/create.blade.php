@@ -1,6 +1,18 @@
 @php /** @var \Illuminate\Support\Collection<int, \App\Models\User> $users */ @endphp
 @php /** @var \Illuminate\Support\Collection<int, \App\Models\User> $sellers */ @endphp
 @php /** @var \Illuminate\Support\Collection<int, \App\Models\Product> $products */ @endphp
+@php
+// Precompute products for safe @json encoding (avoid inline closures inside @json)
+$productsJs = $products->map(function($p){
+    return [
+        'id' => $p->id,
+        'name' => $p->name,
+        'harga_biasa' => $p->harga_biasa,
+        'harga_jual' => $p->harga_jual,
+        'sell_price' => $p->sell_price,
+    ];
+});
+@endphp
 <x-admin-layout>
     <x-slot name="title">Buat Order Baru</x-slot>
 
@@ -143,15 +155,7 @@
 
     <script>
         // Data produk untuk JS
-        window.PRODUCTS_JS = @json($products->map(function($p){
-            return [
-                'id' => $p->id,
-                'name' => $p->name,
-                'harga_biasa' => $p->harga_biasa,
-                'harga_jual' => $p->harga_jual,
-                'sell_price' => $p->sell_price,
-            ];
-        }));
+        window.PRODUCTS_JS = @json($productsJs);
         window.OLD_ITEMS = @json(old('items', []));
 
         (function(){
