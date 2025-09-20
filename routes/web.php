@@ -45,6 +45,8 @@ use App\Http\Controllers\Admin\TicketController as AdminTicketController;
 // Add store showcase controllers
 use App\Http\Controllers\User\StoreShowcaseController as UserStoreShowcaseController;
 use App\Http\Controllers\Admin\StoreShowcaseController as AdminStoreShowcaseController;
+// +++ Scheduled Order Batch controller
+use App\Http\Controllers\Admin\ScheduledOrderBatchController; // new
 
 Route::get('/', function () {
     return redirect()->route('login');
@@ -435,6 +437,21 @@ Route::middleware(['auth', 'role:admin'])->prefix('admin')->name('admin.')->grou
     Route::prefix('api')->name('api.')->group(function () {
         Route::get('/tickets/count', [AdminTicketController::class, 'getCount'])->name('tickets.count');
         Route::get('/chats/count', [App\Http\Controllers\Admin\ChatController::class, 'getCount'])->name('chats.count');
+    });
+    
+    // +++ Admin Scheduled Orders (Batches)
+    Route::prefix('scheduled-orders')->name('scheduled-orders.')->group(function () {
+        // Blade UI
+        Route::get('/ui', function(){ return view('admin.scheduled-orders.index'); })->name('ui.index');
+        Route::get('/create', function(){ return view('admin.scheduled-orders.create'); })->name('create');
+        Route::get('/{batch}/ui', function($batch){ return view('admin.scheduled-orders.show'); })->name('ui.show');
+
+        // JSON API
+        Route::get('/', [ScheduledOrderBatchController::class, 'index'])->name('index'); // JSON list for now
+        Route::post('/', [ScheduledOrderBatchController::class, 'store'])->name('store');
+        Route::get('/{batch}', [ScheduledOrderBatchController::class, 'show'])->name('show');
+        Route::post('/{batch}/cancel', [ScheduledOrderBatchController::class, 'cancel'])->name('cancel');
+        Route::post('/{batch}/run-now', [ScheduledOrderBatchController::class, 'runNow'])->name('run-now');
     });
 });
 
