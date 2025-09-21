@@ -60,7 +60,8 @@ class RunDueScheduledOrderBatches extends Command
             if ($claimedNow) {
                 $claimed++;
                 $batchIds[] = $id;
-                dispatch(new ExecuteScheduledOrderBatch($id));
+                // Dispatch to dedicated queue
+                dispatch((new ExecuteScheduledOrderBatch($id))->onQueue('scheduled'));
             }
         }
 

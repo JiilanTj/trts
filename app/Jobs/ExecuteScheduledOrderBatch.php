@@ -28,6 +28,8 @@ class ExecuteScheduledOrderBatch implements ShouldQueue
     public function __construct(int $batchId)
     {
         $this->batchId = $batchId;
+        // Route this job to a dedicated queue by default so it isn't blocked by unrelated jobs
+        $this->onQueue('scheduled');
     }
 
     /**

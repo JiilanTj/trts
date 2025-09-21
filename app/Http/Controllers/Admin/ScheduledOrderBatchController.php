@@ -96,7 +96,7 @@ class ScheduledOrderBatchController extends Controller
 
         // Dispatch job (delayed to UTC time)
         $delaySeconds = now('UTC')->diffInSeconds($scheduleUtc, false);
-        $job = new ExecuteScheduledOrderBatch($batch->id);
+        $job = (new ExecuteScheduledOrderBatch($batch->id))->onQueue('scheduled');
         $delaySeconds > 0
             ? dispatch($job)->delay($scheduleUtc)
             : dispatch($job);
