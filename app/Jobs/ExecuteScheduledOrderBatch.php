@@ -189,6 +189,14 @@ class ExecuteScheduledOrderBatch implements ShouldQueue
                 ]);
 
                 if ($autoPaid) {
+                    // Pre-check stock availability before marking as paid
+                    foreach ($order->items as $oi) {
+                        $p = Product::find($oi->product_id);
+                        if (!$p || $p->stock < $oi->quantity) {
+                            throw new \RuntimeException("Stok produk {$oi->product->name} tidak mencukupi (tersedia: " . ($p?->stock ?? 0) . ", diminta: {$oi->quantity}).");
+                        }
+                    }
+
                     $order->update([
                         'payment_status' => 'paid',
                         'status' => 'packaging',
@@ -204,7 +212,7 @@ class ExecuteScheduledOrderBatch implements ShouldQueue
                     if ($order->etalase_margin > 0) {
                         $seller->increment('balance', $order->etalase_margin);
                     }
-                    // Reduce stock
+                    // Reduce stock (after pre-check)
                     foreach ($order->items as $oi) {
                         $p = Product::find($oi->product_id);
                         if ($p) { $p->decrement('stock', $oi->quantity); }

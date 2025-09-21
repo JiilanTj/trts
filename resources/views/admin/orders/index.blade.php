@@ -23,6 +23,9 @@
         $createUrl = \Illuminate\Support\Facades\Route::has('admin.orders.create')
             ? route('admin.orders.create')
             : url('/admin/orders/create');
+        $scheduledIndexUrl = \Illuminate\Support\Facades\Route::has('admin.scheduled-orders.ui.index')
+            ? route('admin.scheduled-orders.ui.index')
+            : url('/admin/scheduled-orders/ui');
     @endphp
 
     <div class="bg-white rounded-lg shadow-sm border border-gray-200">
@@ -30,10 +33,15 @@
         <div class="px-6 py-4 border-b border-gray-200">
             <div class="flex items-center justify-between">
                 <h2 class="text-xl font-semibold text-gray-800">Order</h2>
-                <a href="{{ $createUrl }}" class="inline-flex items-center bg-emerald-600 hover:bg-emerald-700 text-white px-4 py-2 rounded-lg text-sm font-medium transition">
-                    <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/></svg>
-                    Buat Order
-                </a>
+                <div class="flex items-center gap-2">
+                    <a href="{{ $scheduledIndexUrl }}" class="inline-flex items-center bg-indigo-50 hover:bg-indigo-100 text-indigo-700 px-4 py-2 rounded-lg text-sm font-medium transition">
+                        Auto Order
+                    </a>
+                    <a href="{{ $createUrl }}" class="inline-flex items-center bg-emerald-600 hover:bg-emerald-700 text-white px-4 py-2 rounded-lg text-sm font-medium transition">
+                        <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/></svg>
+                        Buat Order
+                    </a>
+                </div>
             </div>
 
             <!-- Filter Form -->

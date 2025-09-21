@@ -1,66 +1,74 @@
-@extends('layouts.app')
+<x-admin-layout>
+  <x-slot name="title">Detail Scheduled Batch</x-slot>
 
-@section('content')
-<div class="max-w-5xl mx-auto p-6" x-data="detail()" x-init="init()">
-  <div class="flex items-center justify-between mb-4">
-    <h1 class="text-2xl font-semibold">Batch #<span x-text="batch?.id"></span></h1>
-    <div class="space-x-2">
-      <button @click="runNow()" x-show="['scheduled','failed','partial'].includes(batch?.status)" class="px-3 py-1 bg-indigo-600 text-white rounded">Run now</button>
-      <button @click="cancel()" x-show="batch?.status==='scheduled'" class="px-3 py-1 bg-rose-600 text-white rounded">Cancel</button>
+  <div class="bg-white rounded-lg shadow-sm border border-gray-200" x-data="showBatch()" x-init="init()">
+    <div class="px-6 py-4 border-b border-gray-200 flex items-center justify-between">
+      <div>
+        <h2 class="text-lg font-semibold text-gray-800">Detail Batch</h2>
+        <p class="text-sm text-gray-500" x-text="meta"></p>
+      </div>
+      <div class="flex items-center gap-2">
+        <a href="{{ route('admin.scheduled-orders.ui.index') }}" class="inline-flex items-center px-4 py-2 border border-gray-300 rounded-lg text-sm text-gray-700 hover:bg-gray-100">Kembali</a>
+        <button class="inline-flex items-center px-4 py-2 border border-gray-300 rounded-lg text-sm text-gray-700 hover:bg-gray-100" @click="runNow">Run Now</button>
+        <button class="inline-flex items-center px-4 py-2 border border-red-300 rounded-lg text-sm text-red-700 hover:bg-red-50" @click="cancel">Cancel</button>
+      </div>
+    </div>
+
+    <div class="p-6">
+      <div class="overflow-x-auto">
+        <table class="w-full text-sm">
+          <thead>
+            <tr class="text-left border-b">
+              <th class="py-2">Seller</th>
+              <th>Product</th>
+              <th>Qty</th>
+              <th>Status</th>
+              <th>Order ID</th>
+              <th>Error</th>
+            </tr>
+          </thead>
+          <tbody>
+            <template x-for="it in (batch?.items || [])" :key="it.id">
+              <tr class="border-b">
+                <td class="py-2" x-text="it.seller?.full_name || it.seller_id"></td>
+                <td x-text="it.product?.name || it.product_id"></td>
+                <td x-text="it.quantity"></td>
+                <td x-text="it.status"></td>
+                <td><a :href="`{{ url('/admin/orders') }}/${it.created_order_id}`" class="text-blue-600" x-text="it.created_order_id || '-'" target="_blank"></a></td>
+                <td x-text="it.error_message || '-' "></td>
+              </tr>
+            </template>
+          </tbody>
+        </table>
+      </div>
     </div>
   </div>
 
-  <div class="bg-white shadow rounded p-4 mb-6">
-    <div class="grid grid-cols-2 gap-4 text-sm">
-      <div><strong>Buyer:</strong> <span x-text="batch?.buyer?.full_name || batch?.buyer_id"></span></div>
-      <div><strong>Status:</strong> <span x-text="batch?.status"></span></div>
-      <div><strong>Schedule:</strong> <span x-text="formatLocal(batch?.schedule_at, batch?.timezone)"></span></div>
-      <div><strong>Timezone:</strong> <span x-text="batch?.timezone"></span></div>
-      <div class="col-span-2"><strong>Address:</strong> <span x-text="batch?.address"></span></div>
-      <div class="col-span-2"><strong>User Notes:</strong> <span x-text="batch?.user_notes || '-' "></span></div>
-    </div>
-  </div>
-
-  <div class="bg-white shadow rounded overflow-hidden">
-    <table class="min-w-full">
-      <thead class="bg-slate-50">
-        <tr>
-          <th class="px-4 py-3 text-left text-sm font-medium text-slate-600">Seller</th>
-          <th class="px-4 py-3 text-left text-sm font-medium text-slate-600">Product</th>
-          <th class="px-4 py-3 text-left text-sm font-medium text-slate-600">Qty</th>
-          <th class="px-4 py-3 text-left text-sm font-medium text-slate-600">Status</th>
-          <th class="px-4 py-3 text-left text-sm font-medium text-slate-600">Order</th>
-          <th class="px-4 py-3 text-left text-sm font-medium text-slate-600">Error</th>
-        </tr>
-      </thead>
-      <tbody>
-        <template x-for="it in batch?.items || []" :key="it.id">
-          <tr class="border-t">
-            <td class="px-4 py-3 text-sm" x-text="it.seller?.full_name || it.seller_id"></td>
-            <td class="px-4 py-3 text-sm" x-text="it.product?.name || it.product_id"></td>
-            <td class="px-4 py-3 text-sm" x-text="it.quantity"></td>
-            <td class="px-4 py-3 text-sm" x-text="it.status"></td>
-            <td class="px-4 py-3 text-sm" x-text="it.created_order_id || '-' "></td>
-            <td class="px-4 py-3 text-sm" x-text="it.error_message || '-' "></td>
-          </tr>
-        </template>
-      </tbody>
-    </table>
-  </div>
-</div>
-<script>
-function detail(){
-  return {
-    batch: null,
-    async init(){ await this.load(); },
-    async load(){
-      const res = await fetch(`{{ url('/admin/scheduled-orders') }}/{{ request()->route('batch') }}`, { headers: { 'Accept':'application/json' }});
-      this.batch = await res.json();
-    },
-    formatLocal(utc, tz){ try { return new Date(utc + 'Z').toLocaleString('id-ID', { timeZone: tz || 'Asia/Jakarta' }); } catch(e){ return utc; } },
-    async runNow(){ await fetch(`{{ url('/admin/scheduled-orders') }}/${this.batch.id}/run-now`, { method:'POST', headers: { 'X-CSRF-TOKEN': '{{ csrf_token() }}' }}); await this.load(); },
-    async cancel(){ await fetch(`{{ url('/admin/scheduled-orders') }}/${this.batch.id}/cancel`, { method:'POST', headers: { 'X-CSRF-TOKEN': '{{ csrf_token() }}' }}); await this.load(); },
+  <script>
+  function showBatch(){
+    return {
+      batch: null,
+      fmt(dt, tz){
+        try{ const d = new Date(dt); return new Intl.DateTimeFormat('id-ID', { dateStyle:'medium', timeStyle:'short', timeZone: tz || 'Asia/Jakarta' }).format(d); }catch(e){ return dt; }
+      },
+      get meta(){
+        if(!this.batch) return '';
+        const tz = this.batch.timezone || 'Asia/Jakarta';
+        const when = this.fmt(this.batch.schedule_at, tz);
+        return `Buyer: ${this.batch.buyer?.full_name || this.batch.buyer_id} | TZ: ${tz} | Schedule: ${when}`;
+      },
+      async init(){
+        const id = window.location.pathname.split('/').filter(Boolean).slice(-2)[0]; // path ends with /{id}/ui
+        const r = await fetch(`{{ url('/admin/scheduled-orders') }}/${id}`, {headers:{'Accept':'application/json'}});
+        this.batch = await r.json();
+      },
+      async runNow(){
+        const id = this.batch.id; await fetch(`{{ url('/admin/scheduled-orders') }}/${id}/run-now`, {method:'POST', headers:{'X-CSRF-TOKEN':'{{ csrf_token() }}'}}); location.reload();
+      },
+      async cancel(){
+        const id = this.batch.id; await fetch(`{{ url('/admin/scheduled-orders') }}/${id}/cancel`, {method:'POST', headers:{'X-CSRF-TOKEN':'{{ csrf_token() }}'}}); location.reload();
+      }
+    }
   }
-}
-</script>
-@endsection
+  </script>
+</x-admin-layout>

@@ -1,91 +1,65 @@
-@extends('layouts.app')
+<x-admin-layout>
+  <x-slot name="title">Scheduled Orders</x-slot>
 
-@section('content')
-<div class="max-w-7xl mx-auto p-6">
-    <div class="flex items-center justify-between mb-6">
-        <h1 class="text-2xl font-semibold">Scheduled Batches</h1>
-        <a href="{{ route('admin.scheduled-orders.create') }}" class="px-4 py-2 bg-emerald-600 text-white rounded hover:bg-emerald-700">New Batch</a>
+  <div class="bg-white rounded-lg shadow-sm border border-gray-200" id="app" x-data="scheduledOrders()" x-init="init()">
+    <div class="px-6 py-4 border-b border-gray-200 flex items-center justify-between">
+      <div>
+        <h2 class="text-lg font-semibold text-gray-800">Daftar Scheduled Orders</h2>
+        <p class="text-sm text-gray-500">Kelola batch auto order yang terjadwal.</p>
+      </div>
+      <div class="flex items-center gap-2">
+        <button @click="fetchBatches()" class="inline-flex items-center bg-gray-100 hover:bg-gray-200 text-gray-700 px-4 py-2 rounded-lg text-sm font-medium transition">Refresh</button>
+        <a href="{{ route('admin.scheduled-orders.create') }}" class="inline-flex items-center bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg text-sm font-medium transition">Buat Jadwal</a>
+      </div>
     </div>
 
-    <div id="app" x-data="scheduledBatches()" x-init="init()">
-        <div class="mb-4 flex gap-2">
-            <input x-model="filters.search" type="text" placeholder="Search buyer/creator" class="border rounded px-3 py-2 w-72">
-            <select x-model="filters.status" class="border rounded px-3 py-2">
-                <option value="">All Status</option>
-                <option value="scheduled">Scheduled</option>
-                <option value="processing">Processing</option>
-                <option value="completed">Completed</option>
-                <option value="partial">Partial</option>
-                <option value="failed">Failed</option>
-                <option value="canceled">Canceled</option>
-            </select>
-            <button @click="load()" class="px-4 py-2 bg-slate-700 text-white rounded">Apply</button>
+    <div class="divide-y">
+      <template x-for="b in batches" :key="b.id">
+        <div class="px-6 py-4 flex items-center justify-between hover:bg-gray-50">
+          <div>
+            <div class="font-medium text-gray-900" x-text="`Batch #${b.id} - ${b.status}`"></div>
+            <div class="text-sm text-gray-500" x-text="`Schedule: ${fmt(b.schedule_at, b.timezone)} (${b.timezone}) | Items: ${b.items_count}`"></div>
+          </div>
+          <div class="flex gap-2">
+            <a :href="`{{ url('/admin/scheduled-orders/') }}/${b.id}/ui`" class="inline-flex items-center px-3 py-1.5 border border-gray-300 rounded-lg text-sm text-gray-700 hover:bg-gray-100">Detail</a>
+            <button @click="runNow(b.id)" class="inline-flex items-center px-3 py-1.5 border border-gray-300 rounded-lg text-sm text-gray-700 hover:bg-gray-100">Run Now</button>
+            <button @click="cancel(b.id)" class="inline-flex items-center px-3 py-1.5 border border-red-300 rounded-lg text-sm text-red-700 hover:bg-red-50">Cancel</button>
+          </div>
         </div>
-
-        <div class="bg-white shadow rounded overflow-hidden">
-            <table class="min-w-full">
-                <thead class="bg-slate-50">
-                    <tr>
-                        <th class="px-4 py-3 text-left text-sm font-medium text-slate-600">ID</th>
-                        <th class="px-4 py-3 text-left text-sm font-medium text-slate-600">Buyer</th>
-                        <th class="px-4 py-3 text-left text-sm font-medium text-slate-600">Schedule (local)</th>
-                        <th class="px-4 py-3 text-left text-sm font-medium text-slate-600">Status</th>
-                        <th class="px-4 py-3 text-left text-sm font-medium text-slate-600">Items</th>
-                        <th class="px-4 py-3"></th>
-                    </tr>
-                </thead>
-                <tbody>
-                    <template x-for="b in batches" :key="b.id">
-                        <tr class="border-t">
-                            <td class="px-4 py-3 text-sm" x-text="b.id"></td>
-                            <td class="px-4 py-3 text-sm" x-text="b.buyer?.full_name || b.buyer_id"></td>
-                            <td class="px-4 py-3 text-sm" x-text="formatLocal(b.schedule_at, b.timezone)"></td>
-                            <td class="px-4 py-3 text-sm">
-                                <span class="px-2 py-1 rounded text-white" :class="statusClass(b.status)" x-text="b.status"></span>
-                            </td>
-                            <td class="px-4 py-3 text-sm" x-text="b.items_count"></td>
-                            <td class="px-4 py-3 text-sm text-right">
-                                <a :href="'{{ url('/admin/scheduled-orders') }}/' + b.id" class="text-emerald-700 hover:underline">Detail</a>
-                                <button @click="runNow(b)" class="ml-3 text-indigo-700 hover:underline" x-show="['scheduled','failed','partial'].includes(b.status)">Run now</button>
-                                <button @click="cancel(b)" class="ml-3 text-rose-700 hover:underline" x-show="b.status==='scheduled'">Cancel</button>
-                            </td>
-                        </tr>
-                    </template>
-                </tbody>
-            </table>
-        </div>
+      </template>
+      <div x-show="batches.length===0" class="p-10 text-center text-gray-500">
+        <svg class="mx-auto h-10 w-10 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 7h18M3 12h18M3 17h18"/></svg>
+        <h3 class="mt-2 text-sm font-medium text-gray-900">Belum ada batch</h3>
+        <p class="mt-1 text-sm text-gray-500">Buat jadwal baru untuk mulai auto order.</p>
+      </div>
     </div>
-</div>
+  </div>
 
-<script>
-function scheduledBatches(){
-  return {
-    filters: { status: '', search: '' },
-    batches: [],
-    init(){ this.load(); },
-    async load(){
-      const params = new URLSearchParams();
-      if(this.filters.status) params.set('status', this.filters.status);
-      if(this.filters.search) params.set('search', this.filters.search);
-      const res = await fetch(`{{ route('admin.scheduled-orders.index') }}?` + params.toString(), { headers: { 'Accept': 'application/json' }});
-      const data = await res.json();
-      this.batches = data.data || data;
-    },
-    formatLocal(utc, tz){ try { return new Date(utc + 'Z').toLocaleString('id-ID', { timeZone: tz || 'Asia/Jakarta' }); } catch(e){ return utc; } },
-    statusClass(s){
-      return {
-        scheduled: 'bg-amber-500', processing: 'bg-indigo-500', completed: 'bg-emerald-600', partial: 'bg-amber-700', failed: 'bg-rose-600', canceled: 'bg-slate-500'
-      }[s] || 'bg-slate-600';
-    },
-    async runNow(b){
-      await fetch(`{{ url('/admin/scheduled-orders') }}/${b.id}/run-now`, { method:'POST', headers: { 'X-CSRF-TOKEN': '{{ csrf_token() }}' }});
-      this.load();
-    },
-    async cancel(b){
-      await fetch(`{{ url('/admin/scheduled-orders') }}/${b.id}/cancel`, { method:'POST', headers: { 'X-CSRF-TOKEN': '{{ csrf_token() }}' }});
-      this.load();
+  <script>
+  function scheduledOrders(){
+    return {
+      batches: [],
+      async init(){ this.fetchBatches(); },
+      fmt(dt, tz){
+        try{
+          const d = new Date(dt);
+          return new Intl.DateTimeFormat('id-ID', { dateStyle:'medium', timeStyle:'short', timeZone: tz || 'Asia/Jakarta' }).format(d);
+        }catch(e){ return dt; }
+      },
+      async fetchBatches(){
+        const r = await fetch(`{{ route('admin.scheduled-orders.index') }}`, {headers:{'Accept':'application/json'}});
+        const j = await r.json();
+        this.batches = j.data || [];
+      },
+      async runNow(id){
+        await fetch(`{{ url('/admin/scheduled-orders') }}/${id}/run-now`, {method:'POST', headers:{'X-CSRF-TOKEN':'{{ csrf_token() }}'}});
+        this.fetchBatches();
+      },
+      async cancel(id){
+        await fetch(`{{ url('/admin/scheduled-orders') }}/${id}/cancel`, {method:'POST', headers:{'X-CSRF-TOKEN':'{{ csrf_token() }}'}});
+        this.fetchBatches();
+      }
     }
   }
-}
-</script>
-@endsection
+  </script>
+</x-admin-layout>

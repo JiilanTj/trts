@@ -12,6 +12,7 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Validator;
+use Illuminate\Validation\ValidationException; // added
 
 class OrderController extends Controller
 {
@@ -158,6 +159,16 @@ class OrderController extends Controller
 
             // Handle auto-paid
             if ($request->boolean('auto_paid')) {
+                // Ensure stock availability before marking as paid
+                foreach ($order->items as $it) {
+                    $p = Product::find($it->product_id);
+                    if (!$p || $p->stock < $it->quantity) {
+                        throw ValidationException::withMessages([
+                            'items' => ["Stok produk {$it->product->name} tidak mencukupi (tersedia: " . ($p?->stock ?? 0) . ", diminta: {$it->quantity})."]
+                        ]);
+                    }
+                }
+
                 $order->update([
                     'payment_status' => 'paid',
                     'status' => 'packaging',
@@ -233,6 +244,15 @@ class OrderController extends Controller
     {
         if ($order->payment_status !== 'waiting_confirmation') {
             return back()->withErrors(['order' => 'Status pembayaran tidak valid untuk approve.']);
+        }
+
+        // Pre-check stock before approving payment
+        $order->loadMissing('items.product');
+        foreach ($order->items as $it) {
+            $p = Product::find($it->product_id);
+            if (!$p || $p->stock < $it->quantity) {
+                return back()->withErrors(['stock' => "Stok produk {$it->product->name} tidak mencukupi untuk approve (tersedia: " . ($p?->stock ?? 0) . ", diminta: {$it->quantity})."]);
+            }
         }
         
         DB::transaction(function () use ($order, $request) {
@@ -313,6 +333,12 @@ class OrderController extends Controller
                 $this->createOrderNotification($order, 'payment', 'Margin Seller Diterima', 
                     "Margin sebesar Rp" . number_format($order->seller_margin_total, 0, ',', '.') . 
                     " telah ditambahkan ke saldo Anda. Credit score +5 poin!");
+            }
+
+            // Decrement stock after approval (guaranteed sufficient by pre-check)
+            foreach ($order->items as $it) {
+                $p = Product::find($it->product_id);
+                if ($p) { $p->decrement('stock', $it->quantity); }
             }
         });
         

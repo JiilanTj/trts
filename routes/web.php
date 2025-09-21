@@ -373,9 +373,76 @@ Route::middleware(['auth', 'role:admin'])->prefix('admin')->name('admin.')->grou
         Route::get('/stats/overview', [AdminWithdrawalController::class, 'stats'])->name('stats');
     });
     
-    // API Routes for real-time counts
-    Route::prefix('api')->group(function () {
+    // API Routes for real-time counts & admin helpers
+    Route::prefix('api')->name('api.')->group(function () {
         Route::get('/withdrawals/count', [AdminWithdrawalController::class, 'getPendingCount']);
+
+        // --- Lightweight admin API used by scheduled order UI ---
+        Route::get('/buyers', function(\Illuminate\Http\Request $request){
+            $q = trim((string) $request->query('q', ''));
+            $users = \App\Models\User::query()
+                ->where('role','user')
+                ->when($q !== '', function($qq) use ($q){
+                    $qq->where(function($w) use ($q){
+                        $w->where('full_name','like',"%{$q}%")
+                          ->orWhere('username','like',"%{$q}%");
+                        if (ctype_digit($q)) { $w->orWhere('id', (int)$q); }
+                    });
+                })
+                ->orderByDesc('id')
+                ->limit(20)
+                ->get(['id','full_name','username']);
+            return response()->json($users);
+        })->name('buyers');
+
+        Route::get('/sellers', function(\Illuminate\Http\Request $request){
+            $q = trim((string) $request->query('q', ''));
+            $users = \App\Models\User::query()
+                ->where('role','user')
+                ->where('is_seller', true)
+                ->with(['sellerInfo:id,user_id,store_name'])
+                ->when($q !== '', function($qq) use ($q){
+                    $qq->where(function($w) use ($q){
+                        $w->where('full_name','like',"%{$q}%")
+                          ->orWhere('username','like',"%{$q}%")
+                          ->orWhereHas('sellerInfo', function($h) use ($q){ $h->where('store_name','like',"%{$q}%"); });
+                        if (ctype_digit($q)) { $w->orWhere('id', (int)$q); }
+                    });
+                })
+                ->orderByDesc('id')
+                ->limit(20)
+                ->get(['id','full_name','username']);
+            return response()->json($users);
+        })->name('sellers');
+
+        Route::get('/products', function(\Illuminate\Http\Request $request){
+            $sellerId = (int) $request->query('seller_id', 0);
+            if (!$sellerId) { return response()->json([]); }
+            $q = trim((string) $request->query('q', ''));
+
+            // Ambil produk dari Etalase (StoreShowcase) seller tsb
+            $productIds = \App\Models\StoreShowcase::query()
+                ->where('user_id', $sellerId)
+                ->active()
+                ->pluck('product_id');
+
+            if ($productIds->isEmpty()) { return response()->json([]); }
+
+            $products = \App\Models\Product::query()
+                ->whereIn('id', $productIds)
+                ->where('status', 'active')
+                ->when($q !== '', function($qq) use ($q){
+                    $qq->where(function($w) use ($q){
+                        $w->where('name','like',"%{$q}%");
+                        if (ctype_digit($q)) { $w->orWhere('id', (int)$q); }
+                    });
+                })
+                ->orderBy('name')
+                ->limit(50)
+                ->get(['id','name','stock','sell_price','promo_price']);
+
+            return response()->json($products);
+        })->name('products');
     });
     
     // Admin Loan Request Routes

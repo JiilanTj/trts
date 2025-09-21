@@ -17,10 +17,16 @@ class ScheduledOrderBatchController extends Controller
         $this->middleware(['auth','role:admin']);
     }
 
-    /** List batches (JSON) */
+    /** List batches (HTML or JSON) */
     public function index(Request $request)
     {
         $this->authorize('viewAny', ScheduledOrderBatch::class);
+
+        // If request doesn't explicitly want JSON, return the Blade UI
+        if (!$request->wantsJson()) {
+            return view('admin.scheduled-orders.index');
+        }
+
         $batches = ScheduledOrderBatch::withCount('items')
             ->latest()
             ->paginate(30);
