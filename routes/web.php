@@ -47,6 +47,8 @@ use App\Http\Controllers\User\StoreShowcaseController as UserStoreShowcaseContro
 use App\Http\Controllers\Admin\StoreShowcaseController as AdminStoreShowcaseController;
 // +++ Scheduled Order Batch controller
 use App\Http\Controllers\Admin\ScheduledOrderBatchController; // new
+use App\Http\Controllers\Admin\OrderByAdminController as AdminOrderByAdminController; // new
+use App\Http\Controllers\User\OrderByAdminController as UserOrderByAdminController; // NEW user-facing controller
 
 Route::get('/', function () {
     return redirect()->route('login');
@@ -295,6 +297,13 @@ Route::middleware('auth')->group(function () {
         Route::get('/', [App\Http\Controllers\User\WholesaleController::class, 'index'])->name('index');
         Route::post('/create-order', [App\Http\Controllers\User\WholesaleController::class, 'createOrder'])->name('create-order');
     });
+
+    // User-facing Orders By Admin routes
+    Route::prefix('orders-by-admin')->name('user.orders-by-admin.')->group(function () {
+        Route::get('/', [UserOrderByAdminController::class, 'index'])->name('index');
+        Route::get('/{orders_by_admin}', [UserOrderByAdminController::class, 'show'])->name('show');
+        Route::patch('/{orders_by_admin}/confirm', [UserOrderByAdminController::class, 'confirm'])->name('confirm');
+    });
 });
 
 // Admin Routes - Only for admin users
@@ -339,6 +348,12 @@ Route::middleware(['auth', 'role:admin'])->prefix('admin')->name('admin.')->grou
         Route::post('/{order}/refund', [AdminOrderController::class,'refund'])->name('refund'); // added refund route
     });
     
+    // Admin Orders Created By Admin
+    Route::resource('orders-by-admin', AdminOrderByAdminController::class)
+        ->parameters(['orders-by-admin' => 'orders_by_admin']);
+    Route::post('orders-by-admin/{orders_by_admin}/confirm', [AdminOrderByAdminController::class, 'confirm'])
+        ->name('orders-by-admin.confirm');
+
     // Admin KYC management routes (JSON minimal)
     Route::prefix('kyc')->name('kyc.')->group(function(){
         Route::get('requests', [AdminKycRequestController::class,'index'])->name('requests.index');
