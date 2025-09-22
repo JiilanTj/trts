@@ -17,6 +17,9 @@ class OrderByAdmin extends Model
 
     public const STATUS_PENDING = 'PENDING';
     public const STATUS_CONFIRMED = 'CONFIRMED';
+    public const STATUS_PACKED = 'PACKED';
+    public const STATUS_SHIPPED = 'SHIPPED';
+    public const STATUS_DELIVERED = 'DELIVERED';
 
     /**
      * The attributes that are mass assignable.

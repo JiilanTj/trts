@@ -9,6 +9,8 @@ use App\Models\StoreShowcase;
 use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Validation\Rule;
+use Illuminate\Support\Facades\DB;
 
 class OrderByAdminController extends Controller
 {
@@ -18,15 +20,20 @@ class OrderByAdminController extends Controller
         $this->ensureAdmin();
 
         $status = $request->query('status');
+        $normalizedStatus = $status ? strtoupper($status) : null;
         $query = OrderByAdmin::query()->with(['admin','user','storeShowcase','product'])
             ->latest();
-        if ($status) {
-            $query->where('status', $status);
+        if ($normalizedStatus) {
+            $query->where('status', $normalizedStatus);
         }
         $orders = $query->paginate(20)->withQueryString();
 
         if (view()->exists('admin.orders-by-admin.index')) {
-            return view('admin.orders-by-admin.index', compact('orders', 'status'));
+            // Pass original filter value for UI selection convenience (can be lowercase)
+            return view('admin.orders-by-admin.index', [
+                'orders' => $orders,
+                'status' => $status,
+            ]);
         }
         return response()->json($orders);
     }
@@ -36,10 +43,11 @@ class OrderByAdminController extends Controller
     {
         $this->ensureAdmin();
 
-        // Optional minimal datasets for dropdowns (can be replaced by AJAX search)
-        $users = User::query()->users()->orderByDesc('id')->limit(20)->get(['id','full_name','username']);
-        $showcases = StoreShowcase::query()->with(['user','product'])->orderByDesc('id')->limit(20)->get();
-        $products = Product::query()->active()->orderByDesc('id')->limit(20)->get();
+        // Only list seller users for selection
+        $users = User::query()->users()->sellers()->orderByDesc('id')->limit(50)->get(['id','full_name','username']);
+        // Products and showcases will be loaded dynamically based on selected seller
+        $showcases = collect();
+        $products = collect();
 
         if (view()->exists('admin.orders-by-admin.create')) {
             return view('admin.orders-by-admin.create', compact('users','showcases','products'));
@@ -56,43 +64,66 @@ class OrderByAdminController extends Controller
     {
         $this->ensureAdmin();
 
+        // Support multiple items: items[].{store_showcase_id, product_id, quantity}
         $data = $request->validate([
             'user_id' => ['required','exists:users,id'],
-            'store_showcase_id' => ['required','exists:store_showcases,id'],
-            'product_id' => ['required','exists:products,id'],
-            'quantity' => ['required','integer','min:1'],
-            'unit_price' => ['nullable','integer','min:0'],
-            'status' => ['nullable','in:'.implode(',', [OrderByAdmin::STATUS_PENDING, OrderByAdmin::STATUS_CONFIRMED])],
+            'items' => ['required','array','min:1'],
+            'items.*.store_showcase_id' => ['required','exists:store_showcases,id'],
+            'items.*.product_id' => ['required','exists:products,id'],
+            'items.*.quantity' => ['required','integer','min:1'],
+            // unit_price & status are computed/locked server-side
         ]);
 
         $adminId = Auth::id();
-        $showcase = StoreShowcase::with('product')->findOrFail($data['store_showcase_id']);
-        $product = Product::findOrFail($data['product_id']);
 
-        // Ensure product matches the showcase product (basic integrity guard)
-        if ($showcase->product_id !== $product->id) {
-            return back()->withErrors(['product_id' => 'Produk tidak sesuai dengan etalase yang dipilih.'])->withInput();
+        // Ensure selected user is a seller
+        $buyer = User::findOrFail($data['user_id']);
+        if (!$buyer->isSeller()) {
+            return back()->withErrors(['user_id' => 'User harus seller.'])->withInput();
         }
 
-        // Default unit_price to product seller price if not provided
-        $unitPrice = $data['unit_price'] ?? (int) ($product->harga_jual ?? $product->sell_price);
-        $totalPrice = $unitPrice * (int)$data['quantity'];
+        $created = [];
 
-        $order = OrderByAdmin::create([
-            'admin_id' => $adminId,
-            'user_id' => (int)$data['user_id'],
-            'store_showcase_id' => (int)$data['store_showcase_id'],
-            'product_id' => (int)$data['product_id'],
-            'quantity' => (int)$data['quantity'],
-            'unit_price' => $unitPrice,
-            'total_price' => $totalPrice,
-            'status' => $data['status'] ?? OrderByAdmin::STATUS_PENDING,
-        ]);
+        DB::transaction(function () use ($data, $adminId, &$created) {
+            foreach ($data['items'] as $idx => $item) {
+                $showcase = StoreShowcase::with('product')->findOrFail($item['store_showcase_id']);
+                $product = Product::findOrFail($item['product_id']);
 
-        if (view()->exists('admin.orders-by-admin.show')) {
-            return redirect()->route('admin.orders-by-admin.show', $order);
+                // Ensure showcase belongs to the selected seller
+                if ((int)$showcase->user_id !== (int)$data['user_id']) {
+                    throw \Illuminate\Validation\ValidationException::withMessages([
+                        "items.$idx.store_showcase_id" => 'Etalase tidak dimiliki oleh seller yang dipilih.'
+                    ]);
+                }
+
+                // Ensure product matches the showcase product
+                if ((int)$showcase->product_id !== (int)$product->id) {
+                    throw \Illuminate\Validation\ValidationException::withMessages([
+                        "items.$idx.product_id" => 'Produk tidak sesuai dengan etalase yang dipilih.'
+                    ]);
+                }
+
+                // Compute unit price from product seller price (harga_jual)
+                $unitPrice = (int) ($product->harga_jual ?? $product->sell_price);
+                $totalPrice = $unitPrice * (int)$item['quantity'];
+
+                $created[] = OrderByAdmin::create([
+                    'admin_id' => $adminId,
+                    'user_id' => (int)$data['user_id'],
+                    'store_showcase_id' => (int)$item['store_showcase_id'],
+                    'product_id' => (int)$item['product_id'],
+                    'quantity' => (int)$item['quantity'],
+                    'unit_price' => $unitPrice,
+                    'total_price' => $totalPrice,
+                    'status' => OrderByAdmin::STATUS_PENDING,
+                ]);
+            }
+        });
+
+        if (view()->exists('admin.orders-by-admin.index')) {
+            return redirect()->route('admin.orders-by-admin.index')->with('status', 'Berhasil membuat '.count($created).' order.');
         }
-        return response()->json($order, 201);
+        return response()->json($created, 201);
     }
 
     // Show one
@@ -127,7 +158,13 @@ class OrderByAdminController extends Controller
         $data = $request->validate([
             'quantity' => ['sometimes','integer','min:1'],
             'unit_price' => ['sometimes','integer','min:0'],
-            'status' => ['sometimes','in:'.implode(',', [OrderByAdmin::STATUS_PENDING, OrderByAdmin::STATUS_CONFIRMED])],
+            'status' => ['sometimes','in:'.implode(',', [
+                OrderByAdmin::STATUS_PENDING,
+                OrderByAdmin::STATUS_CONFIRMED,
+                OrderByAdmin::STATUS_PACKED,
+                OrderByAdmin::STATUS_SHIPPED,
+                OrderByAdmin::STATUS_DELIVERED,
+            ])],
         ]);
 
         $orders_by_admin->fill($data);

@@ -458,6 +458,40 @@ Route::middleware(['auth', 'role:admin'])->prefix('admin')->name('admin.')->grou
 
             return response()->json($products);
         })->name('products');
+
+        // New: list active showcases for a seller (with product names)
+        Route::get('/showcases', function(\Illuminate\Http\Request $request){
+            $sellerId = (int) $request->query('seller_id', 0);
+            if (!$sellerId) { return response()->json([]); }
+            $q = trim((string) $request->query('q', ''));
+
+            $showcases = \App\Models\StoreShowcase::query()
+                ->where('user_id', $sellerId)
+                ->active()
+                ->with(['product:id,name,sell_price,promo_price,image'])
+                ->when($q !== '', function($qq) use ($q){
+                    $qq->whereHas('product', function($w) use ($q){
+                        $w->where('name','like',"%{$q}%");
+                        if (ctype_digit($q)) { $w->orWhere('id', (int)$q); }
+                    });
+                })
+                ->orderByDesc('id')
+                ->limit(100)
+                ->get(['id','user_id','product_id']);
+
+            $payload = $showcases->map(function($s){
+                return [
+                    'id' => $s->id,
+                    'product_id' => $s->product_id,
+                    'product_name' => optional($s->product)->name,
+                    'sell_price' => optional($s->product)->sell_price,
+                    'promo_price' => optional($s->product)->promo_price,
+                    'image_url' => optional($s->product)->image_url,
+                ];
+            })->values();
+
+            return response()->json($payload);
+        })->name('showcases');
     });
     
     // Admin Loan Request Routes
