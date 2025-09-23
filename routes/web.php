@@ -49,6 +49,7 @@ use App\Http\Controllers\Admin\StoreShowcaseController as AdminStoreShowcaseCont
 use App\Http\Controllers\Admin\ScheduledOrderBatchController; // new
 use App\Http\Controllers\Admin\OrderByAdminController as AdminOrderByAdminController; // new
 use App\Http\Controllers\User\OrderByAdminController as UserOrderByAdminController; // NEW user-facing controller
+use App\Http\Controllers\Admin\ScheduledOrderByAdminController; // import missing controller for scheduled order-by-admin routes
 
 Route::get('/', function () {
     return redirect()->route('login');
@@ -333,6 +334,9 @@ Route::middleware(['auth', 'role:admin'])->prefix('admin')->name('admin.')->grou
     Route::post('sellers/{sellerInfo}/credit-score', [AdminSellerInfoController::class, 'updateCreditScore'])->name('sellers.update-credit-score');
     Route::get('sellers/{sellerInfo}/stats', [AdminSellerInfoController::class, 'getStats'])->name('sellers.stats');
 
+    // Lightweight API for seller showcases (for Order By Admin forms)
+    Route::get('api/showcases', [\App\Http\Controllers\Admin\OrderByAdminController::class, 'apiShowcases'])->name('api.showcases');
+
     // +++ Admin Order Routes
     Route::prefix('orders')->name('orders.')->group(function () {
         Route::get('/', [AdminOrderController::class,'index'])->name('index');
@@ -353,6 +357,15 @@ Route::middleware(['auth', 'role:admin'])->prefix('admin')->name('admin.')->grou
         ->parameters(['orders-by-admin' => 'orders_by_admin']);
     Route::post('orders-by-admin/{orders_by_admin}/confirm', [AdminOrderByAdminController::class, 'confirm'])
         ->name('orders-by-admin.confirm');
+
+    // Scheduled Order-By-Admin
+    Route::prefix('orders-by-admin/scheduled')->name('orders-by-admin.scheduled.')->group(function(){
+        Route::get('/', [ScheduledOrderByAdminController::class, 'index'])->name('index');
+        Route::post('/', [ScheduledOrderByAdminController::class, 'store'])->name('store');
+        Route::get('/{scheduled}', [ScheduledOrderByAdminController::class, 'show'])->name('show');
+        Route::post('/{scheduled}/cancel', [ScheduledOrderByAdminController::class, 'cancel'])->name('cancel');
+        Route::post('/{scheduled}/run-now', [ScheduledOrderByAdminController::class, 'runNow'])->name('run-now');
+    });
 
     // Admin KYC management routes (JSON minimal)
     Route::prefix('kyc')->name('kyc.')->group(function(){

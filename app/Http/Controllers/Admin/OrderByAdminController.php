@@ -306,4 +306,39 @@ class OrderByAdminController extends Controller
             abort(403, 'Forbidden');
         }
     }
+
+    /**
+     * Lightweight API: list active showcases for a given seller with product info for form selects.
+     * GET /admin/api/showcases?seller_id=ID
+     */
+    public function apiShowcases(Request $request)
+    {
+        $this->ensureAdmin();
+        $sellerId = (int) $request->query('seller_id');
+        if (!$sellerId) {
+            return response()->json([]);
+        }
+
+        $rows = StoreShowcase::query()
+            ->with(['product:id,name,sell_price,promo_price,image'])
+            ->where('user_id', $sellerId)
+            ->active()
+            ->orderByDesc('id')
+            ->limit(200)
+            ->get();
+
+        $out = $rows->map(function (StoreShowcase $s) {
+            $p = $s->product;
+            return [
+                'id' => $s->id,
+                'product_id' => $p?->id,
+                'product_name' => $p?->name,
+                'sell_price' => (int) ($p?->harga_jual ?? 0),
+                'promo_price' => (int) ($p?->harga_biasa ?? 0),
+                'image_url' => $p?->image_url,
+            ];
+        });
+
+        return response()->json($out);
+    }
 }
