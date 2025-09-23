@@ -114,11 +114,16 @@
                                                 </button>
                                             </form>
                                         @else
-                                            <span class="text-[11px] text-amber-300">Saldo kurang, silahkan chat admin untuk topup</span>
-                                            <a href="{{ route('user.chat.index') }}" class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium bg-[#242b33] border border-white/10 hover:border-fuchsia-500/50 hover:text-white transition">
-                                                <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M7 8h10M7 12h6m-6 4h10M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
-                                                Chat Admin
-                                            </a>
+                                            <div class="flex flex-col gap-2">
+                                                <span class="text-[11px] text-amber-300">Saldo kurang, silahkan chat admin untuk topup atau gunakan menu Topup pada halaman utama</span>
+                                                <div class="flex items-center gap-2">
+                                                    <a href="{{ route('user.chat.index') }}" class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium bg-[#242b33] border border-white/10 hover:border-fuchsia-500/50 hover:text-white transition">
+                                                        <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M7 8h10M7 12h6m-6 4h10M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+                                                        Chat Admin
+                                                        <span class="px-1.5 py-0.5 text-[9px] rounded-full bg-emerald-500/20 text-emerald-300 border border-emerald-500/30 font-medium">Lebih Cepat</span>
+                                                    </a>
+                                                </div>
+                                            </div>
                                         @endif
                                     @endif
                                     <a href="{{ route('user.orders-by-admin.show',$order) }}" class="inline-flex items-center gap-1 px-3 py-1.5 rounded-lg text-xs font-medium bg-[#242b33] border border-white/10 hover:border-fuchsia-500/50 hover:text-white transition">Detail</a>

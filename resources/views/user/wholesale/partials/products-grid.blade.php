@@ -53,12 +53,9 @@
         <p class="text-xs text-neutral-400 mb-3">Stok: {{ $product->stock }}</p>
         
         <!-- Action Buttons -->
-        <div class="grid grid-cols-2 gap-2">
-            <button class="py-2 text-xs font-medium bg-[#FE2C55] text-white rounded-lg hover:bg-[#FE2C55]/90 transition">
-                Distribusi
-            </button>
+        <div class="w-full">
             <button onclick="addToEtalase({{ $product->id }}, '{{ addslashes($product->name) }}')" 
-                    class="py-2 text-xs font-medium bg-[#25F4EE] text-white rounded-lg hover:bg-[#25F4EE]/90 transition">
+                    class="w-full py-2 text-xs font-medium bg-[#25F4EE] text-white rounded-lg hover:bg-[#25F4EE]/90 transition">
                 + Etalase
             </button>
         </div>

@@ -77,7 +77,7 @@
                                 </p>
                                 <p class="text-xs text-gray-400 mt-1 leading-relaxed">
                                     @if($marginPercent)
-                                        Setiap penjualan eksternal produk ini akan memberikan margin {{ $marginPercent }}% dari harga jual (Rp {{ number_format($product->harga_jual, 0, ',', '.') }}) ke saldo Anda.
+                                        Setiap penjualan produk ini, anda akan mendapatkan margin {{ $marginPercent }}% dari harga jual (Rp {{ number_format($product->harga_jual, 0, ',', '.') }}) ke saldo Anda.
                                     @else
                                         Margin dihitung dari selisih harga jual dan harga biasa yang ditetapkan admin per produk.
                                     @endif
@@ -88,7 +88,7 @@
                                             $nextLevelData = $levelRequirements[$nextLevel] ?? null;
                                         @endphp
                                         @if($nextLevelData)
-                                            <br><span class="text-cyan-400">Upgrade ke {{ $nextLevelData['badge'] }}</span> untuk margin {{ $nextLevelData['margin_percent'] }}% (+ Rp {{ number_format(round($product->harga_jual * ($nextLevelData['margin_percent'] / 100)) - $sellerMargin, 0, ',', '.') }} per item).
+                                            <br><span class="text-cyan-400">Upgrade ke {{ $nextLevelData['badge'] }}</span> untuk margin {{ $nextLevelData['margin_percent'] }}%
                                         @endif
                                     @endif
                                 </p>
@@ -156,7 +156,7 @@
                     </div>
                     @if($isSeller)
                         <div id="chosen-price" class="text-[11px] font-medium text-gray-400">
-                            Harga terpilih saat ini: <span class="text-fuchsia-300" data-label>Harga Biasa</span> • <span data-price>Rp {{ number_format($product->harga_biasa,0,',','.') }}</span>
+                            Harga terpilih saat ini: <span class="text-fuchsia-300" data-label>Harga Jual</span> • <span data-price>Rp {{ number_format($product->harga_jual,0,',','.') }}</span>
                         </div>
                     @endif
                 </div>
@@ -188,49 +188,30 @@
                     <form method="POST" action="{{ route('browse.products.buy',$product) }}" class="space-y-4" id="buy-form" data-harga-biasa="{{ $product->harga_biasa }}" data-harga-jual="{{ $product->harga_jual }}">
                         @csrf
                         @if($isSeller)
-                            <div class="space-y-3">
-                                <div class="flex items-center gap-4">
-                                    <label class="flex items-center gap-2 text-xs text-gray-300">
-                                        <input type="radio" name="purchase_type" value="self" class="purchase-type text-fuchsia-500 focus:ring-fuchsia-500/60 bg-[#1b1f25] border-white/10" checked>
-                                        <span>Beli Untuk Diri (Harga Biasa)</span>
-                                    </label>
-                                    <label class="flex items-center gap-2 text-xs text-gray-300">
-                                        <input type="radio" name="purchase_type" value="external" class="purchase-type text-cyan-500 focus:ring-cyan-500/60 bg-[#1b1f25] border-white/10">
-                                        <span>Jual ke Pelanggan (Harga Jual)</span>
-                                    </label>
+                            <!-- Hidden radio buttons - automatically set to external -->
+                            <input type="hidden" name="purchase_type" value="external">
+                            <div id="margin-indicator" class="p-3 rounded-lg bg-emerald-900/20 border border-emerald-500/30">
+                                <div class="flex items-center justify-between">
+                                    <span class="text-xs text-emerald-300">Margin yang akan diterima:</span>
+                                    <span class="text-sm font-semibold text-emerald-400" id="margin-amount">
+                                        @if($marginPercent)
+                                            Rp {{ number_format($sellerMargin, 0, ',', '.') }} ({{ $marginPercent }}%)
+                                        @else
+                                            Rp {{ number_format($sellerMargin, 0, ',', '.') }} (admin)
+                                        @endif
+                                    </span>
                                 </div>
-                                <div id="margin-indicator" class="p-3 rounded-lg bg-emerald-900/20 border border-emerald-500/30 hidden">
-                                    <div class="flex items-center justify-between">
-                                        <span class="text-xs text-emerald-300">Margin yang akan diterima:</span>
-                                        <span class="text-sm font-semibold text-emerald-400" id="margin-amount">
-                                            @if($marginPercent)
-                                                Rp {{ number_format($sellerMargin, 0, ',', '.') }} ({{ $marginPercent }}%)
-                                            @else
-                                                Rp {{ number_format($sellerMargin, 0, ',', '.') }} (admin)
-                                            @endif
-                                        </span>
-                                    </div>
-                                    <p class="text-[10px] text-gray-400 mt-1">
-                                        Margin akan otomatis ditambahkan ke saldo setelah pembayaran dikonfirmasi.
-                                    </p>
-                                </div>
+                                <p class="text-[10px] text-gray-400 mt-1">
+                                    Margin akan otomatis ditambahkan ke saldo setelah pembayaran dikonfirmasi.
+                                </p>
                             </div>
                         @else
                             <input type="hidden" name="purchase_type" value="self">
                         @endif
-                        <button @disabled(!$product->inStock()) class="w-full py-3 rounded-xl text-sm font-medium text-white bg-gradient-to-r from-fuchsia-500 via-rose-500 to-cyan-500 hover:from-fuchsia-500/90 hover:via-rose-500/90 hover:to-cyan-500/90 disabled:from-gray-600 disabled:via-gray-500 disabled:to-gray-400 disabled:cursor-not-allowed shadow-sm shadow-fuchsia-500/30 flex items-center justify-center gap-2 focus:outline-none focus:ring-2 focus:ring-fuchsia-500/60"
-                            type="button"
-                            id="go-order-btn"
-                            data-base-url="{{ route('user.orders.create') }}"
-                            data-product-id="{{ $product->id }}">
-                            <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2 9m5-9v9m4-9v9m4-9l2 9" /></svg>
-                            Beli
-                        </button>
-                        
                         <!-- Add to Showcase Button - Only for Sellers -->
                         @if($isSeller)
                             <button type="button" 
-                                class="w-full py-3 rounded-xl text-sm font-medium text-gray-200 bg-gradient-to-r from-gray-700 via-gray-600 to-gray-700 hover:from-gray-600 hover:via-gray-500 hover:to-gray-600 border border-white/10 hover:border-white/20 transition flex items-center justify-center gap-2 focus:outline-none focus:ring-2 focus:ring-gray-500/60"
+                                class="w-full py-3 rounded-xl text-sm font-medium text-white bg-gradient-to-r from-fuchsia-500 via-rose-500 to-cyan-500 hover:from-fuchsia-500/90 hover:via-rose-500/90 hover:to-cyan-500/90 shadow-sm shadow-fuchsia-500/30 flex items-center justify-center gap-2 focus:outline-none focus:ring-2 focus:ring-fuchsia-500/60 transition"
                                 id="add-to-showcase-btn"
                                 data-product-id="{{ $product->id }}"
                                 data-product-name="{{ $product->name }}"
@@ -289,47 +270,6 @@
     @if($isSeller)
     <script>
         (function(){
-            const form = document.getElementById('buy-form');
-            if(!form) return;
-            const radios = form.querySelectorAll('.purchase-type');
-            const chosen = document.getElementById('chosen-price');
-            const marginIndicator = document.getElementById('margin-indicator');
-            const hargaBiasa = parseInt(form.dataset.hargaBiasa,10);
-            const hargaJual = parseInt(form.dataset.hargaJual,10);
-            const rupiah = n => 'Rp ' + (n||0).toLocaleString('id-ID');
-            radios.forEach(r=>{
-                r.addEventListener('change',()=>{
-                    const type = form.querySelector('.purchase-type:checked').value;
-                    const price = type==='external'?hargaJual:hargaBiasa;
-                    chosen.querySelector('[data-label]').textContent = type==='external' ? 'Harga Jual' : 'Harga Biasa';
-                    chosen.querySelector('[data-price]').textContent = rupiah(price);
-                    chosen.classList.add('animate-pulse');
-                    
-                    // Show/hide margin indicator
-                    if(marginIndicator) {
-                        if(type === 'external') {
-                            marginIndicator.classList.remove('hidden');
-                            marginIndicator.classList.add('animate-pulse');
-                            setTimeout(()=>marginIndicator.classList.remove('animate-pulse'), 500);
-                        } else {
-                            marginIndicator.classList.add('hidden');
-                        }
-                    }
-                    
-                    setTimeout(()=>chosen.classList.remove('animate-pulse'),500);
-                });
-            });
-            const goBtn = document.getElementById('go-order-btn');
-            if(goBtn){
-                goBtn.addEventListener('click',()=>{
-                    const type = form.querySelector('.purchase-type:checked')?.value || 'self';
-                    const base = goBtn.dataset.baseUrl;
-                    const pid = goBtn.dataset.productId;
-                    const url = base + '?product_id=' + encodeURIComponent(pid) + '&purchase_type=' + encodeURIComponent(type);
-                    window.location.href = url;
-                });
-            }
-            
             // Handle Add to Showcase button
             const showcaseBtn = document.getElementById('add-to-showcase-btn');
             if(showcaseBtn){
@@ -338,20 +278,6 @@
                     const pid = showcaseBtn.dataset.productId;
                     // Just send product_id, let controller handle the rest
                     const url = addUrl + '?product_id=' + encodeURIComponent(pid);
-                    window.location.href = url;
-                });
-            }
-        })();
-    </script>
-    @else
-    <script>
-        (function(){
-            const goBtn = document.getElementById('go-order-btn');
-            if(goBtn){
-                goBtn.addEventListener('click',()=>{
-                    const base = goBtn.dataset.baseUrl;
-                    const pid = goBtn.dataset.productId;
-                    const url = base + '?product_id=' + encodeURIComponent(pid) + '&purchase_type=self';
                     window.location.href = url;
                 });
             }

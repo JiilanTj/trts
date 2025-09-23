@@ -274,14 +274,9 @@
             <!-- Bottom Actions - Fixed Button -->
             <div class="fixed bottom-16 left-0 right-0 z-40 bg-[#1a1d21]/95 backdrop-blur-sm border-t border-neutral-800/70 p-4 shadow-lg">
                 <div class="max-w-sm mx-auto px-2">
-                    <div class="grid grid-cols-2 gap-2">
-                        <button id="confirmButton" class="py-3 bg-gradient-to-r from-[#FE2C55] to-[#25F4EE] text-white font-bold rounded-xl shadow-lg hover:shadow-xl transform hover:scale-[1.02] transition-all duration-200 active:scale-[0.98] text-center text-sm">
-                            Konfirmasi (0 Produk)
-                        </button>
-                        <button id="addToEtalaseButton" class="py-3 bg-gradient-to-r from-[#25F4EE] to-[#FE2C55] text-white font-bold rounded-xl shadow-lg hover:shadow-xl transform hover:scale-[1.02] transition-all duration-200 active:scale-[0.98] text-center text-sm">
-                            Tambah ke Etalase
-                        </button>
-                    </div>
+                    <button id="addToEtalaseButton" class="w-full py-3 bg-gradient-to-r from-[#25F4EE] to-[#FE2C55] text-white font-bold rounded-xl shadow-lg hover:shadow-xl transform hover:scale-[1.02] transition-all duration-200 active:scale-[0.98] text-center text-sm">
+                        Tambah ke Etalase (0 Produk)
+                    </button>
                 </div>
             </div>
             
@@ -395,9 +390,10 @@
             
             // Update UI elements
             function updateUI() {
-                const text = `Konfirmasi (${selectedProducts} Produk)`;
-                if (confirmButton) {
-                    confirmButton.textContent = text;
+                const etalaseText = `Tambah ke Etalase (${selectedProducts} Produk)`;
+                const addToEtalaseButton = document.getElementById('addToEtalaseButton');
+                if (addToEtalaseButton) {
+                    addToEtalaseButton.textContent = etalaseText;
                 }
                 if (selectedCount) {
                     selectedCount.textContent = selectedProducts;

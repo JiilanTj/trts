@@ -138,15 +138,8 @@
         <!-- Danger Zone -->
         <div class="relative z-10">
             <div class="rounded-2xl border border-red-500/20 bg-red-500/5 p-6">
-                <h3 class="text-lg font-medium text-red-400 mb-2">Hapus dari Etalase</h3>
-                <p class="text-sm text-gray-400 mb-4">Produk ini akan dihapus dari etalase Anda. Produk akan tetap tersedia di katalog utama.</p>
-                <form action="{{ route('user.showcases.destroy', $showcase) }}" method="POST" onsubmit="return confirm('Apakah Anda yakin ingin menghapus produk ini dari etalase?')">
-                    @csrf
-                    @method('DELETE')
-                    <button type="submit" class="px-4 py-2 rounded-lg text-sm font-medium text-red-400 bg-red-500/10 hover:bg-red-500/20 border border-red-500/20 hover:border-red-500/30 transition focus:outline-none focus:ring-2 focus:ring-red-500/60">
-                        Hapus dari Etalase
-                    </button>
-                </form>
+                <h3 class="text-lg font-medium text-red-400 mb-2">Produk yang telah ada di etalase tidak bisa dihapus!</h3>
+                <p class="text-sm text-gray-400 mb-4">Chat admin untuk melakukan hal yang tidak bisa dilakukan disini.</p>
             </div>
         </div>
     </div>
