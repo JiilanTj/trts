@@ -11,7 +11,7 @@
             'review' => ['label' => 'Review', 'color' => 'amber', 'text' => 'Sedang ditinjau admin'],
             'pending' => ['label' => 'Pending', 'color' => 'slate', 'text' => 'Menunggu diproses'],
             'rejected' => ['label' => 'Rejected', 'color' => 'rose', 'text' => 'Ditolak – perbaiki & ajukan ulang'],
-            'none' => ['label' => 'Belum KYC', 'color' => 'slate', 'text' => 'Ajukan verifikasi identitas'],
+            'none' => ['label' => 'Belum Verifikasi', 'color' => 'slate', 'text' => 'Ajukan verifikasi identitas'],
         ];
         $k = $kycMap[$kycStatus] ?? $kycMap['none'];
         $initials = Str::of($user->full_name)->trim()->explode(' ')->map(fn($p)=>Str::substr($p,0,1))->take(2)->implode('');
@@ -173,7 +173,7 @@
                         @if(!$kyc)
                             <div class="flex flex-col gap-2">
                                 @if(!$latestKycRequest || in_array($latestKycRequest->status,['rejected']))
-                                    <a href="{{ route('user.kyc.requests.index') }}" class="inline-flex items-center justify-center px-3 py-1.5 rounded-md text-xs font-medium bg-gradient-to-r from-[#FE2C55] to-[#25F4EE] text-black">Ajukan KYC</a>
+                                    <a href="{{ route('user.kyc.requests.index') }}" class="inline-flex items-center justify-center px-3 py-1.5 rounded-md text-xs font-medium bg-gradient-to-r from-[#FE2C55] to-[#25F4EE] text-black">Ajukan Verifikasi</a>
                                 @else
                                     <a href="{{ route('user.kyc.requests.show', $latestKycRequest) }}" class="inline-flex items-center justify-center px-3 py-1.5 rounded-md text-xs font-medium bg-neutral-700/40 text-neutral-200 border border-neutral-600 hover:bg-neutral-600/40">Lihat Permintaan</a>
                                 @endif

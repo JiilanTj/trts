@@ -3,14 +3,14 @@
     <div class="min-h-screen bg-[#1a1d21] text-neutral-100 pb-24">
         <div class="sticky top-0 z-30 backdrop-blur bg-[#1f2226]/95 border-b border-neutral-800/70 px-4 py-4">
             <div class="flex items-center justify-between">
-                <h1 class="text-lg font-semibold">Data KYC Terverifikasi</h1>
+                <h1 class="text-lg font-semibold">Data Identitas Terverifikasi</h1>
                 <a href="{{ route('user.profile.index') }}" class="text-xs text-neutral-400 hover:text-neutral-200">Kembali</a>
             </div>
         </div>
         <div class="px-4 py-6 space-y-6 max-w-xl mx-auto">
             @if(!$kyc)
                 <div class="rounded-xl border border-[#2c3136] bg-[#23272b] p-6 text-center space-y-3">
-                    <p class="text-sm text-neutral-300">Belum ada data KYC terverifikasi.</p>
+                    <p class="text-sm text-neutral-300">Belum ada data Identitas terverifikasi.</p>
                     <a href="{{ route('user.kyc.requests.index') }}" class="inline-flex items-center px-4 py-2 rounded-md text-sm font-medium bg-gradient-to-r from-[#FE2C55] to-[#25F4EE] text-black">Ajukan KYC</a>
                 </div>
             @else

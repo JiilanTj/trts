@@ -14,7 +14,7 @@
     <div class="min-h-screen bg-[#1a1d21] text-neutral-100 pb-24">
         <div class="sticky top-0 z-30 backdrop-blur bg-[#1f2226]/95 border-b border-neutral-800/70 px-4 py-4">
             <div class="flex items-center justify-between">
-                <h1 class="text-lg font-semibold">Pengajuan KYC</h1>
+                <h1 class="text-lg font-semibold">Pengajuan Verifikasi</h1>
                 <a href="{{ route('user.profile.index') }}" class="text-xs text-neutral-400 hover:text-neutral-200">Kembali</a>
             </div>
         </div>
@@ -48,7 +48,7 @@
                     @endif
                 </div>
                 @if($user->kyc)
-                    <p class="text-sm text-emerald-400">KYC sudah diverifikasi.</p>
+                    <p class="text-sm text-emerald-400">Identitas sudah diverifikasi.</p>
                     <a href="{{ route('user.kyc.show') }}" class="inline-flex items-center mt-2 px-3 py-1.5 rounded-md bg-emerald-500/20 text-emerald-300 text-xs border border-emerald-600/40 hover:bg-emerald-500/25 transition">Lihat Data KYC</a>
                 @elseif($latest)
                     <p class="text-sm">Pengajuan terakhir: <span class="font-medium capitalize">{{ $latest->status_kyc }}</span></p>
@@ -60,7 +60,7 @@
                         @endif
                     </div>
                 @else
-                    <p class="text-sm text-neutral-300">Belum ada pengajuan KYC.</p>
+                    <p class="text-sm text-neutral-300">Belum ada pengajuan Verifikasi.</p>
                 @endif
             </div>
 
