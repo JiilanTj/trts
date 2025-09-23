@@ -101,6 +101,8 @@
                             <span class="font-medium">Pengaturan Situs</span>
                         </a>
                     </li>
+                    {{-- Regular Orders menu disabled per requirements --}}
+                    {{--
                     <li>
                         <a href="{{ route('admin.orders.index') }}" class="flex items-center space-x-3 px-3 py-2.5 rounded-lg {{ request()->routeIs('admin.orders.*') ? 'bg-blue-50 text-blue-700 border border-blue-200' : 'text-gray-600 hover:bg-gray-100 hover:text-gray-900' }} transition-all duration-200">
                             <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -109,6 +111,7 @@
                             <span class="font-medium">Orders</span>
                         </a>
                     </li>
+                    --}}
                     <li>
                         <a href="{{ route('admin.topup.index') }}" class="flex items-center space-x-3 px-3 py-2.5 rounded-lg {{ request()->routeIs('admin.topup.*') ? 'bg-blue-50 text-blue-700 border border-blue-200' : 'text-gray-600 hover:bg-gray-100 hover:text-gray-900' }} transition-all duration-200">
                             <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -299,7 +302,7 @@ function updateTicketsCount() {
 function updateChatsCount() {
     fetch('/admin/api/chats/count')
         .then(response => response.json())
-        .then(data => {
+        .then data => {
             const badge = document.getElementById('open-chats-count');
             if (data.count > 0) {
                 badge.textContent = data.count;

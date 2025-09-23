@@ -32,8 +32,11 @@
                     <div>
                         <label class="block text-xs font-medium text-gray-600 mb-1">Status</label>
                         <select name="status" class="w-full px-3 py-2 rounded-lg border border-gray-300 focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
-                            <option value="PENDING" @selected($currentStatus==='PENDING')>Pending</option>
-                            <option value="CONFIRMED" @selected($currentStatus==='CONFIRMED')>Terkonfirmasi</option>
+                            <option value="PENDING" @selected($currentStatus==='PENDING')>Menunggu Konfirmasi</option>
+                            <option value="CONFIRMED" @selected($currentStatus==='CONFIRMED')>Dikonfirmasi</option>
+                            <option value="PACKED" @selected($currentStatus==='PACKED')>Dikemas</option>
+                            <option value="SHIPPED" @selected($currentStatus==='SHIPPED')>Dikirim</option>
+                            <option value="DELIVERED" @selected($currentStatus==='DELIVERED')>Terkirim</option>
                         </select>
                     </div>
                 </div>

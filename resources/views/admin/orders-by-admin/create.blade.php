@@ -68,7 +68,7 @@
 
                     <div>
                         <label class="block text-xs font-medium text-gray-600 mb-1">Status</label>
-                        <input type="text" value="Pending" class="w-full px-3 py-2 rounded-lg border border-gray-300 bg-gray-100 text-gray-700" readonly />
+                        <input type="text" value="Menunggu Konfirmasi" class="w-full px-3 py-2 rounded-lg border border-gray-300 bg-gray-100 text-gray-700" readonly />
                         <input type="hidden" name="status" value="PENDING" />
                     </div>
                 </div>

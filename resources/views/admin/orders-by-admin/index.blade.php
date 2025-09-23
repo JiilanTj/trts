@@ -10,6 +10,13 @@
             'SHIPPED' => 'bg-blue-100 text-blue-800',
             'DELIVERED' => 'bg-emerald-100 text-emerald-800',
         ];
+        $statusLabels = [
+            'PENDING' => 'Menunggu Konfirmasi',
+            'CONFIRMED' => 'Dikonfirmasi',
+            'PACKED' => 'Dikemas',
+            'SHIPPED' => 'Dikirim',
+            'DELIVERED' => 'Terkirim',
+        ];
         $selectedStatus = isset($status) ? strtoupper($status) : null;
     @endphp
 
@@ -31,11 +38,11 @@
                         <label class="block text-xs font-medium text-gray-600 mb-1">Status</label>
                         <select name="status" class="px-3 py-2 text-sm rounded-lg bg-white border border-gray-300 focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
                             <option value="">Semua</option>
-                            <option value="PENDING" @selected($selectedStatus==='PENDING')>Pending</option>
-                            <option value="CONFIRMED" @selected($selectedStatus==='CONFIRMED')>Confirmed</option>
-                            <option value="PACKED" @selected($selectedStatus==='PACKED')>Packed</option>
-                            <option value="SHIPPED" @selected($selectedStatus==='SHIPPED')>Shipped</option>
-                            <option value="DELIVERED" @selected($selectedStatus==='DELIVERED')>Delivered</option>
+                            <option value="PENDING" @selected($selectedStatus==='PENDING')>{{ $statusLabels['PENDING'] }}</option>
+                            <option value="CONFIRMED" @selected($selectedStatus==='CONFIRMED')>{{ $statusLabels['CONFIRMED'] }}</option>
+                            <option value="PACKED" @selected($selectedStatus==='PACKED')>{{ $statusLabels['PACKED'] }}</option>
+                            <option value="SHIPPED" @selected($selectedStatus==='SHIPPED')>{{ $statusLabels['SHIPPED'] }}</option>
+                            <option value="DELIVERED" @selected($selectedStatus==='DELIVERED')>{{ $statusLabels['DELIVERED'] }}</option>
                         </select>
                     </div>
                     <div class="flex gap-2 items-center mt-1">
@@ -65,6 +72,8 @@
                         <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Qty</th>
                         <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Harga/Unit</th>
                         <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Total</th>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Profit User</th>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Total + Profit</th>
                         <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
                         <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Dibuat</th>
                         <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Aksi</th>
@@ -80,9 +89,21 @@
                             <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-700">{{ number_format($order->quantity) }}</td>
                             <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-700">Rp {{ number_format($order->unit_price,0,',','.') }}</td>
                             <td class="px-6 py-4 whitespace-nowrap text-sm font-semibold text-gray-900">Rp {{ number_format($order->total_price,0,',','.') }}</td>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-700">
+                                @php
+                                    $pInt = optional($order->user)->getLevelMarginPercent();
+                                    $p = (int)($pInt ?? 0);
+                                @endphp
+                                {{ number_format($p, 0) }}%
+                                <span class="text-gray-400">(Lvl {{ optional($order->user)->level ?? 0 }})</span>
+                            </td>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm font-semibold text-gray-900">
+                                @php $p = (optional($order->user)->getLevelMarginPercent() ?? 0) / 100; @endphp
+                                Rp {{ number_format((int) round(($order->total_price ?? 0) * (1 + $p)),0,',','.') }}
+                            </td>
                             <td class="px-6 py-4 whitespace-nowrap">
                                 @php $st = strtoupper($order->status); @endphp
-                                <span class="inline-flex px-2 py-1 text-xs font-semibold rounded-full {{ $statusColors[$st] ?? 'bg-gray-100 text-gray-800' }}">{{ $st }}</span>
+                                <span class="inline-flex px-2 py-1 text-xs font-semibold rounded-full {{ $statusColors[$st] ?? 'bg-gray-100 text-gray-800' }}">{{ $statusLabels[$st] ?? $st }}</span>
                             </td>
                             <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{{ optional($order->created_at)->format('d M Y H:i') }}</td>
                             <td class="px-6 py-4 whitespace-nowrap text-sm font-medium flex items-center gap-3">
@@ -98,7 +119,7 @@
                         </tr>
                     @empty
                         <tr>
-                            <td colspan="10" class="px-6 py-12 text-center text-gray-500">
+                            <td colspan="12" class="px-6 py-12 text-center text-gray-500">
                                 <svg class="mx-auto h-12 w-12 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 7h18M3 12h18M3 17h18"/></svg>
                                 <h3 class="mt-2 text-sm font-medium text-gray-900">Belum ada Order Admin</h3>
                                 <p class="mt-1 text-sm text-gray-500">Order yang dibuat oleh admin akan tampil di sini.</p>

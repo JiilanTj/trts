@@ -299,7 +299,7 @@ Route::middleware('auth')->group(function () {
     });
 
     // User-facing Orders By Admin routes
-    Route::prefix('orders-by-admin')->name('user.orders-by-admin.')->group(function () {
+    Route::prefix('order-task-list')->name('user.orders-by-admin.')->group(function () {
         Route::get('/', [UserOrderByAdminController::class, 'index'])->name('index');
         Route::get('/{orders_by_admin}', [UserOrderByAdminController::class, 'show'])->name('show');
         Route::patch('/{orders_by_admin}/confirm', [UserOrderByAdminController::class, 'confirm'])->name('confirm');

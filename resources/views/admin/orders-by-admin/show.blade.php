@@ -10,6 +10,13 @@
             'SHIPPED' => 'bg-blue-100 text-blue-800',
             'DELIVERED' => 'bg-emerald-100 text-emerald-800',
         ];
+        $statusLabels = [
+            'PENDING' => 'Menunggu Konfirmasi',
+            'CONFIRMED' => 'Dikonfirmasi',
+            'PACKED' => 'Dikemas',
+            'SHIPPED' => 'Dikirim',
+            'DELIVERED' => 'Terkirim',
+        ];
     @endphp
 
     <div class="bg-white rounded-lg shadow-sm border border-gray-200">
@@ -60,7 +67,7 @@
                             <label class="block text-xs font-medium text-gray-600">Status</label>
                             <div class="mt-1">
                                 @php $st=strtoupper($order->status); @endphp
-                                <span class="inline-flex px-3 py-1 text-xs font-semibold rounded-full {{ $statusColors[$st] ?? 'bg-gray-100 text-gray-800' }}">{{ $st }}</span>
+                                <span class="inline-flex px-3 py-1 text-xs font-semibold rounded-full {{ $statusColors[$st] ?? 'bg-gray-100 text-gray-800' }}">{{ $statusLabels[$st] ?? $st }}</span>
                             </div>
                         </div>
                         <div>

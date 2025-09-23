@@ -5,6 +5,7 @@ namespace App\Http\Controllers\User;
 use App\Http\Controllers\Controller;
 use App\Models\OrderByAdmin;
 use App\Models\User;
+use App\Models\Notification; // add
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
@@ -17,15 +18,44 @@ class OrderByAdminController extends Controller
     {
         $userId = Auth::id();
 
+        // Normalize status filter to enum casing
+        $status = $request->query('status');
+        $normalizedStatus = $status ? strtoupper($status) : null;
+
         $orders = OrderByAdmin::query()
             ->with(['admin:id,username,full_name', 'storeShowcase', 'product'])
             ->where('user_id', $userId)
-            ->when($request->query('status'), function ($q, $status) {
-                $q->where('status', $status);
+            ->when($normalizedStatus, function ($q, $st) {
+                $q->where('status', $st);
             })
             ->latest()
             ->paginate(20)
             ->withQueryString();
+
+        // If Blade view exists, render the page with status filter tabs and counts
+        if (view()->exists('user.orders-by-admin.index')) {
+            $statusOptions = [
+                OrderByAdmin::STATUS_PENDING => 'Pending',
+                OrderByAdmin::STATUS_CONFIRMED => 'Confirmed',
+                OrderByAdmin::STATUS_PACKED => 'Packed',
+                OrderByAdmin::STATUS_SHIPPED => 'Shipped',
+                OrderByAdmin::STATUS_DELIVERED => 'Delivered',
+            ];
+
+            $counts = OrderByAdmin::query()
+                ->select('status', DB::raw('COUNT(*) as c'))
+                ->where('user_id', $userId)
+                ->groupBy('status')
+                ->pluck('c', 'status')
+                ->toArray();
+
+            return view('user.orders-by-admin.index', [
+                'orders' => $orders,
+                'status' => $normalizedStatus,
+                'statusOptions' => $statusOptions,
+                'statusCounts' => $counts,
+            ]);
+        }
 
         return response()->json($orders);
     }
@@ -35,6 +65,11 @@ class OrderByAdminController extends Controller
     {
         $this->authorizeAccess($orders_by_admin);
         $orders_by_admin->load(['admin:id,username,full_name', 'storeShowcase', 'product']);
+
+        if (view()->exists('user.orders-by-admin.show')) {
+            return view('user.orders-by-admin.show', ['order' => $orders_by_admin]);
+        }
+
         return response()->json($orders_by_admin);
     }
 
@@ -44,6 +79,9 @@ class OrderByAdminController extends Controller
         $this->authorizeAccess($orders_by_admin);
 
         if ($orders_by_admin->status !== OrderByAdmin::STATUS_PENDING) {
+            if (view()->exists('user.orders-by-admin.show')) {
+                return back()->withErrors(['status' => 'Order tidak dalam status PENDING.']);
+            }
             return response()->json([
                 'message' => 'Order tidak dalam status PENDING.'
             ], 422);
@@ -52,38 +90,76 @@ class OrderByAdminController extends Controller
         $authUser = Auth::user();
         $finalOrder = null;
 
-        DB::transaction(function () use ($orders_by_admin, $authUser, &$finalOrder) {
-            // Lock both order and user row to avoid race conditions
-            /** @var OrderByAdmin $order */
-            $order = OrderByAdmin::whereKey($orders_by_admin->getKey())
-                ->lockForUpdate()
-                ->firstOrFail();
+        try {
+            DB::transaction(function () use ($orders_by_admin, $authUser, &$finalOrder) {
+                // Lock both order and user row to avoid race conditions
+                /** @var OrderByAdmin $order */
+                $order = OrderByAdmin::whereKey($orders_by_admin->getKey())
+                    ->lockForUpdate()
+                    ->firstOrFail();
 
-            /** @var User $user */
-            $user = User::whereKey($authUser->getKey())
-                ->lockForUpdate()
-                ->firstOrFail();
+                /** @var User $user */
+                $user = User::whereKey($authUser->getKey())
+                    ->lockForUpdate()
+                    ->firstOrFail();
 
-            // Re-validate state under lock
-            if ($order->status !== OrderByAdmin::STATUS_PENDING) {
-                throw ValidationException::withMessages([
-                    'status' => 'Order tidak dalam status PENDING.'
-                ]);
+                // Re-validate state under lock
+                if ($order->status !== OrderByAdmin::STATUS_PENDING) {
+                    throw ValidationException::withMessages([
+                        'status' => 'Order tidak dalam status PENDING.'
+                    ]);
+                }
+
+                if (!$user->hasSufficientBalance((int)$order->total_price)) {
+                    throw ValidationException::withMessages([
+                        'balance' => 'Saldo tidak mencukupi.'
+                    ]);
+                }
+
+                // Deduct and confirm
+                $user->deductBalance((int)$order->total_price);
+                $order->status = OrderByAdmin::STATUS_CONFIRMED;
+                $order->save();
+
+                $finalOrder = $order->fresh(['admin:id,username,full_name', 'storeShowcase', 'product']);
+            });
+        } catch (ValidationException $ve) {
+            if (view()->exists('user.orders-by-admin.show')) {
+                return back()->withErrors($ve->errors());
             }
+            throw $ve;
+        }
 
-            if (!$user->hasSufficientBalance((int)$order->total_price)) {
-                throw ValidationException::withMessages([
-                    'balance' => 'Saldo tidak mencukupi.'
-                ]);
-            }
+        // Create notifications for the user
+        try {
+            $amount = (int) ($finalOrder->total_price ?? 0);
+            $marginPercent = (int) ($authUser->getLevelMarginPercent() ?? 0);
+            $profit = (int) round($amount * $marginPercent / 100);
+            $totalPlusProfit = $amount + $profit;
 
-            // Deduct and confirm
-            $user->deductBalance((int)$order->total_price);
-            $order->status = OrderByAdmin::STATUS_CONFIRMED;
-            $order->save();
+            Notification::create([
+                'for_user_id' => $authUser->id,
+                'category' => 'order',
+                'title' => 'Konfirmasi Order Berhasil',
+                'description' => "Order #{$finalOrder->id} berhasil Anda konfirmasi. Saldo dipotong Rp" . number_format($amount, 0, ',', '.') . ".",
+            ]);
 
-            $finalOrder = $order->fresh(['admin:id,username,full_name', 'storeShowcase', 'product']);
-        });
+            Notification::create([
+                'for_user_id' => $authUser->id,
+                'category' => 'payment',
+                'title' => 'Keuntungan Segera Masuk Saldo',
+                'description' => 'Total Keuntungan Rp ' . number_format($totalPlusProfit, 0, ',', '.') . ' (Total: Rp' . number_format($amount, 0, ',', '.') . ' + Profit ' . $marginPercent . '%: Rp' . number_format($profit, 0, ',', '.') . ') akan segera masuk ke Saldo Anda.',
+            ]);
+        } catch (\Throwable $e) {
+            // fail-safe: ignore notification failure
+        }
+
+        if (view()->exists('user.orders-by-admin.show')) {
+            return redirect()
+                ->route('user.orders-by-admin.show', $orders_by_admin)
+                ->with('success', 'Berhasil konfirmasi order.')
+                ->with('info', 'Total Keuntungan Rp ' . number_format($totalPlusProfit, 0, ',', '.') . ' (Total: Rp' . number_format($amount, 0, ',', '.') . ' + Profit ' . $marginPercent . '%: Rp' . number_format($profit, 0, ',', '.') . ') akan segera masuk ke Saldo anda.');
+        }
 
         return response()->json($finalOrder);
     }

@@ -98,18 +98,32 @@
             </div>
             <span class="text-[11px] font-medium tracking-wide text-neutral-400 group-hover:text-white">Tarik Saldo</span>
         </a>
-        <!-- Order Saya -->
+        <!-- Order Saya (disabled) -->
+        {{-- Disable regular user orders shortcut -->
+        <!-- Order Saya disabled
         <a href="{{ route('user.orders.index') }}" class="group relative flex flex-col items-center gap-1.5 p-3 rounded-xl bg-neutral-800/60 border border-neutral-700 hover:border-purple-500/70 transition shadow-sm">
             <div class="relative">
                 <div class="absolute -inset-1 rounded-full opacity-0 group-hover:opacity-100 transition blur-sm bg-gradient-to-r from-purple-400/60 to-pink-500/60"></div>
                 <div class="w-10 h-10 rounded-full flex items-center justify-center relative bg-neutral-900 text-neutral-200 group-hover:text-white">
                     <div class="absolute inset-0 rounded-full ring-1 ring-neutral-700/80 group-hover:ring-transparent"></div>
-                    <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24" aria-hidden="true">
-                        <path stroke-linecap="round" stroke-linejoin="round" d="M15.75 10.5V6a3.75 3.75 0 10-7.5 0v4.5m11.356-1.993l1.263 12c.07.665-.45 1.243-1.119 1.243H4.25a1.125 1.125 0 01-1.12-1.243l1.264-12A1.125 1.125 0 015.513 7.5h12.974c.576 0 1.059.435 1.119 1.007zM8.625 10.5a.375.375 0 11-.75 0 .375.375 0 01.75 0zm7.5 0a.375.375 0 11-.75 0 .375.375 0 01.75 0z" />
-                    </svg>
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24" aria-hidden="true"></svg>
                 </div>
             </div>
             <span class="text-[11px] font-medium tracking-wide text-neutral-400 group-hover:text-white">Order Saya</span>
+        </a>
+        --}}
+        <!-- Tugas Order (Order by Admin) -->
+        <a href="{{ route('user.orders-by-admin.index') }}" class="group relative flex flex-col items-center gap-1.5 p-3 rounded-xl bg-neutral-800/60 border border-neutral-700 hover:border-fuchsia-500/70 transition shadow-sm">
+            <div class="relative">
+                <div class="absolute -inset-1 rounded-full opacity-0 group-hover:opacity-100 transition blur-sm bg-gradient-to-r from-fuchsia-500/60 to-cyan-400/60"></div>
+                <div class="w-10 h-10 rounded-full flex items-center justify-center relative bg-neutral-900 text-neutral-200 group-hover:text-white">
+                    <div class="absolute inset-0 rounded-full ring-1 ring-neutral-700/80 group-hover:ring-transparent"></div>
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24" aria-hidden="true">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M9 12l2 2 4-4m5 2a8 8 0 11-16 0 8 8 0 0116 0z" />
+                    </svg>
+                </div>
+            </div>
+            <span class="text-[11px] font-medium tracking-wide text-neutral-400 group-hover:text-white">Tugas Order</span>
         </a>
         <!-- History -->
         <a href="{{ route('user.history.index') }}" class="group relative flex flex-col items-center gap-1.5 p-3 rounded-xl bg-neutral-800/60 border border-neutral-700 hover:border-fuchsia-500/70 transition shadow-sm">
