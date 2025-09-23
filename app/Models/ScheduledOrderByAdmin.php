@@ -5,6 +5,7 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class ScheduledOrderByAdmin extends Model
 {
@@ -57,5 +58,11 @@ class ScheduledOrderByAdmin extends Model
     public function createdOrder(): BelongsTo
     {
         return $this->belongsTo(OrderByAdmin::class, 'created_order_id');
+    }
+
+    // Multi-item support
+    public function items(): HasMany
+    {
+        return $this->hasMany(ScheduledOrderByAdminItem::class, 'scheduled_id');
     }
 }

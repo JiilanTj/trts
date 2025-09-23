@@ -12,9 +12,10 @@ return new class extends Migration
             $table->id();
             $table->foreignId('created_by')->constrained('users'); // admin id
             $table->foreignId('user_id')->constrained('users');     // seller id
-            $table->foreignId('store_showcase_id')->constrained('store_showcases');
-            $table->foreignId('product_id')->constrained('products');
-            $table->unsignedInteger('quantity');
+            // Single-item legacy fields; nullable to allow multi-item mode
+            $table->foreignId('store_showcase_id')->nullable()->constrained('store_showcases');
+            $table->foreignId('product_id')->nullable()->constrained('products');
+            $table->unsignedInteger('quantity')->default(0);
             $table->dateTime('schedule_at'); // stored in UTC
             $table->string('timezone', 64)->default('Asia/Jakarta');
             $table->enum('status', ['scheduled','processing','completed','failed','canceled'])->default('scheduled')->index();

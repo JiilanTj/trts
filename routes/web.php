@@ -354,8 +354,10 @@ Route::middleware(['auth', 'role:admin'])->prefix('admin')->name('admin.')->grou
     
     // Admin Orders Created By Admin
     Route::resource('orders-by-admin', AdminOrderByAdminController::class)
-        ->parameters(['orders-by-admin' => 'orders_by_admin']);
+        ->parameters(['orders-by-admin' => 'orders_by_admin'])
+        ->whereNumber('orders_by_admin');
     Route::post('orders-by-admin/{orders_by_admin}/confirm', [AdminOrderByAdminController::class, 'confirm'])
+        ->whereNumber('orders_by_admin')
         ->name('orders-by-admin.confirm');
 
     // Scheduled Order-By-Admin

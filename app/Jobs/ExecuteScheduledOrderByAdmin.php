@@ -6,6 +6,7 @@ use App\Models\Notification;
 use App\Models\OrderByAdmin;
 use App\Models\Product;
 use App\Models\ScheduledOrderByAdmin;
+use App\Models\ScheduledOrderByAdminItem;
 use App\Models\StoreShowcase;
 use App\Models\User;
 use Illuminate\Bus\Queueable;
@@ -39,7 +40,7 @@ class ExecuteScheduledOrderByAdmin implements ShouldQueue
             }
         });
 
-        $row = ScheduledOrderByAdmin::find($this->scheduleId);
+        $row = ScheduledOrderByAdmin::with('items')->find($this->scheduleId);
         if (!$row) { return; }
 
         try {
@@ -50,45 +51,86 @@ class ExecuteScheduledOrderByAdmin implements ShouldQueue
                     throw new \RuntimeException('Seller tidak valid.');
                 }
 
-                /** @var StoreShowcase|null $showcase */
-                $showcase = StoreShowcase::find($row->store_showcase_id);
-                if (!$showcase || (int)$showcase->user_id !== (int)$row->user_id) {
-                    throw new \RuntimeException('Etalase tidak dimiliki oleh seller.');
+                $createdOrderIds = [];
+
+                // Multi-item path
+                $items = $row->items;
+                if ($items && $items->count() > 0) {
+                    foreach ($items as $it) {
+                        /** @var StoreShowcase|null $showcase */
+                        $showcase = StoreShowcase::find($it->store_showcase_id);
+                        if (!$showcase || (int)$showcase->user_id !== (int)$row->user_id) {
+                            throw new \RuntimeException('Etalase tidak dimiliki oleh seller.');
+                        }
+
+                        /** @var Product|null $product */
+                        $product = Product::find($it->product_id);
+                        if (!$product || (int)$showcase->product_id !== (int)$product->id) {
+                            throw new \RuntimeException('Produk tidak sesuai dengan etalase.');
+                        }
+
+                        $unitPrice = (int) ($product->harga_jual ?? $product->sell_price);
+                        $totalPrice = $unitPrice * (int)$it->quantity;
+
+                        $order = OrderByAdmin::create([
+                            'admin_id' => (int)$row->created_by,
+                            'user_id' => (int)$row->user_id,
+                            'store_showcase_id' => (int)$it->store_showcase_id,
+                            'product_id' => (int)$it->product_id,
+                            'quantity' => (int)$it->quantity,
+                            'unit_price' => $unitPrice,
+                            'total_price' => $totalPrice,
+                            'status' => OrderByAdmin::STATUS_PENDING,
+                        ]);
+
+                        $createdOrderIds[] = $order->id;
+                        $it->update(['created_order_id' => $order->id]);
+                    }
+                } else {
+                    // Backward-compat: single item fields
+                    /** @var StoreShowcase|null $showcase */
+                    $showcase = StoreShowcase::find($row->store_showcase_id);
+                    if (!$showcase || (int)$showcase->user_id !== (int)$row->user_id) {
+                        throw new \RuntimeException('Etalase tidak dimiliki oleh seller.');
+                    }
+
+                    /** @var Product|null $product */
+                    $product = Product::find($row->product_id);
+                    if (!$product || (int)$showcase->product_id !== (int)$product->id) {
+                        throw new \RuntimeException('Produk tidak sesuai dengan etalase.');
+                    }
+
+                    $unitPrice = (int) ($product->harga_jual ?? $product->sell_price);
+                    $totalPrice = $unitPrice * (int)$row->quantity;
+
+                    $order = OrderByAdmin::create([
+                        'admin_id' => (int)$row->created_by,
+                        'user_id' => (int)$row->user_id,
+                        'store_showcase_id' => (int)$row->store_showcase_id,
+                        'product_id' => (int)$row->product_id,
+                        'quantity' => (int)$row->quantity,
+                        'unit_price' => $unitPrice,
+                        'total_price' => $totalPrice,
+                        'status' => OrderByAdmin::STATUS_PENDING,
+                    ]);
+
+                    $createdOrderIds[] = $order->id;
                 }
-
-                /** @var Product|null $product */
-                $product = Product::find($row->product_id);
-                if (!$product || (int)$showcase->product_id !== (int)$product->id) {
-                    throw new \RuntimeException('Produk tidak sesuai dengan etalase.');
-                }
-
-                $unitPrice = (int) ($product->harga_jual ?? $product->sell_price);
-                $totalPrice = $unitPrice * (int)$row->quantity;
-
-                $order = OrderByAdmin::create([
-                    'admin_id' => (int)$row->created_by,
-                    'user_id' => (int)$row->user_id,
-                    'store_showcase_id' => (int)$row->store_showcase_id,
-                    'product_id' => (int)$row->product_id,
-                    'quantity' => (int)$row->quantity,
-                    'unit_price' => $unitPrice,
-                    'total_price' => $totalPrice,
-                    'status' => OrderByAdmin::STATUS_PENDING,
-                ]);
 
                 $row->update([
                     'status' => 'completed',
                     'finished_at' => now(),
-                    'created_order_id' => $order->id,
+                    'created_order_id' => $createdOrderIds[0] ?? null, // keep first for quick link
                 ]);
 
-                // Optional: notify seller that order was created automatically
+                // Notify seller one-time
                 try {
+                    $orderLabel = count($createdOrderIds) > 1 ? (count($createdOrderIds) . ' order') : ('Order #' . ($createdOrderIds[0] ?? ''));
                     Notification::create([
-                        'for_user_id' => $order->user_id,
+                        'for_user_id' => (int)$row->user_id,
                         'category' => 'order',
                         'title' => 'Order Dibuat Otomatis',
-                        'description' => "Order #{$order->id} dibuat otomatis sesuai jadwal.",
+                        'description' => $orderLabel . ' dibuat otomatis sesuai jadwal.',
                     ]);
                 } catch (\Throwable $e) { /* ignore */ }
             });

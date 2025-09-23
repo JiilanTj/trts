@@ -5,10 +5,11 @@ namespace App\Http\Controllers\Admin;
 use App\Http\Controllers\Controller;
 use App\Jobs\ExecuteScheduledOrderByAdmin;
 use App\Models\ScheduledOrderByAdmin;
+use App\Models\ScheduledOrderByAdminItem;
 use App\Models\StoreShowcase;
-use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Carbon;
+use App\Models\User; // added
 
 class ScheduledOrderByAdminController extends Controller
 {
@@ -20,9 +21,15 @@ class ScheduledOrderByAdminController extends Controller
     public function index(Request $request)
     {
         if (!$request->wantsJson()) {
-            return view('admin.orders-by-admin.scheduled.index');
+            // Provide sellers list for the create form (limit to recent sellers)
+            $users = User::query()->users()->sellers()->orderByDesc('id')->limit(50)->get(['id','full_name','username']);
+            return view('admin.orders-by-admin.scheduled.index', compact('users'));
         }
-        $rows = ScheduledOrderByAdmin::with(['seller:id,full_name,username','product:id,name'])
+        $rows = ScheduledOrderByAdmin::with([
+                'seller:id,full_name,username',
+                'items.product:id,name',
+                'items.storeShowcase:id,user_id,product_id'
+            ])
             ->latest()->paginate(30);
         return response()->json($rows);
     }
@@ -31,11 +38,12 @@ class ScheduledOrderByAdminController extends Controller
     {
         $data = $request->validate([
             'user_id' => 'required|exists:users,id',
-            'store_showcase_id' => 'required|exists:store_showcases,id',
-            'product_id' => 'required|exists:products,id',
-            'quantity' => 'required|integer|min:1',
             'timezone' => 'nullable|string|max:64',
             'schedule_at' => 'required|string',
+            'items' => 'required|array|min:1',
+            'items.*.store_showcase_id' => 'required|exists:store_showcases,id',
+            'items.*.product_id' => 'required|exists:products,id',
+            'items.*.quantity' => 'required|integer|min:1',
         ]);
 
         $tz = $data['timezone'] ?? 'Asia/Jakarta';
@@ -43,24 +51,40 @@ class ScheduledOrderByAdminController extends Controller
         catch (\Throwable $e) { return response()->json(['message' => 'Format jadwal tidak valid'], 422); }
         $utc = $local->clone()->setTimezone('UTC');
 
-        // Validate ownership
-        $showcase = StoreShowcase::findOrFail($data['store_showcase_id']);
-        if ((int)$showcase->user_id !== (int)$data['user_id']) {
-            return response()->json(['message' => 'Etalase bukan milik seller tersebut'], 422);
+        // Validate ownership for each item and same seller ownership
+        foreach ($data['items'] as $idx => $item) {
+            $showcase = StoreShowcase::findOrFail($item['store_showcase_id']);
+            if ((int)$showcase->user_id !== (int)$data['user_id']) {
+                return response()->json(['message' => "Etalase #{$showcase->id} bukan milik seller tersebut"], 422);
+            }
+            if ((int)$showcase->product_id !== (int)$item['product_id']) {
+                return response()->json(['message' => "Produk tidak sesuai dengan etalase #{$showcase->id}"], 422);
+            }
         }
 
         $row = ScheduledOrderByAdmin::create([
             'created_by' => $request->user()->id,
             'user_id' => $data['user_id'],
-            'store_showcase_id' => $data['store_showcase_id'],
-            'product_id' => $data['product_id'],
-            'quantity' => $data['quantity'],
+            // keep single-item columns blank in multi-item mode
+            'store_showcase_id' => null,
+            'product_id' => null,
+            'quantity' => 0,
             'schedule_at' => $utc,
             'timezone' => $tz,
             'status' => 'scheduled',
         ]);
 
-        // dispatch delayed
+        // Create item rows
+        foreach ($data['items'] as $item) {
+            ScheduledOrderByAdminItem::create([
+                'scheduled_id' => $row->id,
+                'store_showcase_id' => $item['store_showcase_id'],
+                'product_id' => $item['product_id'],
+                'quantity' => $item['quantity'],
+            ]);
+        }
+
+        // dispatch delayed per schedule id (job will fan-out)
         $job = (new ExecuteScheduledOrderByAdmin($row->id))->onQueue('scheduled');
         dispatch($job)->delay($utc);
 
@@ -69,7 +93,7 @@ class ScheduledOrderByAdminController extends Controller
 
     public function show(ScheduledOrderByAdmin $scheduled)
     {
-        $scheduled->load(['seller:id,full_name', 'product:id,name']);
+        $scheduled->load(['seller:id,full_name', 'items.product:id,name']);
         return response()->json($scheduled);
     }
 
