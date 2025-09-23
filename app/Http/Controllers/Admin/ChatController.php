@@ -161,13 +161,13 @@ class ChatController extends Controller
     }
 
     /**
-     * Send message to chat room
+     * Send message to chat room (Blade form route)
      */
     public function sendMessage(Request $request, ChatRoom $chatRoom): JsonResponse
     {
         $request->validate([
-            'message' => 'required|string|max:1000',
-            'attachment' => 'sometimes|file|mimes:jpg,jpeg,png,pdf,doc,docx|max:2048',
+            'message' => 'sometimes|string|max:1000',
+            'attachment' => 'sometimes|file|mimes:jpg,jpeg,png,gif,webp,bmp,pdf,doc,docx|max:4096',
         ]);
 
         $admin = Auth::user();
@@ -182,6 +182,11 @@ class ChatController extends Controller
             return response()->json(['error' => 'Chat room is closed'], 400);
         }
 
+        // Either message or attachment must be present
+        if (!$request->filled('message') && !$request->hasFile('attachment')) {
+            return response()->json(['error' => 'Message or attachment is required'], 422);
+        }
+
         // Handle file attachment
         $attachmentPath = null;
         if ($request->hasFile('attachment')) {
@@ -191,13 +196,13 @@ class ChatController extends Controller
         // Create message
         $message = $chatRoom->messages()->create([
             'user_id' => $admin->id,
-            'message' => $request->message,
+            'message' => $request->input('message'),
             'message_type' => $attachmentPath ? ChatMessage::TYPE_FILE : ChatMessage::TYPE_TEXT,
             'attachment_path' => $attachmentPath,
         ]);
 
         // Load relationship data for broadcasting
-        $message->load('user');
+        $message->load('sender');
 
         // Broadcast the message to all participants
         broadcast(new \App\Events\NewChatMessage($message));
@@ -208,11 +213,13 @@ class ChatController extends Controller
                 'id' => $message->id,
                 'message' => $message->message,
                 'user_id' => $message->user_id,
-                'user_name' => $message->user->full_name ?? $message->user->username,
+                'user_name' => $message->sender->full_name ?? $message->sender->username,
                 'is_from_admin' => true,
                 'is_from_guest' => false,
                 'created_at' => $message->created_at->toISOString(),
                 'time' => $message->created_at->format('H:i'),
+                'message_type' => $message->message_type,
+                'attachment_path' => $message->attachment_path,
             ],
         ]);
     }
@@ -345,6 +352,7 @@ class ChatController extends Controller
                     'is_from_admin' => $message->isFromAdmin(),
                     'created_at' => $message->created_at->toISOString(),
                     'message_type' => $message->message_type ?? 'text',
+                    'attachment_path' => $message->attachment_path,
                 ];
             });
 
@@ -361,7 +369,8 @@ class ChatController extends Controller
     public function sendMessageApi(Request $request, ChatRoom $chatRoom): JsonResponse
     {
         $request->validate([
-            'message' => 'required|string|max:1000',
+            'message' => 'sometimes|string|max:1000',
+            'attachment' => 'sometimes|file|mimes:jpg,jpeg,png,gif,webp,bmp,pdf,doc,docx|max:4096',
         ]);
 
         $admin = Auth::user();
@@ -376,11 +385,23 @@ class ChatController extends Controller
             $chatRoom->assignTo($admin);
         }
 
+        // Either message or attachment must be present
+        if (!$request->filled('message') && !$request->hasFile('attachment')) {
+            return response()->json(['error' => 'Message or attachment is required'], 422);
+        }
+
+        // Handle file attachment
+        $attachmentPath = null;
+        if ($request->hasFile('attachment')) {
+            $attachmentPath = $request->file('attachment')->store('chat-attachments', 'public');
+        }
+
         // Create message
         $message = $chatRoom->messages()->create([
             'user_id' => $admin->id,
-            'message' => $request->message,
-            'message_type' => 'text',
+            'message' => $request->input('message'),
+            'message_type' => $attachmentPath ? ChatMessage::TYPE_FILE : 'text',
+            'attachment_path' => $attachmentPath,
         ]);
 
         // Update chat room timestamp
@@ -392,10 +413,15 @@ class ChatController extends Controller
                 'id' => $message->id,
                 'message' => $message->message,
                 'user_id' => $message->user_id,
-                'user_name' => $admin->full_name ?? $admin->username,
+                'sender' => [
+                    'full_name' => $admin->full_name,
+                    'username' => $admin->username,
+                ],
                 'is_from_admin' => true,
                 'is_from_guest' => false,
                 'created_at' => $message->created_at->toISOString(),
+                'message_type' => $message->message_type,
+                'attachment_path' => $message->attachment_path,
             ]
         ]);
     }

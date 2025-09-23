@@ -96,17 +96,35 @@
         <div class="h-96 overflow-y-auto p-6 space-y-4" id="messagesContainer">
             @forelse($messages as $message)
                 @php
-                    $isFromInitiator = $chatRoom->isGuestChat() ? $message->is_from_guest : ($message->user_id === $chatRoom->user_id);
+                    // Right (blue) if message is from the chat's assigned admin
+                    $isFromAssignedAdmin = !is_null($chatRoom->admin_id) && (int) $message->user_id === (int) $chatRoom->admin_id;
+                    $isImage = $message->attachment_path && in_array(strtolower(pathinfo($message->attachment_path, PATHINFO_EXTENSION)), ['jpg','jpeg','png','gif','webp','bmp']);
                 @endphp
-                <div class="flex {{ $isFromInitiator ? 'justify-end' : 'justify-start' }}" data-message-id="{{ $message->id }}">
+                <div class="flex {{ $isFromAssignedAdmin ? 'justify-end' : 'justify-start' }}" data-message-id="{{ $message->id }}">
                     <div class="max-w-xs lg:max-w-md">
                         <!-- Message bubble -->
-                        <div class="px-4 py-3 rounded-lg {{ $isFromInitiator ? 'bg-blue-600 text-white' : 'bg-gray-100 text-gray-900' }}">
-                            <p class="text-sm">{{ $message->message }}</p>
+                        <div class="px-4 py-3 rounded-lg {{ $isFromAssignedAdmin ? 'bg-blue-600 text-white' : 'bg-gray-100 text-gray-900' }}">
+                            @if($message->message_type === 'file' && $message->attachment_path)
+                                <div class="mb-2">
+                                    @if($isImage)
+                                        <img src="{{ Storage::url($message->attachment_path) }}" alt="Attachment" class="max-w-full h-auto rounded-md">
+                                    @else
+                                        <a href="{{ Storage::url($message->attachment_path) }}" target="_blank" class="flex items-center space-x-2 p-2 {{ $isFromAssignedAdmin ? 'bg-white/10 text-white' : 'bg-black/5 text-gray-800' }} rounded-md">
+                                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
+                                            </svg>
+                                            <span class="text-sm truncate">{{ basename($message->attachment_path) }}</span>
+                                        </a>
+                                    @endif
+                                </div>
+                            @endif
+                            @if($message->message)
+                                <p class="text-sm">{{ $message->message }}</p>
+                            @endif
                         </div>
                         
                         <!-- Message info -->
-                        <div class="mt-1 text-xs text-gray-500 {{ $isFromInitiator ? 'text-right' : 'text-left' }}">
+                        <div class="mt-1 text-xs text-gray-500 {{ $isFromAssignedAdmin ? 'text-right' : 'text-left' }}">
                             <span>{{ $message->getSenderName() }}</span>
                             <span class="mx-1">•</span>
                             <span>{{ $message->created_at->format('H:i') }}</span>
@@ -132,14 +150,33 @@
                 <form id="messageForm" data-chat-room="{{ $chatRoom->id }}">
                     @csrf
                     <div class="flex items-end space-x-4">
+                        <!-- Attachment Button -->
+                        <div class="flex-shrink-0">
+                            <input type="file" id="attachmentInput" name="attachment" class="hidden" accept=".jpg,.jpeg,.png,.gif,.pdf,.doc,.docx">
+                            <button type="button" id="attachmentButton" class="p-3 rounded-lg border border-gray-300 text-gray-700 hover:bg-gray-50">
+                                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.172 7l-6.586 6.586a2 2 0 102.828 2.828l6.414-6.586a4 4 0 00-5.656-5.656l-6.415 6.585a6 6 0 108.486 8.486L20.5 13"></path>
+                                </svg>
+                            </button>
+                        </div>
+
                         <div class="flex-1">
                             <textarea 
                                 name="message" 
                                 id="messageInput"
                                 rows="3" 
                                 class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 resize-none" 
-                                placeholder="Type your message..."
-                                required></textarea>
+                                placeholder="Type your message..."></textarea>
+                            <div id="attachmentPreview" class="hidden mt-2 p-2 border border-gray-200 rounded-lg">
+                                <div class="flex items-center justify-between">
+                                    <span id="attachmentName" class="text-sm text-gray-700"></span>
+                                    <button type="button" id="removeAttachment" class="text-red-600 hover:text-red-700">
+                                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+                                        </svg>
+                                    </button>
+                                </div>
+                            </div>
                         </div>
                         <button 
                             type="submit" 
@@ -226,6 +263,12 @@
         const messageForm = document.getElementById('messageForm');
         const messageInput = document.getElementById('messageInput');
         const chatRoomId = {{ $chatRoom->id }};
+        const csrfToken = document.querySelector('meta[name="csrf-token"]').content;
+        const attachmentInput = document.getElementById('attachmentInput');
+        const attachmentButton = document.getElementById('attachmentButton');
+        const attachmentPreview = document.getElementById('attachmentPreview');
+        const attachmentName = document.getElementById('attachmentName');
+        const removeAttachment = document.getElementById('removeAttachment');
         
         // Auto-scroll to bottom
         if (messagesContainer) {
@@ -233,6 +276,21 @@
         }
         
         console.log('🔄 Admin Chat: Using Polling System Only');
+
+        // Handle attachment UI
+        attachmentButton?.addEventListener('click', () => attachmentInput?.click());
+        attachmentInput?.addEventListener('change', () => {
+            const file = attachmentInput.files[0];
+            if (file) {
+                attachmentName.textContent = file.name;
+                attachmentPreview.classList.remove('hidden');
+            }
+        });
+        removeAttachment?.addEventListener('click', () => {
+            attachmentInput.value = '';
+            attachmentPreview.classList.add('hidden');
+            attachmentName.textContent = '';
+        });
 
         // Handle form submission
         if (messageForm) {
@@ -261,9 +319,17 @@
 
         // Send message function
         async function sendMessage() {
-            if (!messageInput.value.trim() || !chatRoomId) return;
+            const trimmed = messageInput.value.trim();
+            const hasFile = attachmentInput.files && attachmentInput.files[0];
+            if (!trimmed && !hasFile) {
+                return; // require message or attachment
+            }
+            if (!chatRoomId) return;
             
-            const message = messageInput.value.trim();
+            const formData = new FormData();
+            formData.append('_token', csrfToken);
+            if (trimmed) formData.append('message', trimmed);
+            if (hasFile) formData.append('attachment', attachmentInput.files[0]);
             
             // Disable form while sending
             const submitBtn = messageForm.querySelector('button[type="submit"]');
@@ -273,18 +339,21 @@
                 const response = await fetch(`/admin/api/chat/${chatRoomId}/send`, {
                     method: 'POST',
                     headers: {
-                        'Content-Type': 'application/json',
-                        'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content,
+                        'X-CSRF-TOKEN': csrfToken,
                         'X-Requested-With': 'XMLHttpRequest'
                     },
-                    body: JSON.stringify({ message })
+                    body: formData
                 });
                 
                 if (response.ok) {
                     const data = await response.json();
                     if (data.success) {
                         messageInput.value = '';
-                        // Message will be displayed via polling from chat.js
+                        // reset attachment
+                        attachmentInput.value = '';
+                        attachmentPreview.classList.add('hidden');
+                        attachmentName.textContent = '';
+                        // Message will be displayed via polling from chat.js or another poller
                         console.log('✅ Message sent successfully');
                     }
                 } else {

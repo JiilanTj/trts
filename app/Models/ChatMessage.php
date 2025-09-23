@@ -6,6 +6,7 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use App\Events\NewChatMessage;
+use Illuminate\Support\Facades\Storage;
 
 class ChatMessage extends Model
 {
@@ -108,7 +109,7 @@ class ChatMessage extends Model
      */
     public function getAttachmentUrlAttribute(): ?string
     {
-        return $this->attachment_path ? asset('storage/chat-attachments/' . $this->attachment_path) : null;
+        return $this->attachment_path ? Storage::url($this->attachment_path) : null;
     }
 
     /**
