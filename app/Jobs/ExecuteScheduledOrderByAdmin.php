@@ -30,15 +30,21 @@ class ExecuteScheduledOrderByAdmin implements ShouldQueue
 
     public function handle(): void
     {
-        // Claim and transition to processing
-        DB::transaction(function(){
+        // Claim atomically: only the first job that changes status to `processing` may proceed
+        $claimed = false;
+        DB::transaction(function() use (&$claimed) {
             $row = ScheduledOrderByAdmin::where('id', $this->scheduleId)->lockForUpdate()->first();
             if (!$row) { return; }
-            if (in_array($row->status, ['completed','canceled'])) { return; }
-            if ($row->status !== 'processing') {
-                $row->update(['status' => 'processing', 'started_at' => now()]);
-            }
+            // If already being processed or finished/canceled, do not proceed
+            if (in_array($row->status, ['processing', 'completed', 'canceled'])) { return; }
+            // Otherwise claim it
+            $row->update(['status' => 'processing', 'started_at' => now()]);
+            $claimed = true;
         });
+        if (!$claimed) {
+            // Another worker already claimed or finished it
+            return;
+        }
 
         $row = ScheduledOrderByAdmin::with('items')->find($this->scheduleId);
         if (!$row) { return; }

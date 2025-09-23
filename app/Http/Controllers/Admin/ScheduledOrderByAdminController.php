@@ -10,6 +10,7 @@ use App\Models\StoreShowcase;
 use Illuminate\Http\Request;
 use Illuminate\Support\Carbon;
 use App\Models\User; // added
+use Illuminate\Support\Facades\DB;
 
 class ScheduledOrderByAdminController extends Controller
 {
@@ -111,6 +112,20 @@ class ScheduledOrderByAdminController extends Controller
         if (!in_array($scheduled->status, ['scheduled','failed'])) {
             return response()->json(['message' => 'Tidak bisa dijalankan sekarang'], 422);
         }
+
+        // Atomically claim the row so UI updates immediately and avoid double-execution
+        $claimed = DB::transaction(function() use ($scheduled) {
+            $row = ScheduledOrderByAdmin::where('id', $scheduled->id)->lockForUpdate()->first();
+            if (!$row) { return false; }
+            if (!in_array($row->status, ['scheduled','failed'])) { return false; }
+            $row->update(['status' => 'processing', 'started_at' => now()]);
+            return true;
+        });
+
+        if (!$claimed) {
+            return response()->json(['message' => 'Sudah diproses oleh worker lain'], 409);
+        }
+
         dispatch(new ExecuteScheduledOrderByAdmin($scheduled->id));
         return response()->json(['message' => 'Dikirim ke antrian']);
     }
