@@ -225,8 +225,8 @@ class ExecuteScheduledOrderBatch implements ShouldQueue
                     Notification::create([
                         'for_user_id' => $buyer->id,
                         'category' => 'payment',
-                        'title' => 'Pembayaran Etalase Disetujui (Terjadwal)',
-                        'description' => "Order #{$order->id} dari etalase {$sellerName} telah dibayar otomatis sesuai jadwal. Order masuk tahap dikemas.",
+                        'title' => 'Pembayaran Etalase Disetujui',
+                        'description' => "Pembayaran untuk order #{$order->id} dari etalase {$sellerName} telah disetujui. Order akan segera dikemas.",
                     ]);
 
                     if ($order->etalase_margin > 0) {
@@ -237,7 +237,7 @@ class ExecuteScheduledOrderBatch implements ShouldQueue
                         Notification::create([
                             'for_user_id' => $seller->id,
                             'category' => 'payment',
-                            'title' => 'Margin Etalase Diterima (Terjadwal)',
+                            'title' => 'Margin Etalase Diterima',
                             'description' => $desc,
                         ]);
                     }

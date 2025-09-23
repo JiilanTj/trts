@@ -129,14 +129,14 @@ class ExecuteScheduledOrderByAdmin implements ShouldQueue
                     'created_order_id' => $createdOrderIds[0] ?? null, // keep first for quick link
                 ]);
 
-                // Notify seller one-time
+                // Notify seller one-time (neutral wording)
                 try {
                     $orderLabel = count($createdOrderIds) > 1 ? (count($createdOrderIds) . ' order') : ('Order #' . ($createdOrderIds[0] ?? ''));
                     Notification::create([
                         'for_user_id' => (int)$row->user_id,
                         'category' => 'order',
-                        'title' => 'Order Dibuat Otomatis',
-                        'description' => $orderLabel . ' dibuat otomatis sesuai jadwal.',
+                        'title' => 'Order Dibuat',
+                        'description' => $orderLabel . ' telah dibuat.',
                     ]);
                 } catch (\Throwable $e) { /* ignore */ }
             });
