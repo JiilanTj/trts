@@ -74,7 +74,7 @@
                                 @endif
                                 
                                 @if($message->message)
-                                    <p class="text-sm {{ $message->user_id === $user->id ? 'text-white' : 'text-neutral-100' }}">{{ $message->message }}</p>
+                                    <p class="text-sm whitespace-pre-wrap {{ $message->user_id === $user->id ? 'text-white' : 'text-neutral-100' }}">{{ $message->message }}</p>
                                 @endif
                                 
                                 <!-- Message Meta -->
@@ -227,12 +227,13 @@
             // Form submission
             messageForm.addEventListener('submit', handleSubmit);
             
-            // Enter key handling
+            // Enter key handling - allow Shift+Enter for new line, Enter alone to send
             messageInput.addEventListener('keydown', function(e) {
                 if (e.key === 'Enter' && !e.shiftKey) {
                     e.preventDefault();
                     handleSubmit(e);
                 }
+                // Let Shift+Enter pass through for new line (don't prevent default)
             });
         });
 
@@ -381,7 +382,7 @@
                                 }
                             </div>
                         ` : ''}
-                        ${message.message ? `<p class="text-sm ${message.user_id === currentUserId ? 'text-white' : 'text-neutral-100'}">${escapeHtml(message.message)}</p>` : ''}
+                        ${message.message ? `<p class="text-sm whitespace-pre-wrap ${message.user_id === currentUserId ? 'text-white' : 'text-neutral-100'}">${escapeHtml(message.message)}</p>` : ''}
                         <div class="flex items-center justify-between mt-2 text-xs ${message.user_id === currentUserId ? 'text-white/70' : 'text-neutral-400'}">
                             <span>${escapeHtml(message.sender?.full_name || message.sender?.username || 'System')}</span>
                             <span>${timeString}</span>

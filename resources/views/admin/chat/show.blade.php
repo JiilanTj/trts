@@ -119,7 +119,7 @@
                                 </div>
                             @endif
                             @if($message->message)
-                                <p class="text-sm">{{ $message->message }}</p>
+                                <p class="text-sm whitespace-pre-wrap">{{ $message->message }}</p>
                             @endif
                         </div>
                         
@@ -299,12 +299,13 @@
                 sendMessage();
             });
             
-            // Handle enter key
+            // Handle enter key - allow Shift+Enter for new line, Enter alone to send
             messageInput?.addEventListener('keydown', (e) => {
                 if (e.key === 'Enter' && !e.shiftKey) {
                     e.preventDefault();
                     sendMessage();
                 }
+                // Let Shift+Enter pass through for new line (don't prevent default)
             });
         }
         

@@ -214,7 +214,7 @@ class ChatManager {
             }
         }
 
-        const textHtml = message.message ? `<p class="text-sm">${this.escapeHtml(message.message)}</p>` : '';
+        const textHtml = message.message ? `<p class="text-sm whitespace-pre-wrap">${this.escapeHtml(message.message)}</p>` : '';
 
         return `
             <div class="flex ${alignClass}" data-message-id="${message.id}">

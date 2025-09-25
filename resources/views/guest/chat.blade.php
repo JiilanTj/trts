@@ -303,12 +303,13 @@
             }
         });
 
-        // Enter key handler
+        // Enter key handler - allow Shift+Enter for new line, Enter alone to send
         messageInput?.addEventListener('keydown', (e) => {
             if (e.key === 'Enter' && !e.shiftKey) {
                 e.preventDefault();
                 messageForm.dispatchEvent(new Event('submit'));
             }
+            // Let Shift+Enter pass through for new line (don't prevent default)
         });
 
         // Start polling for new messages
@@ -360,7 +361,7 @@
             messageDiv.innerHTML = `
                 <div class="max-w-xs lg:max-w-md">
                     <div class="px-4 py-3 rounded-lg ${isFromGuest ? 'bg-blue-600 text-white' : 'bg-gray-100 text-gray-900'}">
-                        <p class="text-sm">${message}</p>
+                        <p class="text-sm whitespace-pre-wrap">${message}</p>
                     </div>
                     <div class="mt-1 text-xs text-gray-500 ${isFromGuest ? 'text-right' : 'text-left'}">
                         <span>${senderName}</span>
