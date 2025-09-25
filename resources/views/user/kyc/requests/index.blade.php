@@ -145,7 +145,7 @@
                         {{-- Dokumen (Vertical + Preview) --}}
                         <div class="space-y-4">
                             <h3 class="text-[11px] font-semibold tracking-wide text-neutral-400 uppercase">Dokumen</h3>
-                            <p class="text-[11px] text-neutral-500 -mt-2">Format: JPG / JPEG / PNG / (PDF hanya ditampilkan sebagai nama file). Maks 10MB.</p>
+                            <p class="text-[11px] text-neutral-500 -mt-2">Format: JPG / JPEG / PNG / (PDF hanya ditampilkan sebagai nama file).</p>
                             <div class="space-y-5 text-[11px]">
                                 {{-- KTP Depan --}}
                                 <div class="space-y-2">
@@ -205,6 +205,7 @@
                     <script>
                         (function(){
                             const inputs = document.querySelectorAll('input[type=file][data-preview-target]');
+                            
                             inputs.forEach(inp => {
                                 inp.addEventListener('change', () => {
                                     const file = inp.files && inp.files[0];
@@ -214,12 +215,15 @@
                                     const img = wrap.querySelector('img');
                                     const nameEl = wrap.querySelector('.file-name');
                                     const kindEl = wrap.querySelector('.kind');
+                                    
                                     if(!file){
                                         wrap.classList.add('hidden');
                                         return;
                                     }
+                                    
                                     nameEl.textContent = file.name;
                                     kindEl.textContent = file.type || 'File';
+                                    
                                     // Show preview only for image/*
                                     if(file.type.startsWith('image/')){
                                         img.src = URL.createObjectURL(file);
@@ -229,6 +233,7 @@
                                         img.removeAttribute('src');
                                     }
                                     wrap.classList.remove('hidden');
+                                    
                                     // Reset button
                                     const resetBtn = wrap.querySelector('.reset-btn');
                                     if(resetBtn){
