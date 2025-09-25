@@ -63,9 +63,9 @@ class KycRequestController extends Controller
             'marital_status' => 'nullable|string|max:40',
             'occupation' => 'nullable|string|max:120',
             'nationality' => 'nullable|string|max:50',
-            'ktp_front' => 'required|file|mimes:jpg,jpeg,png,pdf|max:2048',
-            'ktp_back' => 'required|file|mimes:jpg,jpeg,png,pdf|max:2048',
-            'selfie_ktp' => 'required|file|mimes:jpg,jpeg,png,pdf|max:4096',
+            'ktp_front' => 'required|file|mimes:jpg,jpeg,png,pdf|max:10240',
+            'ktp_back' => 'required|file|mimes:jpg,jpeg,png,pdf|max:10240',
+            'selfie_ktp' => 'required|file|mimes:jpg,jpeg,png,pdf|max:10240',
         ]);
 
         $frontPath = $data['ktp_front']->store('kyc/front','public');

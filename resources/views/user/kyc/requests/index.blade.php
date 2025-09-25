@@ -145,7 +145,7 @@
                         {{-- Dokumen (Vertical + Preview) --}}
                         <div class="space-y-4">
                             <h3 class="text-[11px] font-semibold tracking-wide text-neutral-400 uppercase">Dokumen</h3>
-                            <p class="text-[11px] text-neutral-500 -mt-2">Format: JPG / JPEG / PNG / (PDF hanya ditampilkan sebagai nama file). Maks 4MB.</p>
+                            <p class="text-[11px] text-neutral-500 -mt-2">Format: JPG / JPEG / PNG / (PDF hanya ditampilkan sebagai nama file). Maks 10MB.</p>
                             <div class="space-y-5 text-[11px]">
                                 {{-- KTP Depan --}}
                                 <div class="space-y-2">
