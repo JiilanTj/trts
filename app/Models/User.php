@@ -425,7 +425,7 @@ class User extends Authenticatable
     public static function getLevelRequirements(): array
     {
         return [
-            1 => ['transaction_amount' => 0, 'margin_percent' => null, 'badge' => 'Bintang 1'],
+            1 => ['transaction_amount' => 0, 'margin_percent' => 10, 'badge' => 'Bintang 1'],
             2 => ['transaction_amount' => 100_000_000, 'margin_percent' => 13, 'badge' => 'Bintang 2'],
             3 => ['transaction_amount' => 250_000_000, 'margin_percent' => 15, 'badge' => 'Bintang 3'],
             4 => ['transaction_amount' => 500_000_000, 'margin_percent' => 18, 'badge' => 'Bintang 4'],

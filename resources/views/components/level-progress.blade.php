@@ -86,8 +86,6 @@ $levelIcons = [
                         <p class="text-xs text-neutral-400">
                             @if($levelRequirements[$currentLevel]['margin_percent'])
                                 Komisi Margin: {{ $levelRequirements[$currentLevel]['margin_percent'] }}%
-                            @else
-                                Komisi: Sesuai Setting Admin
                             @endif
                         </p>
                     @endif
@@ -142,7 +140,7 @@ $levelIcons = [
         <div class="p-4">
             <h4 class="text-sm font-semibold text-white mb-3 flex items-center">
                 <svg class="w-4 h-4 mr-2 text-[#fe2c55]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m-4-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
                 </svg>
                 Syarat & Benefit Level
             </h4>

@@ -233,7 +233,7 @@ class ExecuteScheduledOrderBatch implements ShouldQueue
                         $levelBadge = $seller->getLevelBadge();
                         $marginPercent = $seller->getLevelMarginPercent();
                         $desc = "Margin sebesar Rp" . number_format($order->etalase_margin, 0, ',', '.') . " dari penjualan etalase telah ditambahkan ke saldo Anda. Order #{$order->id} dari {$buyer->full_name}.";
-                        $desc .= $marginPercent ? " (Margin {$marginPercent}% karena Anda {$levelBadge})" : " (Margin sesuai selisih harga karena Anda {$levelBadge})";
+                        $desc .= $marginPercent ? " (Margin {$marginPercent}% karena Anda {$levelBadge})" : " (Margin dihitung khusus untuk level Anda: {$levelBadge})";
                         Notification::create([
                             'for_user_id' => $seller->id,
                             'category' => 'payment',

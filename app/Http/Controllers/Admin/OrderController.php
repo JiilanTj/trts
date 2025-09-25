@@ -207,7 +207,7 @@ class OrderController extends Controller
                         $levelBadge = $etalaseSeller->getLevelBadge();
                         $marginPercent = $etalaseSeller->getLevelMarginPercent();
                         $desc = "Margin sebesar Rp" . number_format($order->etalase_margin, 0, ',', '.') . " dari penjualan etalase telah ditambahkan ke saldo Anda. Order #{$order->id} dari {$buyer->full_name}.";
-                        $desc .= $marginPercent ? " (Margin {$marginPercent}% karena Anda {$levelBadge})" : " (Margin sesuai selisih harga karena Anda {$levelBadge})";
+                        $desc .= $marginPercent ? " (Margin {$marginPercent}% karena Anda {$levelBadge})" : " (Margin dihitung khusus untuk level Anda: {$levelBadge})"; // updated fallback
                         Notification::create([
                             'for_user_id' => $etalaseSeller->id,
                             'category' => 'payment',
@@ -304,7 +304,7 @@ class OrderController extends Controller
                 if ($marginPercent) {
                     $marginDescription .= " (Margin {$marginPercent}% karena Anda {$levelBadge})";
                 } else {
-                    $marginDescription .= " (Margin sesuai selisih harga karena Anda {$levelBadge})";
+                    $marginDescription .= " (Margin dihitung khusus untuk level Anda: {$levelBadge})"; // updated fallback
                 }
                 
                 \App\Models\Notification::create([

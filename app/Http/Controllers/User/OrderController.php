@@ -394,7 +394,7 @@ class OrderController extends Controller
                     if ($marginPercent) {
                         $marginDescription .= " (Margin {$marginPercent}% karena Anda {$levelBadge})";
                     } else {
-                        $marginDescription .= " (Margin sesuai selisih harga karena Anda {$levelBadge})";
+                        $marginDescription .= " (Margin dihitung khusus untuk level Anda: {$levelBadge})"; // updated fallback
                     }
                     
                     Notification::create([
@@ -442,7 +442,7 @@ class OrderController extends Controller
             if ($marginPercent) {
                 $description .= " (Margin {$marginPercent}% karena Anda {$levelBadge})";
             } else {
-                $description .= " (Margin sesuai harga jual karena Anda {$levelBadge})";
+                $description .= " (Margin dihitung khusus untuk level Anda: {$levelBadge})"; // updated fallback
             }
             
             $description .= " Credit score +5 poin!";

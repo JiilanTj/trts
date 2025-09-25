@@ -29,8 +29,8 @@ class SellerMarginLogicTest extends TestCase
             'promo_price' => 8000,  // harga_biasa (promo active)
         ]);
 
-        // Level 1 should use difference between harga_jual and harga_biasa
-        $expectedMargin = 10000 - 8000; // 2000
+        // Level 1 now percentage based (10% of harga_jual)
+        $expectedMargin = round(10000 * 0.10); // 1000
         $actualMargin = $product->getSellerMargin($seller);
         
         $this->assertEquals($expectedMargin, $actualMargin);
@@ -163,8 +163,8 @@ class SellerMarginLogicTest extends TestCase
             'promo_price' => null,  // no promo, so harga_biasa = sell_price
         ]);
 
-        // Level 1 margin should be 0 since harga_jual = harga_biasa
-        $expectedMargin = max(0, 10000 - 10000); // 0
+        // With percentage system promo absence irrelevant: margin = 10% of harga_jual
+        $expectedMargin = round(10000 * 0.10); // 1000
         $actualMargin = $product->getSellerMargin($seller);
         
         $this->assertEquals($expectedMargin, $actualMargin);
@@ -188,7 +188,7 @@ class SellerMarginLogicTest extends TestCase
         ]);
 
         // Since promo is invalid, harga_biasa = sell_price, so margin should be 0
-        $expectedMargin = max(0, 10000 - 10000); // 0
+        $expectedMargin = round(10000 * 0.10); // 1000
         $actualMargin = $product->getSellerMargin($seller);
         
         $this->assertEquals($expectedMargin, $actualMargin);
@@ -201,7 +201,7 @@ class SellerMarginLogicTest extends TestCase
     {
         // Test Level 1
         $level1User = new User(['level' => 1]);
-        $this->assertEquals(null, $level1User->getLevelMarginPercent());
+        $this->assertEquals(10, $level1User->getLevelMarginPercent());
         $this->assertEquals('Bintang 1', $level1User->getLevelBadge());
 
         // Test Level 2

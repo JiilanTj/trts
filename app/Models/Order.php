@@ -104,7 +104,7 @@ class Order extends Model
             if ($marginPercent) {
                 $description .= " (Margin {$marginPercent}% karena Anda {$levelBadge})";
             } else {
-                $description .= " (Margin sesuai harga jual karena Anda {$levelBadge})";
+                $description .= " (Margin dihitung khusus untuk level Anda: {$levelBadge})"; // adjusted fallback
             }
             
             $description .= " Credit score +5 poin!";
