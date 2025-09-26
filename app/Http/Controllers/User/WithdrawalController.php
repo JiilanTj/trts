@@ -158,20 +158,12 @@ class WithdrawalController extends Controller
     {
         $amount = (float) $request->input('amount', 0);
         
-        if ($amount < 10000) {
-            return response()->json(['error' => 'Nominal minimal Rp 10.000'], 400);
+        if ($amount < 1000000) {
+            return response()->json(['error' => 'Nominal minimal Rp 1.000.000'], 400);
         }
 
         // Calculate admin fee using same logic as form request
-        if ($amount <= 100000) {
-            $adminFee = 2500;
-        } elseif ($amount <= 500000) {
-            $adminFee = $amount * 0.025;
-        } elseif ($amount <= 1000000) {
-            $adminFee = $amount * 0.02;
-        } else {
-            $adminFee = $amount * 0.015;
-        }
+        $adminFee = $amount * 0.01;
 
         $totalDeducted = $amount + $adminFee;
 

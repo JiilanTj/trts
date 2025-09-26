@@ -141,11 +141,11 @@
                                        value="{{ old('amount') }}"
                                        class="w-full pl-10 pr-3 py-2.5 bg-white/5 border border-white/10 rounded-lg text-white placeholder-gray-400 focus:border-amber-500/50 focus:ring-1 focus:ring-amber-500/50 transition text-sm"
                                        placeholder="0"
-                                       min="10000"
+                                       min="1000000"
                                        step="1000"
                                        required>
                             </div>
-                            <p class="text-gray-400 text-[10px] mt-1">Minimal penarikan Rp 10.000</p>
+                            <p class="text-gray-400 text-[10px] mt-1">Minimal penarikan Rp 1.000.000. Biaya admin 1% dipotong otomatis.</p>
                             @error('amount')
                             <p class="text-red-400 text-[10px] mt-1">{{ $message }}</p>
                             @enderror
@@ -194,9 +194,10 @@
                     <div class="bg-amber-500/10 border border-amber-500/20 rounded-lg p-3">
                         <h4 class="text-amber-300 font-medium text-xs mb-2">Perhatian:</h4>
                         <ul class="text-amber-200/80 text-[10px] space-y-1">
+                            <li>• Minimal penarikan Rp 1.000.000</li>
                             <li>• Penarikan akan diproses dalam 1-3 hari kerja</li>
                             <li>• Pastikan data rekening sudah benar sebelum submit</li>
-                            <li>• Biaya admin akan dipotong otomatis dari saldo</li>
+                            <li>• Biaya admin 1% akan dipotong otomatis dari saldo</li>
                             <li>• Penarikan yang sudah diproses tidak dapat dibatalkan</li>
                         </ul>
                     </div>
@@ -227,30 +228,28 @@
 
     <script>
         function previewWithdrawal() {
-            const amount = document.getElementById('amount').value;
+            const amountInput = document.getElementById('amount');
+            const rawAmount = Number(amountInput.value);
             const currentBalance = {{ auth()->user()->balance ?? 0 }};
-            
-            if (!amount || amount < 10000) {
-                alert('Masukkan jumlah penarikan minimal Rp 10.000');
+
+            if (!rawAmount || rawAmount < 1000000) {
+                alert('Masukkan jumlah penarikan minimal Rp 1.000.000');
                 return;
             }
-            
-            if (amount > currentBalance) {
+
+            if (rawAmount > currentBalance) {
                 alert('Jumlah penarikan melebihi saldo tersedia');
                 return;
             }
-            
-            // Calculate admin fee (example: 2% with min Rp 5000, max Rp 25000)
-            const adminFeeRate = 0.02;
-            const minFee = 5000;
-            const maxFee = 25000;
-            let adminFee = Math.max(minFee, Math.min(maxFee, amount * adminFeeRate));
-            
-            const totalDeducted = parseInt(amount) + adminFee;
+
+            // Calculate admin fee (1% dari jumlah penarikan)
+            const adminFee = rawAmount * 0.01;
+
+            const totalDeducted = rawAmount + adminFee;
             const remainingBalance = currentBalance - totalDeducted;
-            
+
             // Update preview
-            document.getElementById('preview-amount').textContent = 'Rp ' + parseInt(amount).toLocaleString('id-ID');
+            document.getElementById('preview-amount').textContent = 'Rp ' + rawAmount.toLocaleString('id-ID');
             document.getElementById('preview-fee').textContent = 'Rp ' + adminFee.toLocaleString('id-ID');
             document.getElementById('preview-total').textContent = 'Rp ' + totalDeducted.toLocaleString('id-ID');
             document.getElementById('preview-remaining').textContent = 'Rp ' + remainingBalance.toLocaleString('id-ID');
@@ -264,7 +263,7 @@
 
         // Auto preview on amount change
         document.getElementById('amount').addEventListener('input', function() {
-            if (this.value >= 10000) {
+            if (Number(this.value) >= 1000000) {
                 setTimeout(previewWithdrawal, 500);
             } else {
                 document.getElementById('fee-preview').classList.add('hidden');

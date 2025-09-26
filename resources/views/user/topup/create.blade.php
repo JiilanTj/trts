@@ -45,7 +45,7 @@
                         </div>
                         <div>
                             <h3 class="text-lg font-semibold text-white">Jumlah Topup</h3>
-                            <p class="text-xs text-gray-400">Minimum Rp 10.000 - Maximum Rp 10.000.000</p>
+                            <p class="text-xs text-gray-400">Minimum Rp 1.000.000 - Maximum Rp 10.000.000</p>
                         </div>
                     </div>
                     
@@ -59,26 +59,15 @@
                                    id="amount" 
                                    name="amount" 
                                    value="{{ old('amount') }}"
-                                   min="10000" 
+                                   min="1000000" 
                                    max="10000000" 
                                    step="1000"
                                    class="w-full pl-8 pr-4 py-3 bg-[#1a1f25] border border-white/10 rounded-lg text-white placeholder-gray-500 focus:ring-2 focus:ring-cyan-500/50 focus:border-cyan-500/50 transition" 
-                                   placeholder="10000">
+                                   placeholder="1000000">
                         </div>
                         @error('amount')
                             <p class="mt-1 text-xs text-red-400">{{ $message }}</p>
                         @enderror
-                        
-                        <!-- Quick Amount Buttons -->
-                        <div class="mt-3 flex flex-wrap gap-2">
-                            @foreach([50000, 100000, 250000, 500000, 1000000] as $quickAmount)
-                                <button type="button" 
-                                        onclick="document.getElementById('amount').value = {{ $quickAmount }}"
-                                        class="px-3 py-1.5 text-xs font-medium bg-[#1a1f25] border border-white/10 rounded-lg text-gray-300 hover:bg-white/5 hover:border-cyan-500/30 hover:text-cyan-300 transition">
-                                    Rp {{ number_format($quickAmount, 0, ',', '.') }}
-                                </button>
-                            @endforeach
-                        </div>
                     </div>
                 </div>
 

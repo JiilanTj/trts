@@ -50,7 +50,7 @@ class StoreWithdrawalRequest extends FormRequest
             'amount' => [
                 'required',
                 'numeric',
-                'min:10000', // Minimum withdrawal 10k
+                'min:1000000', // Minimum withdrawal 1M
                 'max:10000000', // Maximum withdrawal 10M
                 function ($attribute, $value, $fail) {
                     if (auth()->user() && !auth()->user()->hasSufficientBalance($value)) {
@@ -90,7 +90,7 @@ class StoreWithdrawalRequest extends FormRequest
             
             'amount.required' => 'Nominal penarikan harus diisi.',
             'amount.numeric' => 'Nominal penarikan harus berupa angka.',
-            'amount.min' => 'Nominal penarikan minimal Rp 10.000.',
+            'amount.min' => 'Nominal penarikan minimal Rp 1.000.000.',
             'amount.max' => 'Nominal penarikan maksimal Rp 10.000.000.',
             
             'notes.max' => 'Catatan maksimal 500 karakter.',
@@ -122,17 +122,8 @@ class StoreWithdrawalRequest extends FormRequest
     public function getAdminFee(): float
     {
         $amount = (float) $this->input('amount', 0);
-        
-        // Admin fee calculation
-        if ($amount <= 100000) {
-            return 2500; // Flat fee for amount <= 100k
-        } elseif ($amount <= 500000) {
-            return $amount * 0.025; // 2.5% for 100k-500k
-        } elseif ($amount <= 1000000) {
-            return $amount * 0.02; // 2% for 500k-1M
-        } else {
-            return $amount * 0.015; // 1.5% for > 1M
-        }
+
+        return $amount * 0.01;
     }
 
     /**
