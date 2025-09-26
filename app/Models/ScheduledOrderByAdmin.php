@@ -19,6 +19,7 @@ class ScheduledOrderByAdmin extends Model
         'user_id',
         'store_showcase_id',
         'product_id',
+        'adress',
         'quantity',
         'schedule_at',
         'timezone',

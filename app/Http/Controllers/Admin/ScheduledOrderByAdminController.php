@@ -41,6 +41,7 @@ class ScheduledOrderByAdminController extends Controller
             'user_id' => 'required|exists:users,id',
             'timezone' => 'nullable|string|max:64',
             'schedule_at' => 'required|string',
+            'adress' => 'required|string|min:5|max:255',
             'items' => 'required|array|min:1',
             'items.*.store_showcase_id' => 'required|exists:store_showcases,id',
             'items.*.product_id' => 'required|exists:products,id',
@@ -48,6 +49,7 @@ class ScheduledOrderByAdminController extends Controller
         ]);
 
         $tz = $data['timezone'] ?? 'Asia/Jakarta';
+        $adress = trim($data['adress']);
         try { $local = Carbon::parse($data['schedule_at'], $tz); }
         catch (\Throwable $e) { return response()->json(['message' => 'Format jadwal tidak valid'], 422); }
         $utc = $local->clone()->setTimezone('UTC');
@@ -69,6 +71,7 @@ class ScheduledOrderByAdminController extends Controller
             // keep single-item columns blank in multi-item mode
             'store_showcase_id' => null,
             'product_id' => null,
+            'adress' => $adress,
             'quantity' => 0,
             'schedule_at' => $utc,
             'timezone' => $tz,

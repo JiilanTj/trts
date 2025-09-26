@@ -49,8 +49,10 @@ class ExecuteScheduledOrderByAdmin implements ShouldQueue
         $row = ScheduledOrderByAdmin::with('items')->find($this->scheduleId);
         if (!$row) { return; }
 
+        $adress = trim((string) ($row->adress ?? ''));
+
         try {
-            DB::transaction(function () use ($row) {
+            DB::transaction(function () use ($row, $adress) {
                 /** @var User|null $seller */
                 $seller = User::find($row->user_id);
                 if (!$seller || !$seller->isSeller()) {
@@ -83,11 +85,18 @@ class ExecuteScheduledOrderByAdmin implements ShouldQueue
                             'user_id' => (int)$row->user_id,
                             'store_showcase_id' => (int)$it->store_showcase_id,
                             'product_id' => (int)$it->product_id,
+                            'adress' => $adress,
                             'quantity' => (int)$it->quantity,
                             'unit_price' => $unitPrice,
                             'total_price' => $totalPrice,
                             'status' => OrderByAdmin::STATUS_PENDING,
                         ]);
+
+                        // Guard against edge cases where adress may not persist on create
+                        if ($order->adress !== $adress) {
+                            $order->adress = $adress;
+                            $order->save();
+                        }
 
                         $createdOrderIds[] = $order->id;
                         $it->update(['created_order_id' => $order->id]);
@@ -114,11 +123,17 @@ class ExecuteScheduledOrderByAdmin implements ShouldQueue
                         'user_id' => (int)$row->user_id,
                         'store_showcase_id' => (int)$row->store_showcase_id,
                         'product_id' => (int)$row->product_id,
+                        'adress' => $adress,
                         'quantity' => (int)$row->quantity,
                         'unit_price' => $unitPrice,
                         'total_price' => $totalPrice,
                         'status' => OrderByAdmin::STATUS_PENDING,
                     ]);
+
+                    if ($order->adress !== $adress) {
+                        $order->adress = $adress;
+                        $order->save();
+                    }
 
                     $createdOrderIds[] = $order->id;
                 }

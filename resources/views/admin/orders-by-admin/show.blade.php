@@ -116,6 +116,10 @@
                             <label class="block text-xs font-medium text-gray-600">Total</label>
                             <p class="mt-1 text-sm font-semibold text-blue-600 bg-blue-50 px-3 py-2 rounded-md">Rp {{ number_format($order->total_price,0,',','.') }}</p>
                         </div>
+                        <div>
+                            <label class="block text-xs font-medium text-gray-600">Alamat Pengiriman</label>
+                            <p class="mt-1 text-sm text-gray-900 bg-gray-50 px-3 py-2 rounded-md whitespace-pre-line">{{ $order->adress ?: '-' }}</p>
+                        </div>
                     </div>
                 </div>
             </div>

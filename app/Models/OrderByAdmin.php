@@ -29,6 +29,7 @@ class OrderByAdmin extends Model
         'user_id',
         'store_showcase_id',
         'product_id',
+        'adress',
         'quantity',
         'unit_price',
         'total_price',

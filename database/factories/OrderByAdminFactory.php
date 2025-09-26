@@ -25,6 +25,7 @@ class OrderByAdminFactory extends Factory
             'user_id' => User::factory()->state(['role' => 'user']),
             'store_showcase_id' => StoreShowcase::factory(),
             'product_id' => Product::factory(),
+            'adress' => $this->faker->streetAddress(),
             'quantity' => $qty,
             'unit_price' => $unit,
             'total_price' => $unit * $qty,

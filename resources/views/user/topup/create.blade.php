@@ -45,7 +45,7 @@
                         </div>
                         <div>
                             <h3 class="text-lg font-semibold text-white">Jumlah Topup</h3>
-                            <p class="text-xs text-gray-400">Minimum Rp 1.000.000 - Maximum Rp 10.000.000</p>
+                            <p class="text-xs text-gray-400">Minimum Rp 1.000.000</p>
                         </div>
                     </div>
                     
@@ -60,7 +60,6 @@
                                    name="amount" 
                                    value="{{ old('amount') }}"
                                    min="1000000" 
-                                   max="10000000" 
                                    step="1000"
                                    class="w-full pl-8 pr-4 py-3 bg-[#1a1f25] border border-white/10 rounded-lg text-white placeholder-gray-500 focus:ring-2 focus:ring-cyan-500/50 focus:border-cyan-500/50 transition" 
                                    placeholder="1000000">

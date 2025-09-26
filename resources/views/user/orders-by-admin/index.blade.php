@@ -95,6 +95,7 @@
                                 <div class="min-w-0 flex-1">
                                     <p class="text-xs font-medium text-white truncate">{{ $order->product->name ?? ('Produk#'.$order->product_id) }}</p>
                                     <p class="text-[10px] text-gray-400 mt-0.5">Qty: {{ number_format($order->quantity) }} • Harga: Rp {{ number_format($order->unit_price,0,',','.') }}</p>
+                                    <p class="text-[10px] text-gray-500 mt-0.5 truncate" title="{{ $order->adress }}">Alamat: {{ $order->adress ? \Illuminate\Support\Str::limit($order->adress, 50) : '-' }}</p>
                                 </div>
                                 <div class="text-sm font-semibold text-fuchsia-300">Rp {{ number_format($order->total_price,0,',','.') }}</div>
                             </div>

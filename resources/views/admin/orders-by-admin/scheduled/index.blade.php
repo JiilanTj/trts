@@ -40,6 +40,9 @@
                             <template x-if="b.seller">
                                 <span><span class="mx-2 text-gray-300">•</span>Seller: <span class="font-medium" x-text="b.seller.full_name || b.seller.username"></span></span>
                             </template>
+                            <template x-if="b.adress">
+                                <div class="text-xs text-gray-500 mt-1 break-words">Alamat: <span x-text="b.adress"></span></div>
+                            </template>
                         </div>
                     </div>
                     <div class="flex gap-2 shrink-0">
@@ -82,6 +85,11 @@
                             <label class="block text-xs font-medium text-gray-600 mb-1">Waktu Eksekusi</label>
                             <input type="datetime-local" x-model="form.schedule_at" class="w-full px-3 py-2 rounded-lg border border-gray-300 focus:ring-2 focus:ring-blue-500 focus:border-blue-500" />
                             <p class="text-xs text-gray-500 mt-1">Diinterpretasikan pada zona waktu terpilih.</p>
+                        </div>
+                        <div class="md:col-span-2">
+                            <label class="block text-xs font-medium text-gray-600 mb-1">Alamat Pengiriman</label>
+                            <textarea x-model="form.adress" rows="3" class="w-full px-3 py-2 rounded-lg border border-gray-300 focus:ring-2 focus:ring-blue-500 focus:border-blue-500" placeholder="Alamat lengkap atau catatan pengiriman"></textarea>
+                            <p class="text-xs text-gray-500 mt-1">Wajib diisi, minimal 5 karakter.</p>
                         </div>
                     </div>
 
@@ -151,6 +159,7 @@
                 user_id: '',
                 timezone: 'Asia/Jakarta',
                 schedule_at: '',
+                adress: '',
                 items: [ { store_showcase_id: '', product_id: '', quantity: 1, unit_price: 0, total_price: 0, image_url: '' } ],
             },
             fmt(dt, tz){
@@ -159,7 +168,7 @@
             async init(){ await this.fetchBatches(); },
             openCreate(){ this.view='create'; this.resetForm(); },
             resetForm(){
-                this.form = { user_id: '', timezone: 'Asia/Jakarta', schedule_at: '', items: [ { store_showcase_id: '', product_id: '', quantity: 1, unit_price: 0, total_price: 0, image_url: '' } ] };
+                this.form = { user_id: '', timezone: 'Asia/Jakarta', schedule_at: '', adress: '', items: [ { store_showcase_id: '', product_id: '', quantity: 1, unit_price: 0, total_price: 0, image_url: '' } ] };
                 this.showcases = [];
             },
             async fetchBatches(){
@@ -225,11 +234,13 @@
                 // simple validation
                 if(!this.form.user_id){ alert('Pilih seller.'); return; }
                 if(!this.form.schedule_at){ alert('Isi waktu eksekusi.'); return; }
+                if(!this.form.adress || this.form.adress.trim().length < 5){ alert('Isi alamat pengiriman minimal 5 karakter.'); return; }
                 if(!this.form.items.length){ alert('Tambah minimal 1 item.'); return; }
                 const payload = {
                     user_id: this.form.user_id,
                     timezone: this.form.timezone,
                     schedule_at: this.form.schedule_at,
+                    adress: this.form.adress.trim(),
                     items: this.form.items.map(i=>({ store_showcase_id: i.store_showcase_id, product_id: i.product_id, quantity: i.quantity }))
                 };
                 const r = await fetch(`{{ route('admin.orders-by-admin.scheduled.store') }}`, {

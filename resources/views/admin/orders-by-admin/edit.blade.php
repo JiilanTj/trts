@@ -41,6 +41,13 @@
                     </div>
                 </div>
 
+                <div class="grid grid-cols-1 mt-2">
+                    <div>
+                        <label class="block text-xs font-medium text-gray-600 mb-1">Alamat Pengiriman</label>
+                        <textarea name="adress" rows="3" required class="w-full px-3 py-2 rounded-lg border border-gray-300 focus:ring-2 focus:ring-blue-500 focus:border-blue-500" placeholder="Alamat lengkap atau catatan pengiriman">{{ old('adress', $order->adress) }}</textarea>
+                    </div>
+                </div>
+
                 <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mt-2">
                     <div>
                         <label class="block text-xs font-medium text-gray-600 mb-1">Gambar Produk</label>

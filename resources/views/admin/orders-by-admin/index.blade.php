@@ -75,6 +75,7 @@
                         <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">User</th>
                         <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Admin</th>
                         <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Produk</th>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Alamat</th>
                         <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Qty</th>
                         <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Harga/Unit</th>
                         <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Total</th>
@@ -92,6 +93,9 @@
                             <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-800">{{ $order->user->full_name ?? ('User#'.$order->user_id) }}</td>
                             <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-800">{{ $order->admin->full_name ?? ('Admin#'.$order->admin_id) }}</td>
                             <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-700">{{ $order->product->name ?? ('Produk#'.$order->product_id) }}</td>
+                            <td class="px-6 py-4 text-sm text-gray-700 max-w-xs">
+                                <span title="{{ $order->adress }}">{{ \Illuminate\Support\Str::limit($order->adress, 40) ?: '-' }}</span>
+                            </td>
                             <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-700">{{ number_format($order->quantity) }}</td>
                             <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-700">Rp {{ number_format($order->unit_price,0,',','.') }}</td>
                             <td class="px-6 py-4 whitespace-nowrap text-sm font-semibold text-gray-900">Rp {{ number_format($order->total_price,0,',','.') }}</td>
@@ -125,7 +129,7 @@
                         </tr>
                     @empty
                         <tr>
-                            <td colspan="12" class="px-6 py-12 text-center text-gray-500">
+                            <td colspan="13" class="px-6 py-12 text-center text-gray-500">
                                 <svg class="mx-auto h-12 w-12 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 7h18M3 12h18M3 17h18"/></svg>
                                 <h3 class="mt-2 text-sm font-medium text-gray-900">Belum ada Order Admin</h3>
                                 <p class="mt-1 text-sm text-gray-500">Order yang dibuat oleh admin akan tampil di sini.</p>

@@ -40,6 +40,7 @@ class ScheduledOrderByAdminTest extends TestCase
                 'user_id' => $seller->id,
                 'timezone' => 'Asia/Jakarta',
                 'schedule_at' => $whenLocal->format('Y-m-d\TH:i'), // matches datetime-local input
+                'adress' => 'Gudang Seller 12',
                 'items' => [
                     [ 'store_showcase_id' => $show1->id, 'product_id' => $product1->id, 'quantity' => 2 ],
                     [ 'store_showcase_id' => $show2->id, 'product_id' => $product2->id, 'quantity' => 3 ],
@@ -58,6 +59,7 @@ class ScheduledOrderByAdminTest extends TestCase
         $this->assertNotNull($row);
         $this->assertEquals('scheduled', $row->status);
         $this->assertEquals('Asia/Jakarta', $row->timezone);
+    $this->assertEquals('Gudang Seller 12', $row->adress);
         $this->assertCount(2, $row->items);
     }
 
@@ -80,6 +82,7 @@ class ScheduledOrderByAdminTest extends TestCase
             'schedule_at' => now()->addMinutes(5),
             'timezone' => 'Asia/Jakarta',
             'status' => 'scheduled',
+            'adress' => 'Alamat Gudang Pusat',
         ]);
 
         $it1 = ScheduledOrderByAdminItem::create([
@@ -115,10 +118,12 @@ class ScheduledOrderByAdminTest extends TestCase
         $this->assertEquals($seller->id, $o1->user_id);
         $this->assertEquals($show1->id, $o1->store_showcase_id);
         $this->assertEquals($product1->id, $o1->product_id);
+    $this->assertEquals('Alamat Gudang Pusat', $o1->adress);
         $this->assertEquals(2, $o1->quantity);
         $this->assertEquals(10000, $o1->unit_price);
         $this->assertEquals(20000, $o1->total_price);
 
+    $this->assertEquals('Alamat Gudang Pusat', $o2->adress);
         $this->assertEquals(3, $o2->quantity);
         $this->assertEquals(20000, $o2->unit_price);
         $this->assertEquals(60000, $o2->total_price);
@@ -140,6 +145,7 @@ class ScheduledOrderByAdminTest extends TestCase
                 'user_id' => $sellerB->id,
                 'timezone' => 'Asia/Jakarta',
                 'schedule_at' => $whenLocal->format('Y-m-d\TH:i'),
+                'adress' => 'Gudang Salah Seller',
                 'items' => [
                     [ 'store_showcase_id' => $showA->id, 'product_id' => $product->id, 'quantity' => 1 ],
                 ],

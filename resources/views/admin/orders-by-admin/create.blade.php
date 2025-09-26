@@ -25,6 +25,12 @@
                     </div>
 
                     <div class="md:col-span-2">
+                        <label class="block text-xs font-medium text-gray-600 mb-1">Alamat Pengiriman</label>
+                        <textarea name="adress" rows="3" required class="w-full px-3 py-2 rounded-lg border border-gray-300 focus:ring-2 focus:ring-blue-500 focus:border-blue-500" placeholder="Alamat lengkap atau catatan pengiriman">{{ old('adress') }}</textarea>
+                        <p class="text-xs text-gray-500 mt-1">Isi alamat tujuan order (min. 5 karakter).</p>
+                    </div>
+
+                    <div class="md:col-span-2">
                         <label class="block text-xs font-medium text-gray-600 mb-2">Item</label>
                         <div id="items-container" class="space-y-4">
                             <div class="order-item border rounded-lg p-4" data-index="0">

@@ -93,6 +93,7 @@ class OrderByAdminController extends Controller
         // Support multiple items: items[].{store_showcase_id, product_id, quantity}
         $data = $request->validate([
             'user_id' => ['required','exists:users,id'],
+            'adress' => ['required','string','min:5','max:255'],
             'items' => ['required','array','min:1'],
             'items.*.store_showcase_id' => ['required','exists:store_showcases,id'],
             'items.*.product_id' => ['required','exists:products,id'],
@@ -101,6 +102,7 @@ class OrderByAdminController extends Controller
         ]);
 
         $adminId = Auth::id();
+        $adress = trim($data['adress']);
 
         // Ensure selected user is a seller
         $buyer = User::findOrFail($data['user_id']);
@@ -110,7 +112,7 @@ class OrderByAdminController extends Controller
 
         $created = [];
 
-        DB::transaction(function () use ($data, $adminId, &$created) {
+    DB::transaction(function () use ($data, $adminId, &$created, $adress) {
             foreach ($data['items'] as $idx => $item) {
                 $showcase = StoreShowcase::with('product')->findOrFail($item['store_showcase_id']);
                 $product = Product::findOrFail($item['product_id']);
@@ -138,6 +140,7 @@ class OrderByAdminController extends Controller
                     'user_id' => (int)$data['user_id'],
                     'store_showcase_id' => (int)$item['store_showcase_id'],
                     'product_id' => (int)$item['product_id'],
+                    'adress' => $adress,
                     'quantity' => (int)$item['quantity'],
                     'unit_price' => $unitPrice,
                     'total_price' => $totalPrice,
@@ -145,6 +148,20 @@ class OrderByAdminController extends Controller
                 ]);
             }
         });
+
+        // Notify seller about newly created orders
+        try {
+            foreach ($created as $order) {
+                Notification::create([
+                    'for_user_id' => $order->user_id,
+                    'category' => 'order',
+                    'title' => 'Order Baru Dibuat',
+                    'description' => "Order #{$order->id} telah dibuat dengan total Rp" . number_format((int) ($order->total_price ?? 0), 0, ',', '.') . '.',
+                ]);
+            }
+        } catch (\Throwable $e) {
+            // ignore notification failure
+        }
 
         if (view()->exists('admin.orders-by-admin.index')) {
             return redirect()->route('admin.orders-by-admin.index')->with('status', 'Berhasil membuat '.count($created).' order.');
@@ -191,7 +208,12 @@ class OrderByAdminController extends Controller
                 OrderByAdmin::STATUS_SHIPPED,
                 OrderByAdmin::STATUS_DELIVERED,
             ])],
+            'adress' => ['sometimes','string','min:5','max:255'],
         ]);
+
+        if (array_key_exists('adress', $data)) {
+            $data['adress'] = trim($data['adress']);
+        }
 
         // Enforce forward-only status transitions
         $oldStatus = $orders_by_admin->status; // capture before changes
@@ -238,7 +260,7 @@ class OrderByAdminController extends Controller
                 OrderByAdmin::STATUS_DELIVERED => 'Terkirim',
             ];
             $descMap = [
-                OrderByAdmin::STATUS_CONFIRMED => "Order #{$orders_by_admin->id} telah dikonfirmasi admin.",
+                OrderByAdmin::STATUS_CONFIRMED => "Order #{$orders_by_admin->id} telah dikonfirmasi.",
                 OrderByAdmin::STATUS_PACKED => "Order #{$orders_by_admin->id} sedang dikemas.",
                 OrderByAdmin::STATUS_SHIPPED => "Order #{$orders_by_admin->id} telah dikirim dan sedang dalam perjalanan.",
                 OrderByAdmin::STATUS_DELIVERED => "Order #{$orders_by_admin->id} telah sampai di alamat tujuan.",
@@ -289,7 +311,7 @@ class OrderByAdminController extends Controller
                 'for_user_id' => $orders_by_admin->user_id,
                 'category' => 'order',
                 'title' => 'Order Dikonfirmasi',
-                'description' => "Order #{$orders_by_admin->id} telah dikonfirmasi admin.",
+                'description' => "Order #{$orders_by_admin->id} telah dikonfirmasi.",
             ]);
         } catch (\Throwable $e) { /* ignore notif failure */ }
 

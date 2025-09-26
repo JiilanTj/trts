@@ -82,6 +82,10 @@
                                 <p class="text-[10px] text-gray-400">Total Harga</p>
                                 <p class="text-sm font-semibold text-fuchsia-300">Rp {{ number_format($order->total_price,0,',','.') }}</p>
                             </div>
+                            <div class="bg-[#0f1115]/60 border border-white/5 rounded-xl p-3 col-span-2">
+                                <p class="text-[10px] text-gray-400">Alamat Pengiriman</p>
+                                <p class="text-xs text-gray-200 whitespace-pre-line mt-1">{{ $order->adress ?: '-' }}</p>
+                            </div>
                         </div>
 
                         <div class="mt-4 flex flex-wrap items-center gap-2 text-[11px] text-gray-400">
