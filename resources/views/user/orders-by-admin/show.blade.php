@@ -67,7 +67,7 @@
                     </div>
                     <div class="min-w-0 flex-1">
                         <h2 class="text-white font-semibold text-sm sm:text-base">{{ $order->product->name ?? ('Produk#'.$order->product_id) }}</h2>
-                        <p class="text-[11px] text-gray-400 mt-1">Dibuat: {{ optional($order->created_at)->format('d-m-Y H:i') }}</p>
+                        <p class="text-[11px] text-gray-400 mt-1">Dibuat: {{ optional($order->created_at)->setTimezone('Asia/Jakarta')->format('d-m-Y H:i') }} WIB</p>
 
                         <div class="grid grid-cols-2 sm:grid-cols-3 gap-3 mt-4">
                             <div class="bg-[#0f1115]/60 border border-white/5 rounded-xl p-3">
@@ -122,7 +122,7 @@
                 @endif
             </div>
 
-            <div class="text-[10px] text-gray-500">Terakhir diperbarui: {{ optional($order->updated_at)->format('d-m-Y H:i') }}</div>
+            <div class="text-[10px] text-gray-500">Terakhir diperbarui: {{ optional($order->updated_at)->setTimezone('Asia/Jakarta')->format('d-m-Y H:i') }} WIB</div>
         </div>
     </div>
 </x-app-layout>

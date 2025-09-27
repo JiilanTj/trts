@@ -81,7 +81,7 @@
                                 <p class="font-semibold text-white text-sm">Order: {{ str_pad($order->id, 10, '0', STR_PAD_LEFT) }}</p>
                                 <span class="px-2 py-1 text-[10px] rounded-md font-medium {{ $statusColors[$order->status] ?? 'bg-gray-600/20 text-gray-300 border border-gray-500/30' }}">{{ $statusLabels[$order->status] ?? $order->status }}</span>
                             </div>
-                            <p class="text-xs text-gray-400 mt-1">{{ optional($order->created_at)->format('d-m-Y H:i') }}</p>
+                            <p class="text-xs text-gray-400 mt-1">{{ optional($order->created_at)->setTimezone('Asia/Jakarta')->format('d-m-Y H:i') }} WIB</p>
                         </div>
                         <div class="px-4 py-3 border-t border-white/5">
                             <div class="flex items-center gap-3">

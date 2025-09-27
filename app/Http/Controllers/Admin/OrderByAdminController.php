@@ -151,13 +151,25 @@ class OrderByAdminController extends Controller
 
         // Notify seller about newly created orders
         try {
-            foreach ($created as $order) {
+            if (count($created) > 1) {
+                $totalAmount = array_sum(array_map(fn($order) => $order->total_price, $created));
+                $orderCode = 'M' . date('dmy') . 'P' . substr(str_shuffle('ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789'), 0, 6);
                 Notification::create([
-                    'for_user_id' => $order->user_id,
+                    'for_user_id' => $created[0]->user_id,
                     'category' => 'order',
-                    'title' => 'Order Baru Dibuat',
-                    'description' => "Order #{$order->id} telah dibuat dengan total Rp" . number_format((int) ($order->total_price ?? 0), 0, ',', '.') . '.',
+                    'title' => 'Pesanan Baru',
+                    'description' => 'Toko Anda mendapatkan ' . count($created) . ' pesanan baru batch ' . $orderCode . ' dengan total Rp' . number_format($totalAmount, 0, ',', '.'),
                 ]);
+            } else {
+                foreach ($created as $order) {
+                    $orderCode = date('dmy') . 'P' . substr(str_shuffle('ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789'), 0, 8);
+                    Notification::create([
+                        'for_user_id' => $order->user_id,
+                        'category' => 'order',
+                        'title' => 'Pesanan Baru',
+                        'description' => 'Toko Anda mendapatkan pesanan baru no. ' . $orderCode . ' dengan total Rp' . number_format((int) ($order->total_price ?? 0), 0, ',', '.'),
+                    ]);
+                }
             }
         } catch (\Throwable $e) {
             // ignore notification failure
@@ -307,11 +319,12 @@ class OrderByAdminController extends Controller
 
         // Notify seller about confirmation
         try {
+            $orderCode = date('dmy') . 'P' . substr(str_shuffle('ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789'), 0, 8);
             Notification::create([
                 'for_user_id' => $orders_by_admin->user_id,
                 'category' => 'order',
-                'title' => 'Order Dikonfirmasi',
-                'description' => "Order #{$orders_by_admin->id} telah dikonfirmasi.",
+                'title' => 'Pesanan Dikonfirmasi',
+                'description' => 'Pesanan no. ' . $orderCode . ' dengan total Rp' . number_format($orders_by_admin->total_price, 0, ',', '.') . ' telah dikonfirmasi dan siap untuk diproses.',
             ]);
         } catch (\Throwable $e) { /* ignore notif failure */ }
 

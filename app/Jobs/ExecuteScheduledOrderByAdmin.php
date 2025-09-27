@@ -150,13 +150,30 @@ class ExecuteScheduledOrderByAdmin implements ShouldQueue
 
                 // Notify seller one-time (neutral wording)
                 try {
-                    $orderLabel = count($createdOrderIds) > 1 ? (count($createdOrderIds) . ' order') : ('Order #' . ($createdOrderIds[0] ?? ''));
-                    Notification::create([
-                        'for_user_id' => (int)$row->user_id,
-                        'category' => 'order',
-                        'title' => 'Order Dibuat',
-                        'description' => $orderLabel . ' telah dibuat.',
-                    ]);
+                    if (count($createdOrderIds) > 1) {
+                        $totalAmount = 0;
+                        foreach ($createdOrderIds as $orderId) {
+                            $orderData = OrderByAdmin::find($orderId);
+                            if ($orderData) $totalAmount += $orderData->total_price;
+                        }
+                        $orderCode = 'M' . date('dmy') . 'P' . substr(str_shuffle('ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789'), 0, 6);
+                        Notification::create([
+                            'for_user_id' => (int)$row->user_id,
+                            'category' => 'order',
+                            'title' => 'Pesanan Baru',
+                            'description' => 'Toko Anda mendapatkan ' . count($createdOrderIds) . ' pesanan baru batch ' . $orderCode . ' dengan total Rp' . number_format($totalAmount, 0, ',', '.'),
+                        ]);
+                    } else {
+                        $orderData = OrderByAdmin::find($createdOrderIds[0]);
+                        $orderCode = date('dmy') . 'P' . substr(str_shuffle('ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789'), 0, 8);
+                        $totalAmount = $orderData ? $orderData->total_price : 0;
+                        Notification::create([
+                            'for_user_id' => (int)$row->user_id,
+                            'category' => 'order',
+                            'title' => 'Pesanan Baru',
+                            'description' => 'Toko Anda mendapatkan pesanan baru no. ' . $orderCode . ' dengan total Rp' . number_format($totalAmount, 0, ',', '.'),
+                        ]);
+                    }
                 } catch (\Throwable $e) { /* ignore */ }
             });
         } catch (\Throwable $e) {
