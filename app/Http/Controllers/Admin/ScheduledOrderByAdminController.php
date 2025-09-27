@@ -85,6 +85,7 @@ class ScheduledOrderByAdminController extends Controller
                 'store_showcase_id' => $item['store_showcase_id'],
                 'product_id' => $item['product_id'],
                 'quantity' => $item['quantity'],
+                'adress' => $adress, // Copy adress to each item
             ]);
         }
 

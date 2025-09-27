@@ -17,6 +17,7 @@ class ScheduledOrderByAdminItem extends Model
         'store_showcase_id',
         'product_id',
         'quantity',
+        'adress',
         'created_order_id',
         'error_message',
     ];

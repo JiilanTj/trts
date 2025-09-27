@@ -80,12 +80,16 @@ class ExecuteScheduledOrderByAdmin implements ShouldQueue
                         $unitPrice = (int) ($product->harga_jual ?? $product->sell_price);
                         $totalPrice = $unitPrice * (int)$it->quantity;
 
+                        // Use adress from item if available, otherwise fallback to parent
+                        $itemAdress = trim((string) ($it->adress ?? ''));
+                        $finalAdress = !empty($itemAdress) ? $itemAdress : $adress;
+
                         $order = OrderByAdmin::create([
                             'admin_id' => (int)$row->created_by,
                             'user_id' => (int)$row->user_id,
                             'store_showcase_id' => (int)$it->store_showcase_id,
                             'product_id' => (int)$it->product_id,
-                            'adress' => $adress,
+                            'adress' => $finalAdress,
                             'quantity' => (int)$it->quantity,
                             'unit_price' => $unitPrice,
                             'total_price' => $totalPrice,
@@ -93,8 +97,8 @@ class ExecuteScheduledOrderByAdmin implements ShouldQueue
                         ]);
 
                         // Guard against edge cases where adress may not persist on create
-                        if ($order->adress !== $adress) {
-                            $order->adress = $adress;
+                        if ($order->adress !== $finalAdress) {
+                            $order->adress = $finalAdress;
                             $order->save();
                         }
 
