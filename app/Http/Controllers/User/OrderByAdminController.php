@@ -137,18 +137,20 @@ class OrderByAdminController extends Controller
             $profit = (int) round($amount * $marginPercent / 100);
             $totalPlusProfit = $amount + $profit;
 
+            $orderCode = date('dmy') . 'P' . substr(str_shuffle('ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789'), 0, 8);
+            
             Notification::create([
                 'for_user_id' => $authUser->id,
                 'category' => 'order',
-                'title' => 'Konfirmasi Order Berhasil',
-                'description' => "Order #{$finalOrder->id} berhasil Anda konfirmasi. Saldo dipotong Rp" . number_format($amount, 0, ',', '.') . ".",
+                'title' => 'Konfirmasi Pesanan Berhasil',
+                'description' => 'Pesanan no. ' . $orderCode . ' dengan total Rp' . number_format($amount, 0, ',', '.') . ' berhasil dikonfirmasi. Saldo Anda dipotong Rp' . number_format($amount, 0, ',', '.') . '.',
             ]);
 
             Notification::create([
                 'for_user_id' => $authUser->id,
                 'category' => 'payment',
-                'title' => 'Keuntungan Segera Masuk Saldo',
-                'description' => 'Total Keuntungan Rp ' . number_format($totalPlusProfit, 0, ',', '.') . ' (Total: Rp' . number_format($amount, 0, ',', '.') . ' + Profit ' . $marginPercent . '%: Rp' . number_format($profit, 0, ',', '.') . ') akan segera masuk ke Saldo Anda.',
+                'title' => 'Keuntungan Akan Masuk ke Saldo',
+                'description' => 'Keuntungan sebesar Rp' . number_format($totalPlusProfit, 0, ',', '.') . ' (Pesanan: Rp' . number_format($amount, 0, ',', '.') . ' + Profit ' . $marginPercent . '%: Rp' . number_format($profit, 0, ',', '.') . ') akan segera masuk ke Saldo Anda.',
             ]);
         } catch (\Throwable $e) {
             // fail-safe: ignore notification failure

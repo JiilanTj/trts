@@ -265,18 +265,18 @@ class OrderByAdminController extends Controller
         // Notify seller (user) if status changed
         if (array_key_exists('status', $data) && $data['status'] !== $oldStatus) {
             $labelMap = [
-                OrderByAdmin::STATUS_PENDING => 'Menunggu Konfirmasi',
-                OrderByAdmin::STATUS_CONFIRMED => 'Dikonfirmasi',
-                OrderByAdmin::STATUS_PACKED => 'Dikemas',
-                OrderByAdmin::STATUS_SHIPPED => 'Dikirim',
-                OrderByAdmin::STATUS_DELIVERED => 'Terkirim',
+                OrderByAdmin::STATUS_PENDING => 'Pesanan Menunggu',
+                OrderByAdmin::STATUS_CONFIRMED => 'Pesanan Dikonfirmasi',
+                OrderByAdmin::STATUS_PACKED => 'Pesanan Sedang Dikemas',
+                OrderByAdmin::STATUS_SHIPPED => 'Pesanan Dikirim',
+                OrderByAdmin::STATUS_DELIVERED => 'Pesanan Diterima',
             ];
             $descMap = [
-                OrderByAdmin::STATUS_CONFIRMED => "Order #{$orders_by_admin->id} telah dikonfirmasi.",
-                OrderByAdmin::STATUS_PACKED => "Order #{$orders_by_admin->id} sedang dikemas.",
-                OrderByAdmin::STATUS_SHIPPED => "Order #{$orders_by_admin->id} telah dikirim dan sedang dalam perjalanan.",
-                OrderByAdmin::STATUS_DELIVERED => "Order #{$orders_by_admin->id} telah sampai di alamat tujuan.",
-                OrderByAdmin::STATUS_PENDING => "Order #{$orders_by_admin->id} menunggu konfirmasi.",
+                OrderByAdmin::STATUS_CONFIRMED => "Pesanan no. " . (date('dmy') . 'P' . substr(str_shuffle('ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789'), 0, 8)) . " dengan total Rp" . number_format($orders_by_admin->total_price, 0, ',', '.') . " telah dikonfirmasi dan siap diproses.",
+                OrderByAdmin::STATUS_PACKED => "Pesanan no. " . (date('dmy') . 'P' . substr(str_shuffle('ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789'), 0, 8)) . " dengan total Rp" . number_format($orders_by_admin->total_price, 0, ',', '.') . " sedang dikemas dan akan segera dikirim.",
+                OrderByAdmin::STATUS_SHIPPED => "Pesanan no. " . (date('dmy') . 'P' . substr(str_shuffle('ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789'), 0, 8)) . " dengan total Rp" . number_format($orders_by_admin->total_price, 0, ',', '.') . " telah dikirim dan sedang dalam perjalanan ke alamat tujuan.",
+                OrderByAdmin::STATUS_DELIVERED => "Pesanan no. " . (date('dmy') . 'P' . substr(str_shuffle('ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789'), 0, 8)) . " dengan total Rp" . number_format($orders_by_admin->total_price, 0, ',', '.') . " telah sampai di alamat tujuan. Terima kasih!",
+                OrderByAdmin::STATUS_PENDING => "Pesanan no. " . (date('dmy') . 'P' . substr(str_shuffle('ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789'), 0, 8)) . " dengan total Rp" . number_format($orders_by_admin->total_price, 0, ',', '.') . " menunggu konfirmasi Anda.",
             ];
             $new = $data['status'];
             $title = 'Order ' . ($labelMap[$new] ?? $new);
