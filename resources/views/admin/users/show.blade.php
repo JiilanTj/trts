@@ -14,7 +14,7 @@
                 @endif
                 <div>
                     <p class="text-lg font-medium">{{ $user->full_name }}</p>
-                    <p class="text-sm text-gray-500">@{{ $user->username }}</p>
+                    <p class="text-sm text-gray-500">@ {{ $user->username }}</p>
                     <div class="flex items-center space-x-2 mt-1">
                         <span class="px-2 py-1 rounded text-white text-xs {{ $user->role==='admin' ? 'bg-purple-600':'bg-blue-600' }}">{{ ucfirst($user->role) }}</span>
                         @if($user->isSeller())
@@ -61,7 +61,8 @@
             <div class="flex space-x-2 pt-4">
                 <a href="{{ route('admin.users.edit', $user) }}" class="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700">Ubah</a>
                 @if($user->isSeller() && $user->sellerInfo)
-                    <a href="{{ route('admin.sellers.show', $user->sellerInfo) }}" class="bg-green-600 text-white px-4 py-2 rounded hover:bg-green-700">Lihat Toko</a>
+                    <a href="{{ route('admin.showcases.user-showcase', $user->id) }}" 
+                       class="bg-green-600 text-white px-4 py-2 rounded hover:bg-green-700">Lihat Toko</a>
                 @endif
                 <form action="{{ route('admin.users.destroy', $user) }}" method="POST" onsubmit="return confirm('Hapus pengguna ini?');">
                     @csrf
