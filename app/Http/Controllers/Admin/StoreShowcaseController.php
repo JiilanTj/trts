@@ -66,14 +66,14 @@ class StoreShowcaseController extends Controller
      */
     public function userShowcase($userId)
     {
-        $user = User::findOrFail($userId);
+        $user = User::with(['detail', 'sellerInfo'])->findOrFail($userId);
         
         $showcases = StoreShowcase::with(['product'])
             ->where('user_id', $user->id)
             ->active()
             ->orderBy('sort_order')
             ->orderBy('created_at', 'desc')
-            ->get();
+            ->paginate(10);
 
         return view('admin.store-showcases.user-showcase', compact('user', 'showcases'));
     }

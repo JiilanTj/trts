@@ -88,13 +88,13 @@
                         <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 7l-8-4-8 4m16 0l-8 4-8-4m16 0v10l-8 4-8-4V7"></path>
                         </svg>
-                        {{ $showcases->count() }} Produk Tersedia
+                        {{ $showcases->total() }} Produk Tersedia
                     </div>
                 </div>
             </div>
 
             <!-- Products Showcase -->
-            @if($showcases->count() > 0)
+            @if($showcases->total() > 0)
                 @php
                     $featuredShowcases = $showcases->where('is_featured', true);
                     $regularShowcases = $showcases->where('is_featured', false);
@@ -309,6 +309,69 @@
                         </div>
                     </div>
                 @endif
+
+                <!-- Pagination Controls -->
+                @if($showcases->hasPages())
+                    <div class="mt-8">
+                        <div class="bg-white rounded-lg border border-gray-200 px-6 py-4">
+                            <div class="flex items-center justify-between">
+                                <div class="flex items-center text-sm text-gray-500">
+                                    <span>Menampilkan {{ $showcases->firstItem() }}-{{ $showcases->lastItem() }} dari {{ $showcases->total() }} produk</span>
+                                </div>
+                                <div class="flex items-center space-x-2">
+                                    {{-- Previous Button --}}
+                                    @if($showcases->onFirstPage())
+                                        <span class="px-3 py-2 text-sm font-medium text-gray-400 bg-gray-100 rounded-lg cursor-not-allowed">
+                                            <svg class="w-4 h-4 inline mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"></path>
+                                            </svg>
+                                            Prev
+                                        </span>
+                                    @else
+                                        <a href="{{ $showcases->previousPageUrl() }}" class="px-3 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors">
+                                            <svg class="w-4 h-4 inline mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"></path>
+                                            </svg>
+                                            Prev
+                                        </a>
+                                    @endif
+
+                                    {{-- Page Numbers --}}
+                                    <div class="hidden sm:flex items-center space-x-1">
+                                        @foreach ($showcases->getUrlRange(1, $showcases->lastPage()) as $page => $url)
+                                            @if ($page == $showcases->currentPage())
+                                                <span class="px-3 py-2 text-sm font-medium text-white bg-blue-600 rounded-lg">
+                                                    {{ $page }}
+                                                </span>
+                                            @else
+                                                <a href="{{ $url }}" class="px-3 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors">
+                                                    {{ $page }}
+                                                </a>
+                                            @endif
+                                        @endforeach
+                                    </div>
+
+                                    {{-- Next Button --}}
+                                    @if($showcases->hasMorePages())
+                                        <a href="{{ $showcases->nextPageUrl() }}" class="px-3 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors">
+                                            Next
+                                            <svg class="w-4 h-4 inline ml-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path>
+                                            </svg>
+                                        </a>
+                                    @else
+                                        <span class="px-3 py-2 text-sm font-medium text-gray-400 bg-gray-100 rounded-lg cursor-not-allowed">
+                                            Next
+                                            <svg class="w-4 h-4 inline ml-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path>
+                                            </svg>
+                                        </span>
+                                    @endif
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                @endif
             @else
                 <div class="text-center py-12">
                     <svg class="mx-auto h-20 w-20 text-gray-400 mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -344,6 +407,57 @@
                                     </span>
                                 </div>
                             </div>
+
+                            <!-- Contact Information -->
+                            <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mt-6">
+                                <div>
+                                    <h4 class="font-medium text-gray-700 mb-2 flex items-center justify-center">
+                                        <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z"></path>
+                                        </svg>
+                                        Nomor Telepon:
+                                    </h4>
+                                    @if($user->detail && $user->detail->phone)
+                                        <a href="tel:{{ $user->detail->phone }}" class="text-blue-600 hover:text-blue-800 transition-colors">
+                                            {{ $user->detail->phone }}
+                                        </a>
+                                    @else
+                                        <span class="text-gray-400 italic">Seller belum setting nomor telepon</span>
+                                    @endif
+                                </div>
+                                
+                                <div>
+                                    <h4 class="font-medium text-gray-700 mb-2 flex items-center justify-center">
+                                        <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z"></path>
+                                        </svg>
+                                        Telepon Kedua:
+                                    </h4>
+                                    @if($user->detail && $user->detail->secondary_phone)
+                                        <a href="tel:{{ $user->detail->secondary_phone }}" class="text-blue-600 hover:text-blue-800 transition-colors">
+                                            {{ $user->detail->secondary_phone }}
+                                        </a>
+                                    @else
+                                        <span class="text-gray-400 italic">Seller belum setting telepon kedua</span>
+                                    @endif
+                                </div>
+                            </div>
+
+                            <div class="mt-6">
+                                <h4 class="font-medium text-gray-700 mb-2 flex items-center justify-center">
+                                    <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"></path>
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"></path>
+                                    </svg>
+                                    Alamat Toko:
+                                </h4>
+                                @if($user->detail && $user->detail->address_line)
+                                    <p class="text-gray-600 leading-relaxed max-w-lg mx-auto">{{ $user->detail->address_line }}</p>
+                                @else
+                                    <span class="text-gray-400 italic">Seller belum setting alamat toko</span>
+                                @endif
+                            </div>
+
                             @if($user->sellerInfo->description)
                                 <div class="mt-6">
                                     <h4 class="font-medium text-gray-700 mb-2">Tentang Toko Ini:</h4>
