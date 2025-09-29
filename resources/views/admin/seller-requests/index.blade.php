@@ -54,17 +54,17 @@
                             <td class="px-6 py-4 whitespace-nowrap">
                                 <div class="flex items-center">
                                     <div class="h-10 w-10 flex-shrink-0">
-                                        @if($request->user->photo)
+                                        @if($request->user && $request->user->photo)
                                             <img class="h-10 w-10 rounded-full object-cover" src="{{ $request->user->photo_url }}" alt="{{ $request->user->full_name }}">
                                         @else
                                             <div class="h-10 w-10 rounded-full bg-gray-200 flex items-center justify-center">
-                                                <span class="text-sm font-medium text-gray-700">{{ substr($request->user->full_name, 0, 1) }}</span>
+                                                <span class="text-sm font-medium text-gray-700">{{ $request->user ? substr($request->user->full_name, 0, 1) : '?' }}</span>
                                             </div>
                                         @endif
                                     </div>
                                     <div class="ml-4">
-                                        <div class="text-sm font-medium text-gray-900">{{ $request->user->full_name }}</div>
-                                        <div class="text-sm text-gray-500">{{ $request->user->username }}</div>
+                                        <div class="text-sm font-medium text-gray-900">{{ $request->user->full_name ?? 'User Tidak Ditemukan' }}</div>
+                                        <div class="text-sm text-gray-500">{{ $request->user->username ?? 'N/A' }}</div>
                                     </div>
                                 </div>
                             </td>
