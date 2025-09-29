@@ -132,9 +132,9 @@
                                     </div>
                                 </td>
                                 <td class="px-4 py-3">
-                                    <div class="text-sm font-medium text-gray-900">{{ $showcase->user->full_name }}</div>
+                                    <div class="text-sm font-medium text-gray-900">{{ $showcase->user->full_name ?? 'User Tidak Ditemukan' }}</div>
                                     <div class="text-sm text-gray-500">
-                                        @if($showcase->user->sellerInfo)
+                                        @if($showcase->user && $showcase->user->sellerInfo)
                                             {{ $showcase->user->sellerInfo->store_name }}
                                         @else
                                             Belum Ada Toko

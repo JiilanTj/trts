@@ -220,12 +220,14 @@
                                 <div class="flex items-center">
                                     <div class="flex-shrink-0 h-10 w-10">
                                         <div class="h-10 w-10 rounded-full bg-gray-300 flex items-center justify-center">
-                                            <span class="text-sm font-medium text-gray-700">{{ strtoupper(substr($withdrawal->user->full_name, 0, 2)) }}</span>
+                                            <span class="text-sm font-medium text-gray-700">
+                                                {{ $withdrawal->user ? strtoupper(substr($withdrawal->user->full_name, 0, 2)) : '??' }}
+                                            </span>
                                         </div>
                                     </div>
                                     <div class="ml-4">
-                                        <div class="text-sm font-medium text-gray-900">{{ $withdrawal->user->full_name }}</div>
-                                        <div class="text-sm text-gray-500">{{ $withdrawal->user->email }}</div>
+                                        <div class="text-sm font-medium text-gray-900">{{ $withdrawal->user->full_name ?? 'User Tidak Ditemukan' }}</div>
+                                        <div class="text-sm text-gray-500">{{ $withdrawal->user->email ?? 'N/A' }}</div>
                                     </div>
                                 </div>
                             </td>
