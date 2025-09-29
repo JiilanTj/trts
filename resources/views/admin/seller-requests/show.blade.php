@@ -36,31 +36,37 @@
                 <div class="bg-gray-50 rounded-lg p-6">
                     <h3 class="text-lg font-medium text-gray-900 mb-4">Informasi User</h3>
                     <div class="flex items-center mb-4">
-                        @if($sellerRequest->user->photo)
+                        @if($sellerRequest->user && $sellerRequest->user->photo)
                             <img class="h-16 w-16 rounded-full object-cover" src="{{ $sellerRequest->user->photo_url }}" alt="{{ $sellerRequest->user->full_name }}">
                         @else
                             <div class="h-16 w-16 rounded-full bg-gray-200 flex items-center justify-center">
-                                <span class="text-xl font-medium text-gray-700">{{ substr($sellerRequest->user->full_name, 0, 1) }}</span>
+                                <span class="text-xl font-medium text-gray-700">
+                                    {{ $sellerRequest->user ? substr($sellerRequest->user->full_name, 0, 1) : '?' }}
+                                </span>
                             </div>
                         @endif
                         <div class="ml-4">
-                            <div class="text-lg font-medium text-gray-900">{{ $sellerRequest->user->full_name }}</div>
-                            <div class="text-sm text-gray-500">{{ $sellerRequest->user->username }}</div>
-                            <div class="text-sm text-gray-500">Bergabung: {{ $sellerRequest->user->created_at->format('d/m/Y') }}</div>
+                            <div class="text-lg font-medium text-gray-900">{{ $sellerRequest->user->full_name ?? 'User Tidak Ditemukan' }}</div>
+                            <div class="text-sm text-gray-500">{{ $sellerRequest->user->username ?? 'N/A' }}</div>
+                            <div class="text-sm text-gray-500">
+                                Bergabung: {{ $sellerRequest->user ? $sellerRequest->user->created_at->format('d/m/Y') : 'N/A' }}
+                            </div>
                         </div>
                     </div>
                     <div class="space-y-2">
                         <div class="flex justify-between">
                             <span class="text-gray-600">Level:</span>
-                            <span class="font-medium">{{ $sellerRequest->user->level }}</span>
+                            <span class="font-medium">{{ $sellerRequest->user->level ?? 'N/A' }}</span>
                         </div>
                         <div class="flex justify-between">
                             <span class="text-gray-600">Saldo:</span>
-                            <span class="font-medium">Rp {{ number_format($sellerRequest->user->balance, 0, ',', '.') }}</span>
+                            <span class="font-medium">
+                                Rp {{ $sellerRequest->user ? number_format($sellerRequest->user->balance, 0, ',', '.') : '0' }}
+                            </span>
                         </div>
                         <div class="flex justify-between">
                             <span class="text-gray-600">Role:</span>
-                            <span class="font-medium">{{ ucfirst($sellerRequest->user->role) }}</span>
+                            <span class="font-medium">{{ $sellerRequest->user ? ucfirst($sellerRequest->user->role) : 'N/A' }}</span>
                         </div>
                     </div>
                 </div>
