@@ -57,7 +57,7 @@ class WithdrawalController extends Controller
      */
     public function show(WithdrawalRequest $withdrawal): View
     {
-        $withdrawal->load(['user', 'processedBy']);
+        $withdrawal->load(['user.detail', 'processedBy']);
         
         // User stats for sidebar
         $userStats = [

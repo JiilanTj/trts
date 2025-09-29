@@ -118,18 +118,22 @@
                     <h3 class="text-lg font-medium text-gray-900 mb-4">Informasi Pengguna</h3>
                     <div class="flex items-center space-x-4">
                         <div class="w-12 h-12 bg-gray-300 rounded-full flex items-center justify-center">
-                            <span class="text-lg font-medium text-gray-700">{{ strtoupper(substr($withdrawal->user->full_name, 0, 2)) }}</span>
+                            <span class="text-lg font-medium text-gray-700">
+                                {{ $withdrawal->user ? strtoupper(substr($withdrawal->user->full_name, 0, 2)) : '??' }}
+                            </span>
                         </div>
                         <div class="flex-1">
-                            <h4 class="text-lg font-medium text-gray-900">{{ $withdrawal->user->full_name }}</h4>
-                            <p class="text-sm text-gray-500">{{ $withdrawal->user->email }}</p>
-                            @if($withdrawal->user->phone_number)
-                                <p class="text-sm text-gray-500">{{ $withdrawal->user->phone_number }}</p>
+                            <h4 class="text-lg font-medium text-gray-900">{{ $withdrawal->user->full_name ?? 'User Tidak Ditemukan' }}</h4>
+                            <p class="text-sm text-gray-500">{{ $withdrawal->user->email ?? 'N/A' }}</p>
+                            @if($withdrawal->user && $withdrawal->user->detail && $withdrawal->user->detail->phone)
+                                <p class="text-sm text-gray-500">{{ $withdrawal->user->detail->phone }}</p>
                             @endif
                         </div>
                         <div class="text-right">
                             <div class="text-sm text-gray-500">Saldo Saat Ini</div>
-                            <div class="text-lg font-medium text-gray-900">Rp {{ number_format($withdrawal->user->balance, 0, ',', '.') }}</div>
+                            <div class="text-lg font-medium text-gray-900">
+                                Rp {{ $withdrawal->user ? number_format($withdrawal->user->balance, 0, ',', '.') : '0' }}
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -327,7 +331,9 @@
                         </div>
                         <div class="flex justify-between">
                             <span class="text-gray-600">Bergabung</span>
-                            <span class="font-medium text-gray-900">{{ $withdrawal->user->created_at->format('M Y') }}</span>
+                            <span class="font-medium text-gray-900">
+                                {{ $withdrawal->user ? $withdrawal->user->created_at->format('M Y') : 'N/A' }}
+                            </span>
                         </div>
                     </div>
                 </div>
