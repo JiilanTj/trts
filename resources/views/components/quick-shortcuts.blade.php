@@ -138,5 +138,18 @@
             </div>
             <span class="text-[11px] font-medium tracking-wide text-neutral-400 group-hover:text-white">History Saya</span>
         </a>
+        <!-- Install App -->
+        <button onclick="window.triggerPWAInstall()" class="group relative flex flex-col items-center gap-1.5 p-3 rounded-xl bg-neutral-800/60 border border-neutral-700 hover:border-indigo-500/70 transition shadow-sm">
+            <div class="relative">
+                <div class="absolute -inset-1 rounded-full opacity-0 group-hover:opacity-100 transition blur-sm bg-gradient-to-r from-indigo-500/60 to-purple-500/60"></div>
+                <div class="w-10 h-10 rounded-full flex items-center justify-center relative bg-neutral-900 text-neutral-200 group-hover:text-white">
+                    <div class="absolute inset-0 rounded-full ring-1 ring-neutral-700/80 group-hover:ring-transparent"></div>
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24" aria-hidden="true">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M3 16.5v2.25A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75V16.5M16.5 12L12 16.5m0 0L7.5 12m4.5 4.5V3" />
+                    </svg>
+                </div>
+            </div>
+            <span class="text-[11px] font-medium tracking-wide text-neutral-400 group-hover:text-white">Install App</span>
+        </button>
     </div>
 </div>
