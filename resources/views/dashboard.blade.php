@@ -137,178 +137,41 @@
         </div>
     </div>
 
-    <!-- PWA Install Prompt (Custom) -->
-    <div x-data="pwaInstallPrompt()" x-show="visible" x-cloak class="fixed inset-0 z-[200] flex items-end sm:items-center justify-center">
-        <div class="absolute inset-0 bg-black/60 backdrop-blur-sm" @click="dismiss()"></div>
-        <div class="relative w-full sm:max-w-sm mx-auto bg-[#1e2226] border border-neutral-700/70 rounded-t-2xl sm:rounded-2xl p-5 shadow-2xl shadow-black/40 animate-[fadeIn_.25s_ease]">
-            <div class="flex items-start space-x-4">
-                <div class="w-12 h-12 rounded-xl overflow-hidden ring-1 ring-white/10 bg-[#121416] flex items-center justify-center">
-                    <img src="/icons/icon-192.png" alt="TT Shop" class="w-11 h-11 object-contain" />
-                </div>
-                <div class="flex-1">
-                    <h3 class="text-base font-semibold mb-1">Install Aplikasi</h3>
-                    <p class="text-xs text-neutral-400 leading-relaxed">Tambah ke layar utama untuk akses lebih cepat & pengalaman seperti aplikasi native.</p>
-                </div> 
-                <button @click="dismiss()" class="text-neutral-400 hover:text-neutral-200 transition" aria-label="Tutup">&times;</button>
-            </div>
-            <div class="mt-4 flex items-center space-x-3">
-                <button @click="install()" :disabled="installing" class="px-4 py-2 rounded-md text-sm font-medium bg-gradient-to-r from-[#FE2C55] to-[#25F4EE] text-white shadow disabled:opacity-50 disabled:cursor-wait">Install</button>
-                <button @click="later()" class="px-3 py-2 text-xs font-medium rounded-md bg-neutral-700/40 hover:bg-neutral-600/40 text-neutral-300">Nanti</button>
-            </div>
-            <template x-if="error">
-                <p class="mt-3 text-xs text-rose-400" x-text="error"></p>
-            </template>
-        </div>
-    </div>
-
     <script>
-        // Global function untuk trigger PWA install
+        // Global function untuk paksa trigger PWA install
         window.triggerPWAInstall = function() {
-            console.log('🚀 triggerPWAInstall dipanggil');
+            console.log('🚀 Paksa trigger PWA install');
             
-            // Debug info
-            console.log('Debug PWA Info:', {
-                isHttps: location.protocol === 'https:',
-                isLocalhost: location.hostname === 'localhost' || location.hostname === '127.0.0.1',
-                userAgent: navigator.userAgent,
-                isStandalone: window.matchMedia('(display-mode: standalone)').matches,
-                hasServiceWorker: 'serviceWorker' in navigator,
-                hasDeferred: !!window.pwaDeferred
-            });
-            
-            const pwaComponent = Alpine.$data(document.querySelector('[x-data*="pwaInstallPrompt"]'));
-            if (pwaComponent) {
-                console.log('🎯 Alpine component found, calling triggerInstall');
-                pwaComponent.triggerInstall();
+            // Langsung coba install tanpa cek kondisi ribet
+            if (window.pwaDeferred) {
+                console.log('✅ Using deferred prompt');
+                window.pwaDeferred.prompt().then(function() {
+                    console.log('📲 PWA install prompt shown');
+                }).catch(function(err) {
+                    console.log('❌ Error showing prompt:', err);
+                    alert('Install PWA gagal. Coba refresh halaman atau gunakan menu browser: Add to Home Screen / Install App');
+                });
             } else {
-                console.log('⚠️ PWA component not found, trying direct install...');
-                // Fallback jika Alpine component belum ready
-                if (window.pwaDeferred) {
-                    console.log('✅ Using deferred prompt');
-                    window.pwaDeferred.prompt();
-                } else {
-                    console.log('❌ No deferred prompt available');
-                    
-                    // Cek berbagai kondisi
-                    let reason = 'Tidak diketahui';
-                    if (location.protocol !== 'https:' && !['localhost', '127.0.0.1'].includes(location.hostname)) {
-                        reason = 'PWA memerlukan HTTPS';
-                    } else if (window.matchMedia('(display-mode: standalone)').matches) {
-                        reason = 'App sudah berjalan dalam mode standalone';
-                    } else if (!('serviceWorker' in navigator)) {
-                        reason = 'Browser tidak mendukung Service Worker';
-                    } else {
-                        reason = 'Browser belum mendeteksi PWA atau sudah dismiss/install sebelumnya';
-                    }
-                    
-                    alert(`Install PWA tidak tersedia.\n\nAlasan: ${reason}\n\nCoba:\n1. Refresh halaman\n2. Pastikan menggunakan HTTPS\n3. Tunggu beberapa detik lalu coba lagi`);
-                }
+                console.log('❌ No deferred prompt, showing fallback');
+                alert('Install PWA:\n\n1. Klik menu browser (⋮)\n2. Pilih "Add to Home Screen" atau "Install App"\n3. Atau refresh halaman dan coba lagi');
             }
         };
 
-        document.addEventListener('alpine:init', () => {
-            Alpine.data('pwaInstallPrompt', () => ({
-                deferred: null,
-                visible: false,
-                installing: false,
-                error: null,
-                init() {
-                    console.log('🎬 PWA Component initialized');
-                    
-                    // Reset kondisi untuk testing
-                    // localStorage.removeItem('pwaInstallPromptDismissed');
-                    
-                    // Jangan tampilkan jika sudah standalone / pernah dismiss
-                    if (this.isStandalone()) {
-                        console.log('🏠 App already in standalone mode');
-                        return;
-                    }
-                    
-                    if (localStorage.getItem('pwaInstalled') === '1') {
-                        console.log('✅ PWA marked as installed in localStorage');
-                        return;
-                    }
-                    
-                    if (localStorage.getItem('pwaInstallPromptDismissed') === '1') {
-                        console.log('🚫 PWA install prompt was dismissed before');
-                        // Jangan return di sini, biarkan user bisa trigger manual
-                    }
-                    
-                    window.addEventListener('beforeinstallprompt', (e) => {
-                        console.log('🎉 beforeinstallprompt event received!');
-                        e.preventDefault();
-                        this.deferred = e;
-                        window.pwaDeferred = e; // Store globally untuk fallback
-                        
-                        // Hanya auto-show jika belum pernah dismiss
-                        if (localStorage.getItem('pwaInstallPromptDismissed') !== '1') {
-                            // Tunda sedikit agar tidak mengganggu initial paint
-                            setTimeout(() => { 
-                                console.log('⏰ Auto-showing PWA prompt');
-                                this.visible = true; 
-                            }, 800);
-                        }
-                    });
-                    
-                    window.matchMedia('(display-mode: standalone)').addEventListener('change', (e) => {
-                        if (e.matches) {
-                            console.log('📱 App switched to standalone mode');
-                            localStorage.setItem('pwaInstalled','1');
-                            this.visible = false;
-                        }
-                    });
-                },
-                triggerInstall() {
-                    console.log('🔥 triggerInstall called', { 
-                        isStandalone: this.isStandalone(), 
-                        hasDeferred: !!this.deferred 
-                    });
-                    
-                    if (this.isStandalone()) {
-                        alert('✅ Aplikasi sudah terinstall dan berjalan!');
-                        return;
-                    }
-                    
-                    if (this.deferred) {
-                        console.log('📲 Showing PWA install prompt');
-                        this.visible = true;
-                    } else {
-                        console.log('❌ No deferred prompt available in component');
-                        alert('Install PWA tidak tersedia saat ini.\n\nKemungkinan:\n1. Browser belum detect PWA criteria\n2. Sudah pernah dismiss sebelumnya\n3. Perlu refresh halaman\n\nCoba refresh dan tunggu beberapa detik.');
-                    }
-                },
-                isStandalone() {
-                    return window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone === true;
-                },
-                async install() {
-                    this.error = null;
-                    if (!this.deferred) {
-                        this.error = 'Install tidak tersedia di browser ini.';
-                        return;
-                    }
-                    try {
-                        this.installing = true;
-                        this.deferred.prompt();
-                        const choice = await this.deferred.userChoice;
-                        if (choice.outcome === 'accepted') {
-                            localStorage.setItem('pwaInstalled','1');
-                        } else {
-                            localStorage.setItem('pwaInstallPromptDismissed','1');
-                        }
-                        this.visible = false;
-                        this.deferred = null;
-                    } catch (err) {
-                        this.error = 'Gagal memulai instalasi.';
-                    } finally {
-                        this.installing = false;
-                    }
-                },
-                later() {
-                    localStorage.setItem('pwaInstallPromptDismissed','1');
-                    this.visible = false;
-                },
-                dismiss() { this.later(); }
-            }));
+        // Simplified PWA detection - hanya capture event, tidak auto-show popup
+        let pwaDeferred = null;
+        window.addEventListener('beforeinstallprompt', (e) => {
+            console.log('🎉 PWA install tersedia!');
+            e.preventDefault();
+            pwaDeferred = e;
+            window.pwaDeferred = e;
+        });
+
+        // Track jika sudah install
+        window.matchMedia('(display-mode: standalone)').addEventListener('change', (e) => {
+            if (e.matches) {
+                console.log('📱 PWA berhasil diinstall!');
+                localStorage.setItem('pwaInstalled','1');
+            }
         });
     </script>
 </x-app-layout>
