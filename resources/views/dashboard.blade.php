@@ -142,20 +142,52 @@
         window.triggerPWAInstall = function() {
             console.log('🚀 Paksa trigger PWA install');
             
-            // Langsung coba install tanpa cek kondisi ribet
+            // Detect browser type
+            const isSafari = /^((?!chrome|android).)*safari/i.test(navigator.userAgent);
+            const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent);
+            const isAndroid = /Android/.test(navigator.userAgent);
+            const isChrome = /Chrome/.test(navigator.userAgent) && !isSafari;
+            
+            console.log('Browser detected:', { isSafari, isIOS, isAndroid, isChrome });
+            
+            // For Safari/iOS - manual instruction
+            if (isSafari || isIOS) {
+                alert('📱 Install Aplikasi (Safari/iOS):\n\n1. Klik tombol "Share" (📤)\n2. Scroll ke bawah\n3. Pilih "Add to Home Screen"\n4. Klik "Add"\n\n✨ Aplikasi akan muncul di home screen!');
+                return;
+            }
+            
+            // For Chrome/Android - try automatic
             if (window.pwaDeferred) {
                 console.log('✅ Using deferred prompt');
                 window.pwaDeferred.prompt().then(function() {
                     console.log('📲 PWA install prompt shown');
                 }).catch(function(err) {
                     console.log('❌ Error showing prompt:', err);
-                    alert('Install PWA gagal. Coba refresh halaman atau gunakan menu browser: Add to Home Screen / Install App');
+                    showManualInstructions();
                 });
             } else {
-                console.log('❌ No deferred prompt, showing fallback');
-                alert('Install PWA:\n\n1. Klik menu browser (⋮)\n2. Pilih "Add to Home Screen" atau "Install App"\n3. Atau refresh halaman dan coba lagi');
+                console.log('❌ No deferred prompt, showing manual instructions');
+                showManualInstructions();
             }
         };
+        
+        function showManualInstructions() {
+            const isSafari = /^((?!chrome|android).)*safari/i.test(navigator.userAgent);
+            const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent);
+            const isAndroid = /Android/.test(navigator.userAgent);
+            
+            let instructions = '';
+            
+            if (isSafari || isIOS) {
+                instructions = '📱 Safari/iOS:\n1. Klik tombol Share (📤)\n2. Pilih "Add to Home Screen"\n3. Klik "Add"';
+            } else if (isAndroid) {
+                instructions = '🤖 Android Chrome:\n1. Klik menu (⋮)\n2. Pilih "Add to Home Screen"\n3. Atau "Install App"';
+            } else {
+                instructions = '💻 Desktop:\n1. Klik menu browser (⋮)\n2. Pilih "Install [App Name]"\n3. Atau "Add to Home Screen"';
+            }
+            
+            alert(`Install PWA Manual:\n\n${instructions}\n\n💡 Refresh halaman jika tidak ada opsi install`);
+        }
 
         // Simplified PWA detection - hanya capture event, tidak auto-show popup
         let pwaDeferred = null;
